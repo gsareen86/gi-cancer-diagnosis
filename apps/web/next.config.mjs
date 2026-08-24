@@ -25,19 +25,9 @@ const nextConfig = {
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains; preload',
           },
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "img-src 'self' data: blob:",
-              "style-src 'self' 'unsafe-inline'",
-              "script-src 'self'",
-              "connect-src 'self'",
-              "frame-ancestors 'none'",
-              "form-action 'self'",
-              "base-uri 'self'",
-            ].join('; '),
-          },
+          // The Content-Security-Policy is set per request in src/middleware.ts, because it
+          // carries a fresh nonce for the framework's inline bootstrap scripts. A static header
+          // here could only use 'unsafe-inline', which would make the directive decorative.
         ],
       },
       {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { validateAnswer } from './answer-validation.js';
-import { indexTemplate, type Question } from './template.js';
-import { bleedingTemplate } from '../__fixtures__/bleeding-template.js';
+import { validateAnswer } from './answer-validation';
+import { indexTemplate, type Question } from './template';
+import { bleedingTemplate } from '../__fixtures__/bleeding-template';
 
 const index = indexTemplate(bleedingTemplate);
 const question = (id: string): Question => {

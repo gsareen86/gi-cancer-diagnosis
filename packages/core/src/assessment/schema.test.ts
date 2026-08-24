@@ -5,8 +5,8 @@ import {
   findProhibitedTreatmentContent,
   validateAssessment,
   type AiAssessment,
-} from './schema.js';
-import { PHASE_1_TAXONOMY } from '../taxonomy.js';
+} from './schema';
+import { PHASE_1_TAXONOMY } from '../taxonomy';
 
 const valid = (): AiAssessment => ({
   case_id: 'case_123',

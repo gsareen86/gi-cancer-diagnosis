@@ -189,10 +189,18 @@ export async function revokeAllSessions(userId: string): Promise<void> {
     .where(and(eq(tables.sessions.userId, userId), isNull(tables.sessions.revokedAt)));
 }
 
-/** A session is live only while its row is neither revoked nor expired. */
-export async function isSessionLive(sessionId: string): Promise<boolean> {
+/**
+ * The session row, if it is still live.
+ *
+ * Returns the row rather than a boolean because the caller needs `mfaPending` from it: the
+ * database is the authority on second-factor state, so satisfying it takes effect on the next
+ * request instead of whenever the access token happens to expire.
+ */
+export async function liveSession(
+  sessionId: string,
+): Promise<{ id: string; mfaPending: boolean } | null> {
   const [row] = await database()
-    .select({ id: tables.sessions.id })
+    .select({ id: tables.sessions.id, mfaPending: tables.sessions.mfaPending })
     .from(tables.sessions)
     .where(
       and(
@@ -202,7 +210,11 @@ export async function isSessionLive(sessionId: string): Promise<boolean> {
       ),
     )
     .limit(1);
-  return row !== undefined;
+  return row ?? null;
+}
+
+export async function isSessionLive(sessionId: string): Promise<boolean> {
+  return (await liveSession(sessionId)) !== null;
 }
 
 export async function markMfaSatisfied(sessionId: string): Promise<void> {

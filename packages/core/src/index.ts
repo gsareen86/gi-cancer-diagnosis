@@ -6,21 +6,21 @@
  * future React Native client without dragging a server along.
  */
 
-export * from './conditions/grammar.js';
-export * from './conditions/evaluate.js';
-export * from './conditions/introspect.js';
+export * from './conditions/grammar';
+export * from './conditions/evaluate';
+export * from './conditions/introspect';
 
-export * from './questionnaire/answers.js';
-export * from './questionnaire/template.js';
-export * from './questionnaire/answer-validation.js';
-export * from './questionnaire/interview.js';
-export * from './questionnaire/publication.js';
-export * from './questionnaire/document.js';
+export * from './questionnaire/answers';
+export * from './questionnaire/template';
+export * from './questionnaire/answer-validation';
+export * from './questionnaire/interview';
+export * from './questionnaire/publication';
+export * from './questionnaire/document';
 
-export * from './safety/red-flags.js';
-export * from './consent/policy.js';
+export * from './safety/red-flags';
+export * from './consent/policy';
 
-export * from './assessment/schema.js';
-export * from './assessment/clinical-summary.js';
+export * from './assessment/schema';
+export * from './assessment/clinical-summary';
 
-export * from './taxonomy.js';
+export * from './taxonomy';

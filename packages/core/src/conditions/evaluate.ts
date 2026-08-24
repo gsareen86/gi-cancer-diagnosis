@@ -1,5 +1,5 @@
-import type { Condition } from './grammar.js';
-import type { AnswerValue } from '../questionnaire/answers.js';
+import type { Condition } from './grammar';
+import type { AnswerValue } from '../questionnaire/answers';
 
 /**
  * Three-valued (Kleene) logic. An unanswered question yields `unknown` rather than `false`,

@@ -6,13 +6,19 @@ import {
   unansweredRequiredQuestionIds,
   validateAnswer,
   type AnswerValue,
-  type Interview,
   type Question,
   type RecordedAnswer,
   type TriggeredRedFlag,
-  type Urgency,
 } from '@gi-compass/core';
 import type { AccessContext, ClinicalRepository } from '@gi-compass/db';
+import {
+  EMERGENCY_NUMBERS,
+  type EmergencyAdvisory,
+  type InterviewView,
+  type RenderedOption,
+  type RenderedQuestion,
+  type RenderedRedFlag,
+} from '@/lib/wire-types';
 import { clinical } from '../db';
 import { currentRedFlagRules, loadTemplateVersion } from './content-service';
 
@@ -24,62 +30,6 @@ import { currentRedFlagRules, loadTemplateVersion } from './content-service';
  * It is deterministic in-process work over an already-loaded answer set — no queue, no service
  * call, no model — because a patient who may be bleeding cannot wait on any of those.
  */
-
-export interface RenderedOption {
-  id: string;
-  label: string;
-  referenceImageIds: string[];
-}
-
-export interface RenderedQuestion {
-  id: string;
-  groupId: string;
-  cluster: string;
-  type: Question['type'];
-  prompt: string;
-  help: string | null;
-  clinicalTerms: Array<{ term: string; explanation: string }>;
-  options: RenderedOption[];
-  numeric: Question['numeric'] | null;
-  scale: (Question['scale'] & { minLabel: string; maxLabel: string }) | null;
-  bodyMapRegionIds: string[];
-  referenceImageIds: string[];
-  required: boolean;
-  multiSelectMax: number | null;
-  textMaxLength: number;
-}
-
-export interface InterviewView {
-  caseId: string;
-  status: string;
-  templateVersionId: string;
-  entryPointId: string;
-  locale: string;
-  progress: Interview['progress'];
-  complete: boolean;
-  nextQuestion: RenderedQuestion | null;
-  answeredQuestions: Array<{ question: RenderedQuestion; value: AnswerValue; askedBecause: string | null }>;
-  unansweredRequired: string[];
-  redFlags: RenderedRedFlag[];
-  emergency: EmergencyAdvisory | null;
-}
-
-export interface RenderedRedFlag {
-  ruleId: string;
-  urgency: Urgency;
-  basis: string;
-}
-
-export interface EmergencyAdvisory {
-  /** Symptom-based, never condition-based. */
-  messages: string[];
-  contacts: Array<{ labelKey: string; number: string }>;
-}
-
-export const EMERGENCY_NUMBERS = [
-  { labelKey: 'emergency.number.general', number: '112' },
-  { labelKey: 'emergency.number.ambulance', number: '108' },
-] as const;
 
 function renderQuestion(
   question: Question,
@@ -180,6 +130,7 @@ export async function buildInterviewView(input: BuildViewInput): Promise<Intervi
     ruleId: flag.ruleId,
     urgency: flag.urgency,
     basis: resolveFlag(flag.basisKey),
+    acknowledged: flag.acknowledgedAt !== null,
   }));
 
   const emergencies = rendered.filter((flag) => flag.urgency === 'emergency');
@@ -201,7 +152,12 @@ export async function buildInterviewView(input: BuildViewInput): Promise<Intervi
     emergency:
       emergencies.length === 0
         ? null
-        : { messages: emergencies.map((flag) => flag.basis), contacts: [...EMERGENCY_NUMBERS] },
+        : {
+            messages: emergencies.map((flag) => flag.basis),
+            contacts: [...EMERGENCY_NUMBERS],
+            // A newly triggered flag interrupts; one the patient has already read does not.
+            requiresInterruption: emergencies.some((flag) => !flag.acknowledged),
+          },
   };
 }
 
@@ -293,4 +249,5 @@ export async function submitAnswer(input: {
   };
 }
 
-export { activeAnswerMap };
+export { activeAnswerMap, EMERGENCY_NUMBERS };
+export type { EmergencyAdvisory, InterviewView, RenderedOption, RenderedQuestion, RenderedRedFlag };

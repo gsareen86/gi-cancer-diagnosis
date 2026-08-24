@@ -28,9 +28,16 @@ import * as clinicalTables from '../../../../packages/db/src/schema';
 
 export type Json = Record<string, unknown>;
 
-export interface Handler {
-  (request: NextRequest, segment: { params: Promise<Record<string, string>> }): Promise<Response>;
-}
+/**
+ * A route handler as Next.js calls it. Deliberately loose about the params shape: the harness
+ * passes whatever the test supplies, and a handler typed for `{ caseId }` is still called the
+ * same way at runtime.
+ */
+export type Handler = (
+  request: NextRequest,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  segment: { params: Promise<any> },
+) => Promise<Response>;
 
 export async function call(
   handler: Handler,
@@ -54,7 +61,7 @@ export async function call(
     init.headers = { 'content-type': 'application/json' };
   }
 
-  const request = new NextRequest(url, init as RequestInit);
+  const request = new NextRequest(url, init as ConstructorParameters<typeof NextRequest>[1]);
   if (options.accessToken !== undefined) {
     request.cookies.set(ACCESS_COOKIE, options.accessToken);
   }

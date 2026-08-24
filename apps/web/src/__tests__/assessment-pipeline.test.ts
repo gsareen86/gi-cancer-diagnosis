@@ -30,6 +30,17 @@ afterAll(truncateAll);
 
 const ALL_CONSENTS = ['account_processing', 'ai_assisted_analysis', 'share_with_assigned_doctor'] as const;
 
+/** Reads a nested path out of the generated JSON Schema without a tower of casts. */
+function walk(value: unknown, path: readonly string[]): unknown {
+  return path.reduce<unknown>(
+    (current, key) =>
+      current !== null && typeof current === 'object'
+        ? (current as Record<string, unknown>)[key]
+        : undefined,
+    value,
+  );
+}
+
 function conformingAssessment(caseId: string, overrides: Record<string, unknown> = {}) {
   return {
     case_id: caseId,
@@ -188,9 +199,14 @@ describe('what the model is told', () => {
     setAiTransport(transport);
     await requestAssessment(caseId);
 
-    const schema = payloads[0]!.outputSchema as Record<string, Record<string, Record<string, Record<string, Record<string, unknown>>>>>;
-    const conditions = schema.properties!.differential_assessment!.items!.properties!.condition!
-      .enum as string[];
+    const conditions = walk(payloads[0]!.outputSchema, [
+      'properties',
+      'differential_assessment',
+      'items',
+      'properties',
+      'condition',
+      'enum',
+    ]) as string[];
     expect(conditions).toContain('Peptic ulcer disease');
     expect(conditions).toContain('Features that require urgent specialist review to exclude GI malignancy');
     expect(conditions).not.toContain('Gastric carcinoma');

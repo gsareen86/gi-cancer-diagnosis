@@ -6,7 +6,7 @@ import {
   hasConsent,
   summarizeConsent,
   type ConsentRecord,
-} from './policy.js';
+} from './policy';
 
 const CURRENT = 'privacy-policy-2026-01';
 

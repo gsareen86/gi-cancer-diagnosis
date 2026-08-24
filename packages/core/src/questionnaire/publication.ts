@@ -1,6 +1,6 @@
-import { conditionDepth, MAX_CONDITION_DEPTH } from '../conditions/grammar.js';
-import { predicateUses, referencedQuestionIds, PREDICATE_COMPATIBILITY } from '../conditions/introspect.js';
-import { indexTemplate, type TemplateVersion } from './template.js';
+import { conditionDepth, MAX_CONDITION_DEPTH } from '../conditions/grammar';
+import { predicateUses, referencedQuestionIds, PREDICATE_COMPATIBILITY } from '../conditions/introspect';
+import { indexTemplate, type TemplateVersion } from './template';
 
 /**
  * Publication validation. A published template version is immutable and immediately visible

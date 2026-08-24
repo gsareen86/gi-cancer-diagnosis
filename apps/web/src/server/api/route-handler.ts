@@ -11,7 +11,7 @@ import {
 } from '@gi-compass/db';
 import type { ConsentPurpose } from '@gi-compass/core';
 import { database } from '../db';
-import { ACCESS_COOKIE, isSessionLive, verifyAccessToken, type SessionRole } from '../auth/session';
+import { ACCESS_COOKIE, liveSession, verifyAccessToken, type SessionRole } from '../auth/session';
 import { problem, type ProblemBody } from './problem';
 import { requestMetadata, type RequestMetadata } from './request-context';
 
@@ -69,7 +69,9 @@ async function readSession(request: NextRequest): Promise<Session | null> {
 
   // A signed token is not enough: the session row is the authority, so revoking a session ends
   // access immediately rather than whenever the access token happens to expire.
-  if (claims.sid === '' || !(await isSessionLive(claims.sid))) return null;
+  if (claims.sid === '') return null;
+  const session = await liveSession(claims.sid);
+  if (session === null) return null;
 
   const [user] = await database()
     .select({ role: tables.users.role, status: tables.users.status })
@@ -80,11 +82,13 @@ async function readSession(request: NextRequest): Promise<Session | null> {
 
   return {
     userId: claims.sub,
-    // The role comes from the database, not the token: a role revoked mid-session takes effect
-    // on the next request.
+    // Role and second-factor state come from the database, not the token. A role revoked or a
+    // second factor satisfied mid-session takes effect on the very next request — otherwise a
+    // doctor who has just completed enrolment would stay locked out until their access token
+    // aged out, and a revoked role would keep working for the same window.
     role: user.role,
     sessionId: claims.sid,
-    mfaPending: claims.mfaPending,
+    mfaPending: session.mfaPending,
   };
 }
 

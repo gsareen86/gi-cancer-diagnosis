@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Typography and spacing are set for reading on a phone, at arm's length, possibly while
+ * anxious. Base size is deliberately larger than a marketing site's, line length is capped, and
+ * touch targets meet the 44px minimum everywhere — a mis-tap on a symptom question produces a
+ * wrong answer, not just an annoyance.
+ */
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    @apply bg-surface-sunken text-ink antialiased;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4 {
+    @apply text-ink font-semibold tracking-tight;
+    line-height: 1.25;
+    text-wrap: balance;
+  }
+
+  /* A visible focus ring everywhere. Never removed — keyboard users need to see where they are. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-surface;
+  }
+
+  /* Inputs inherit the body size: 16px+ stops iOS zooming on focus mid-interview. */
+  input, select, textarea, button {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .gi-card {
+    @apply rounded-xl border border-line bg-surface p-5 sm:p-6;
+  }
+
+  .gi-label {
+    @apply block text-sm font-medium text-ink-muted mb-1.5;
+  }
+
+  .gi-input {
+    @apply w-full rounded-lg border border-line-strong bg-surface px-3.5 py-3
+           text-ink placeholder:text-ink-faint
+           focus:border-accent focus:ring-2 focus:ring-accent/25 focus:outline-none;
+    min-height: 48px;
+  }
+
+  .gi-hint {
+    @apply mt-1.5 text-sm text-ink-muted;
+  }
+
+  .gi-error {
+    @apply mt-1.5 text-sm text-emergency;
+  }
+
+  .gi-button {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3
+           font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    min-height: 48px;
+  }
+
+  .gi-button-primary {
+    @apply gi-button bg-accent text-white hover:bg-accent-hover;
+  }
+
+  .gi-button-secondary {
+    @apply gi-button border border-line-strong bg-surface text-ink hover:bg-surface-sunken;
+  }
+
+  .gi-button-danger {
+    @apply gi-button bg-emergency text-white hover:brightness-90;
+  }
+
+  /*
+   * Choice controls are large tap targets rather than native radios: a patient answering on a
+   * phone needs the whole row to be pressable, and the selected state has to be obvious without
+   * relying on colour alone.
+   */
+  .gi-choice {
+    @apply flex w-full items-start gap-3 rounded-xl border-2 border-line bg-surface
+           p-4 text-left transition-colors hover:border-line-strong hover:bg-surface-sunken;
+    min-height: 56px;
+  }
+
+  .gi-choice-selected {
+    @apply border-accent bg-accent-faint hover:border-accent hover:bg-accent-faint;
+  }
+
+  .gi-prose {
+    @apply max-w-reading;
+  }
+
+  .gi-skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50
+           focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-white;
+  }
+}

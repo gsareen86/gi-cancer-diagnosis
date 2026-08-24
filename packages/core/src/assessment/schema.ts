@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { PHASE_1_TAXONOMY, type TaxonomyEntry } from '../taxonomy.js';
-import { urgencySchema } from '../safety/red-flags.js';
+import { PHASE_1_TAXONOMY, type TaxonomyEntry } from '../taxonomy';
+import { urgencySchema } from '../safety/red-flags';
 
 /**
  * The AI output contract (design D8).

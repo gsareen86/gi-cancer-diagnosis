@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { evaluate, isSatisfied, type EvaluationContext, type Truth } from './evaluate.js';
-import { checkConditionStructure, conditionSchema, parseCondition, type Condition } from './grammar.js';
-import type { AnswerValue } from '../questionnaire/answers.js';
+import { evaluate, isSatisfied, type EvaluationContext, type Truth } from './evaluate';
+import { checkConditionStructure, conditionSchema, parseCondition, type Condition } from './grammar';
+import type { AnswerValue } from '../questionnaire/answers';
 
 const ctx = (
   answers: Record<string, AnswerValue>,

@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { conditionSchema } from '../conditions/grammar.js';
-import { ANSWER_KINDS } from './answers.js';
-import { symptomClusterSchema } from '../taxonomy.js';
+import { conditionSchema } from '../conditions/grammar';
+import { ANSWER_KINDS } from './answers';
+import { symptomClusterSchema } from '../taxonomy';
 
 /**
  * Clinical content is data, never code (spec: questionnaire/engine). A published template

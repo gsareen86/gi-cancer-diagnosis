@@ -1,8 +1,8 @@
-import type { AnswerValue, RecordedAnswer } from '../questionnaire/answers.js';
-import { activeAnswerMap } from '../questionnaire/answers.js';
-import type { Question, TemplateIndex } from '../questionnaire/template.js';
-import type { SymptomCluster } from '../taxonomy.js';
-import type { TriggeredRedFlag } from '../safety/red-flags.js';
+import type { AnswerValue, RecordedAnswer } from '../questionnaire/answers';
+import { activeAnswerMap } from '../questionnaire/answers';
+import type { Question, TemplateIndex } from '../questionnaire/template';
+import type { SymptomCluster } from '../taxonomy';
+import type { TriggeredRedFlag } from '../safety/red-flags';
 
 /**
  * Compiles a case into the structured clinical summary the AI pipeline is grounded on and the

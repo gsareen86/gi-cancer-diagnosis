@@ -18,11 +18,14 @@ const srcRoot = resolve(here, '..');
 
 function resolveImport(fromFile: string, specifier: string): string | null {
   if (!specifier.startsWith('.')) return null;
-  const target = resolve(dirname(fromFile), specifier.replace(/\.js$/, '.ts'));
-  try {
-    if (statSync(target).isFile()) return target;
-  } catch {
-    /* fall through */
+  // Imports are extensionless, so try `.ts` and then `/index.ts`.
+  const base = resolve(dirname(fromFile), specifier);
+  for (const candidate of [`${base}.ts`, join(base, 'index.ts')]) {
+    try {
+      if (statSync(candidate).isFile()) return candidate;
+    } catch {
+      /* try the next shape */
+    }
   }
   return null;
 }

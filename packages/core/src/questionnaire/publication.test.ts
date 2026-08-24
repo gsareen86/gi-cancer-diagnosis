@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { validateForPublication } from './publication.js';
-import type { TemplateVersion } from './template.js';
-import { bleedingTemplate } from '../__fixtures__/bleeding-template.js';
+import { validateForPublication } from './publication';
+import type { TemplateVersion } from './template';
+import { bleedingTemplate } from '../__fixtures__/bleeding-template';
 
 const clone = (): TemplateVersion => structuredClone(bleedingTemplate);
 const codes = (template: TemplateVersion, requiredLocales?: string[]) =>

@@ -1,5 +1,5 @@
-import type { TemplateVersion } from '../questionnaire/template.js';
-import type { RedFlagRuleSet } from '../safety/red-flags.js';
+import type { TemplateVersion } from '../questionnaire/template';
+import type { RedFlagRuleSet } from '../safety/red-flags';
 
 /**
  * The worked GI triage example from the build brief, expressed entirely as data.

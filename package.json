@@ -2,7 +2,7 @@
   "name": "gi-compass",
   "private": true,
   "version": "0.1.0",
-  "description": "AI-assisted GI diagnostic-support platform (India) — doctor-in-the-loop by design",
+  "description": "AI-assisted GI diagnostic-support platform (India) \u2014 doctor-in-the-loop by design",
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -12,7 +12,13 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "eslint .",
-    "spec:validate": "openspec validate --strict"
+    "spec:validate": "openspec validate --strict",
+    "db:up": "./scripts/dev-postgres.sh",
+    "db:migrate": "tsx packages/db/src/migrate.ts",
+    "db:seed": "tsx packages/db/src/seed/index.ts",
+    "dev:web": "./scripts/dev-server.sh",
+    "e2e:patient": "node e2e/patient-walkthrough.mjs",
+    "e2e:doctor": "node e2e/doctor-review.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

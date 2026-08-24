@@ -6,9 +6,9 @@ import {
   redFlagRuleSetSchema,
   validateEscalationCopy,
   EMERGENCY_CONTACTS,
-} from './red-flags.js';
-import type { AnswerValue } from '../questionnaire/answers.js';
-import { bleedingRedFlags } from '../__fixtures__/bleeding-template.js';
+} from './red-flags';
+import type { AnswerValue } from '../questionnaire/answers';
+import { bleedingRedFlags } from '../__fixtures__/bleeding-template';
 
 const answers = (entries: Record<string, AnswerValue>) => new Map(Object.entries(entries));
 const select = (optionId: string): AnswerValue => ({ kind: 'single_select', optionId });

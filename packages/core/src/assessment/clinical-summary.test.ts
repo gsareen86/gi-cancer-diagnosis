@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { compileClinicalSummary, type ClinicalSummaryInput } from './clinical-summary.js';
-import { computeInterview } from '../questionnaire/interview.js';
-import { indexTemplate } from '../questionnaire/template.js';
-import { evaluateRedFlags } from '../safety/red-flags.js';
-import { activeAnswerMap, type AnswerValue, type RecordedAnswer } from '../questionnaire/answers.js';
+import { compileClinicalSummary, type ClinicalSummaryInput } from './clinical-summary';
+import { computeInterview } from '../questionnaire/interview';
+import { indexTemplate } from '../questionnaire/template';
+import { evaluateRedFlags } from '../safety/red-flags';
+import { activeAnswerMap, type AnswerValue, type RecordedAnswer } from '../questionnaire/answers';
 import {
   bleedingRedFlags,
   bleedingTemplate,
   resolveEnglish,
-} from '../__fixtures__/bleeding-template.js';
+} from '../__fixtures__/bleeding-template';
 
 const index = indexTemplate(bleedingTemplate);
 const at = new Date('2026-08-01T00:00:00Z');

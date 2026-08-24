@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { computeInterview, unansweredRequiredQuestionIds } from './interview.js';
-import { indexTemplate } from './template.js';
-import type { AnswerValue, RecordedAnswer } from './answers.js';
-import { bleedingTemplate } from '../__fixtures__/bleeding-template.js';
+import { computeInterview, unansweredRequiredQuestionIds } from './interview';
+import { indexTemplate } from './template';
+import type { AnswerValue, RecordedAnswer } from './answers';
+import { bleedingTemplate } from '../__fixtures__/bleeding-template';
 
 const index = indexTemplate(bleedingTemplate);
 

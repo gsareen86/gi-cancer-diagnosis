@@ -1,8 +1,8 @@
-import { isSatisfied, type EvaluationContext, type EvaluationSubject } from '../conditions/evaluate.js';
-import { referencedQuestionIds } from '../conditions/introspect.js';
-import type { AnswerValue, RecordedAnswer } from './answers.js';
-import { activeAnswerMap } from './answers.js';
-import { byOrder, type Question, type TemplateIndex } from './template.js';
+import { isSatisfied, type EvaluationContext, type EvaluationSubject } from '../conditions/evaluate';
+import { referencedQuestionIds } from '../conditions/introspect';
+import type { AnswerValue, RecordedAnswer } from './answers';
+import { activeAnswerMap } from './answers';
+import { byOrder, type Question, type TemplateIndex } from './template';
 
 /**
  * Computes the adaptive path: which questions the patient is currently being asked, in what

@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { conditionSchema, type Condition } from '../conditions/grammar.js';
-import { isSatisfied, type EvaluationContext, type EvaluationSubject } from '../conditions/evaluate.js';
-import { referencedQuestionIds } from '../conditions/introspect.js';
-import type { AnswerValue } from '../questionnaire/answers.js';
-import { CONDITION_NAMING_TERMS } from '../taxonomy.js';
+import { conditionSchema, type Condition } from '../conditions/grammar';
+import { isSatisfied, type EvaluationContext, type EvaluationSubject } from '../conditions/evaluate';
+import { referencedQuestionIds } from '../conditions/introspect';
+import type { AnswerValue } from '../questionnaire/answers';
+import { CONDITION_NAMING_TERMS } from '../taxonomy';
 
 /**
  * Deterministic emergency triage.

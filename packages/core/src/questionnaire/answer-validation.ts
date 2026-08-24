@@ -1,5 +1,5 @@
-import { answerValueSchema, type AnswerValue } from './answers.js';
-import type { Question } from './template.js';
+import { answerValueSchema, type AnswerValue } from './answers';
+import type { Question } from './template';
 
 /**
  * Per-type answer contracts. An answer failing its contract is rejected, never stored —

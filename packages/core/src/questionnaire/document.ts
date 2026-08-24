@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { templateVersionSchema, type TemplateVersion } from './template.js';
-import { redFlagRuleSetSchema } from '../safety/red-flags.js';
+import { templateVersionSchema, type TemplateVersion } from './template';
+import { redFlagRuleSetSchema } from '../safety/red-flags';
 
 /**
  * What a published template version actually stores.

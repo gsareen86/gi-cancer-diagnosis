@@ -1,4 +1,4 @@
-import type { Condition } from './grammar.js';
+import type { Condition } from './grammar';
 
 /** Every question identifier the condition reads, in first-appearance order, deduplicated. */
 export function referencedQuestionIds(condition: Condition): string[] {
