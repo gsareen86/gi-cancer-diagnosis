@@ -40,6 +40,12 @@ export {
   IllegalTransitionError,
 } from './errors';
 
+/**
+ * The tables application code may query directly. Clinical tables are absent on purpose — see
+ * `public-schema.ts`.
+ */
+export * as tables from './public-schema';
+
 export { createDatabase, createPool } from './client';
 export type { Database, DatabaseConfig } from './client';
 export { runMigrations } from './migrate';

@@ -1,12 +1,14 @@
-import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 import type { AnswerValue, RecordedAnswer, TriggeredRedFlag } from '@gi-compass/core';
 import {
   aiAssessments,
   caseAssignments,
+  caseMessages,
   cases,
   doctorReviews,
   redFlagTriggers,
   responses,
+  reviewDiffs,
   uploadedDocuments,
 } from '../schema';
 import type { Database } from '../client';
@@ -380,6 +382,561 @@ export class ClinicalRepository {
         return assignment ?? null;
       },
       { caseId, skipConsent: context.actor.role === 'system' },
+    );
+  }
+
+  /* ---------------------------------------------------------------------------------------- */
+  /* Case creation and listing                                                                 */
+  /* ---------------------------------------------------------------------------------------- */
+
+  /**
+   * Opens a case. The template version is pinned here and never changes for this case, so a
+   * republish mid-interview cannot shift the ground under answers already given.
+   */
+  async createCase(
+    context: AccessContext,
+    input: { patientId: string; templateVersionId: string; entryPointId: string },
+  ) {
+    return this.#withAccess(
+      context,
+      {
+        action: 'case.create',
+        targetType: 'case',
+        metadata: { entryPointId: input.entryPointId, templateVersionId: input.templateVersionId },
+      },
+      async (tx) => {
+        const [row] = await tx
+          .insert(cases)
+          .values({
+            patientId: input.patientId,
+            templateVersionId: input.templateVersionId,
+            entryPointId: input.entryPointId,
+            status: 'in_progress',
+          })
+          .returning();
+        return row ?? null;
+      },
+    );
+  }
+
+  /**
+   * Resolves a case and its owner for the system pipeline.
+   *
+   * Every other read needs the subject up front, because consent is evaluated against a named
+   * patient. The background pipeline is the one caller that starts from a case id and has to
+   * discover the owner — so this is deliberately narrow: system actors only, no clinical
+   * content in the result, and audited like anything else.
+   */
+  async resolveCaseForSystem(caseId: string): Promise<{
+    id: string;
+    patientId: string;
+    templateVersionId: string;
+    entryPointId: string;
+    status: CaseStatus;
+  } | null> {
+    const [row] = await this.#db
+      .select({
+        id: cases.id,
+        patientId: cases.patientId,
+        templateVersionId: cases.templateVersionId,
+        entryPointId: cases.entryPointId,
+        status: cases.status,
+      })
+      .from(cases)
+      .where(eq(cases.id, caseId))
+      .limit(1);
+
+    if (!row) return null;
+
+    await this.#audit.write(
+      this.#db,
+      { actor: { id: null, role: 'system' }, subjectId: row.patientId, purpose: 'ai_assisted_analysis' },
+      { action: 'case.resolve', targetType: 'case', targetId: caseId },
+      'allowed',
+    );
+    return row;
+  }
+
+  /** A patient's own cases. Returns state and timestamps only — never clinical content. */
+  async listPatientCases(context: AccessContext) {
+    return this.#withAccess(
+      context,
+      { action: 'case.list', targetType: 'patient', targetId: context.subjectId },
+      async (tx) =>
+        tx
+          .select({
+            id: cases.id,
+            status: cases.status,
+            entryPointId: cases.entryPointId,
+            templateVersionId: cases.templateVersionId,
+            createdAt: cases.createdAt,
+            updatedAt: cases.updatedAt,
+            submittedAt: cases.submittedAt,
+            releasedAt: cases.releasedAt,
+          })
+          .from(cases)
+          .where(eq(cases.patientId, context.subjectId))
+          .orderBy(desc(cases.createdAt)),
+    );
+  }
+
+  /**
+   * The doctor's review queue.
+   *
+   * Not routed through `#withAccess`: that funnel authorizes one case for one subject, and a
+   * queue spans many patients. It is scoped by live assignment instead, carries no clinical
+   * findings beyond each case's highest red-flag urgency, and writes its own audit entry.
+   */
+  async listDoctorQueue(doctorId: string, actorRole: AccessContext['actor']['role']) {
+    if (actorRole !== 'doctor') {
+      throw new AuthorizationError('only a doctor may load a review queue');
+    }
+    const db = this.#db;
+    const rows = await db
+      .select({
+        id: cases.id,
+        status: cases.status,
+        entryPointId: cases.entryPointId,
+        patientId: cases.patientId,
+        createdAt: cases.createdAt,
+        submittedAt: cases.submittedAt,
+        aiSkipReason: cases.aiSkipReason,
+      })
+      .from(cases)
+      .innerJoin(
+        caseAssignments,
+        and(eq(caseAssignments.caseId, cases.id), isNull(caseAssignments.endedAt)),
+      )
+      .where(eq(caseAssignments.doctorId, doctorId))
+      .orderBy(desc(cases.submittedAt), desc(cases.createdAt));
+
+    const flags = rows.length === 0
+      ? []
+      : await db
+          .select({
+            caseId: redFlagTriggers.caseId,
+            urgency: redFlagTriggers.urgency,
+            ruleId: redFlagTriggers.ruleId,
+          })
+          .from(redFlagTriggers)
+          .where(inArray(redFlagTriggers.caseId, rows.map((row) => row.id)));
+
+    await this.#audit.write(
+      db,
+      { actor: { id: doctorId, role: 'doctor' }, subjectId: doctorId, purpose: 'share_with_assigned_doctor' },
+      { action: 'queue.read', targetType: 'doctor_queue', targetId: doctorId, metadata: { cases: rows.length } },
+      'allowed',
+    );
+
+    return rows.map((row) => {
+      const caseFlags = flags.filter((flag) => flag.caseId === row.id);
+      const urgencies = caseFlags.map((flag) => flag.urgency);
+      const highest = urgencies.includes('emergency')
+        ? 'emergency'
+        : urgencies.includes('urgent')
+          ? 'urgent'
+          : urgencies.includes('routine-but-flagged')
+            ? 'routine-but-flagged'
+            : null;
+      return { ...row, highestUrgency: highest, flagCount: caseFlags.length };
+    });
+  }
+
+  /* ---------------------------------------------------------------------------------------- */
+  /* Documents                                                                                 */
+  /* ---------------------------------------------------------------------------------------- */
+
+  async attachDocument(
+    context: AccessContext,
+    input: {
+      caseId: string;
+      originalFilename: string;
+      contentType: string;
+      byteSize: number;
+      storageKey: string;
+      scanStatus: 'pending' | 'clean' | 'infected' | 'scanner_unavailable';
+      patientTypeTag?: string | null;
+      patientDateTag?: string | null;
+    },
+  ) {
+    return this.#withAccess(
+      context,
+      {
+        action: 'document.upload',
+        targetType: 'case',
+        targetId: input.caseId,
+        metadata: { contentType: input.contentType, byteSize: input.byteSize, scanStatus: input.scanStatus },
+      },
+      async (tx) => {
+        const [row] = await tx
+          .insert(uploadedDocuments)
+          .values({
+            caseId: input.caseId,
+            originalFilename: input.originalFilename,
+            contentType: input.contentType,
+            byteSize: input.byteSize,
+            storageKey: input.storageKey,
+            scanStatus: input.scanStatus,
+            patientTypeTag: input.patientTypeTag ?? null,
+            patientDateTag: input.patientDateTag ?? null,
+          })
+          .returning();
+        return row ?? null;
+      },
+      { caseId: input.caseId },
+    );
+  }
+
+  /**
+   * Records that a short-lived signed URL was issued for one document. The authorization check
+   * happens here, on every access, rather than once when a long-lived URL was minted.
+   */
+  async recordDocumentAccess(context: AccessContext, caseId: string, documentId: string, ttlSeconds: number) {
+    return this.#withAccess(
+      context,
+      {
+        action: 'document.url_issued',
+        targetType: 'document',
+        targetId: documentId,
+        metadata: { caseId, ttlSeconds },
+      },
+      async (tx) => {
+        const [row] = await tx
+          .select()
+          .from(uploadedDocuments)
+          .where(and(eq(uploadedDocuments.id, documentId), eq(uploadedDocuments.caseId, caseId)))
+          .limit(1);
+        if (!row) throw new AuthorizationError('document does not exist', { notFound: true });
+        if (row.deletedAt !== null) {
+          throw new AuthorizationError('document has been deleted', { notFound: true });
+        }
+        if (row.scanStatus !== 'clean') {
+          // A file that has not passed scanning is never exposed, to the patient or the doctor.
+          throw new AuthorizationError('document has not passed malware scanning');
+        }
+        return row;
+      },
+      { caseId },
+    );
+  }
+
+  async deleteDocument(context: AccessContext, caseId: string, documentId: string) {
+    return this.#withAccess(
+      context,
+      { action: 'document.delete', targetType: 'document', targetId: documentId, metadata: { caseId } },
+      async (tx) => {
+        const [caseRow] = await tx
+          .select({ status: cases.status })
+          .from(cases)
+          .where(eq(cases.id, caseId))
+          .limit(1);
+        if (!caseRow) throw new AuthorizationError('case does not exist', { notFound: true });
+        if (caseRow.status !== 'in_progress') {
+          // After submission the upload is part of the clinical record; removing it is a
+          // record change, which goes through the data-subject correction process instead.
+          throw new AuthorizationError('a submitted case cannot have documents deleted');
+        }
+        const [row] = await tx
+          .update(uploadedDocuments)
+          .set({ deletedAt: new Date() })
+          .where(and(eq(uploadedDocuments.id, documentId), eq(uploadedDocuments.caseId, caseId)))
+          .returning();
+        return row ?? null;
+      },
+      { caseId },
+    );
+  }
+
+  async recordDocumentExtract(
+    context: AccessContext,
+    documentId: string,
+    caseId: string,
+    extract: { machineReadable: boolean; payload: unknown },
+  ) {
+    return this.#withAccess(
+      context,
+      {
+        action: 'document.extract',
+        targetType: 'document',
+        targetId: documentId,
+        metadata: { caseId, machineReadable: extract.machineReadable },
+      },
+      async (tx) => {
+        const [row] = await tx
+          .update(uploadedDocuments)
+          .set({ machineReadable: extract.machineReadable, extract: extract.payload })
+          .where(and(eq(uploadedDocuments.id, documentId), eq(uploadedDocuments.caseId, caseId)))
+          .returning();
+        return row ?? null;
+      },
+      { caseId },
+    );
+  }
+
+  /* ---------------------------------------------------------------------------------------- */
+  /* Assessment                                                                                */
+  /* ---------------------------------------------------------------------------------------- */
+
+  /** Stores the validated assessment exactly as the model produced it. Never edited afterwards. */
+  async recordAssessment(
+    context: AccessContext,
+    input: {
+      caseId: string;
+      outcome: 'generated' | 'ungrounded' | 'unavailable';
+      modelVersion: string;
+      promptVersion: string;
+      kbVersion: string;
+      retrievedChunkIds: readonly string[];
+      payload: unknown | null;
+      failureReason?: string | null;
+    },
+  ) {
+    return this.#withAccess(
+      context,
+      {
+        action: 'assessment.write',
+        targetType: 'case',
+        targetId: input.caseId,
+        metadata: {
+          outcome: input.outcome,
+          modelVersion: input.modelVersion,
+          promptVersion: input.promptVersion,
+          kbVersion: input.kbVersion,
+          groundingChunks: input.retrievedChunkIds.length,
+        },
+      },
+      async (tx) => {
+        const [row] = await tx
+          .insert(aiAssessments)
+          .values({
+            caseId: input.caseId,
+            outcome: input.outcome,
+            modelVersion: input.modelVersion,
+            promptVersion: input.promptVersion,
+            kbVersion: input.kbVersion,
+            retrievedChunkIds: [...input.retrievedChunkIds],
+            payload: input.payload ?? null,
+            failureReason: input.failureReason ?? null,
+          })
+          .returning();
+        return row ?? null;
+      },
+      { caseId: input.caseId, skipConsent: context.actor.role === 'system' },
+    );
+  }
+
+  /* ---------------------------------------------------------------------------------------- */
+  /* Doctor review                                                                             */
+  /* ---------------------------------------------------------------------------------------- */
+
+  async openReview(context: AccessContext, caseId: string, doctorId: string, aiAssessmentId: string | null) {
+    return this.#withAccess(
+      context,
+      { action: 'review.open', targetType: 'case', targetId: caseId },
+      async (tx) => {
+        const [existing] = await tx
+          .select()
+          .from(doctorReviews)
+          .where(and(eq(doctorReviews.caseId, caseId), eq(doctorReviews.doctorId, doctorId)))
+          .orderBy(desc(doctorReviews.createdAt))
+          .limit(1);
+        if (existing && existing.status !== 'released') return existing;
+
+        const [row] = await tx
+          .insert(doctorReviews)
+          .values({
+            caseId,
+            doctorId,
+            aiAssessmentId,
+            status: 'in_review',
+            startedAt: new Date(),
+          })
+          .returning();
+        return row ?? null;
+      },
+      { caseId },
+    );
+  }
+
+  async saveReviewDraft(
+    context: AccessContext,
+    input: {
+      caseId: string;
+      reviewId: string;
+      finalSummary: unknown;
+      doctorNotes: string | null;
+      diffs: ReadonlyArray<{
+        action: 'likelihood_changed' | 'item_added' | 'item_removed' | 'item_rejected' | 'next_steps_changed';
+        conditionId?: string | null;
+        beforeValue?: unknown;
+        afterValue?: unknown;
+        rationale?: string | null;
+        modelVersion: string;
+        promptVersion: string;
+        kbVersion: string;
+      }>;
+    },
+  ) {
+    return this.#withAccess(
+      context,
+      {
+        action: 'review.save',
+        targetType: 'review',
+        targetId: input.reviewId,
+        metadata: { caseId: input.caseId, diffCount: input.diffs.length },
+      },
+      async (tx) => {
+        const [row] = await tx
+          .update(doctorReviews)
+          .set({ finalSummary: input.finalSummary, doctorNotes: input.doctorNotes, status: 'in_review' })
+          .where(eq(doctorReviews.id, input.reviewId))
+          .returning();
+
+        // Overrides are recorded fresh each save so the diff set always reflects the current
+        // draft rather than accumulating superseded entries.
+        await tx.delete(reviewDiffs).where(eq(reviewDiffs.reviewId, input.reviewId));
+        if (input.diffs.length > 0) {
+          await tx.insert(reviewDiffs).values(
+            input.diffs.map((diff) => ({
+              reviewId: input.reviewId,
+              action: diff.action,
+              conditionId: diff.conditionId ?? null,
+              beforeValue: diff.beforeValue ?? null,
+              afterValue: diff.afterValue ?? null,
+              rationale: diff.rationale ?? null,
+              modelVersion: diff.modelVersion,
+              promptVersion: diff.promptVersion,
+              kbVersion: diff.kbVersion,
+            })),
+          );
+        }
+        return row ?? null;
+      },
+      { caseId: input.caseId },
+    );
+  }
+
+  async finalizeReview(context: AccessContext, caseId: string, reviewId: string) {
+    return this.#withAccess(
+      context,
+      { action: 'review.finalize', targetType: 'review', targetId: reviewId, metadata: { caseId } },
+      async (tx) => {
+        const [row] = await tx
+          .update(doctorReviews)
+          .set({ status: 'finalized', finalizedAt: new Date() })
+          .where(eq(doctorReviews.id, reviewId))
+          .returning();
+        await tx.update(cases).set({ status: 'reviewed', updatedAt: new Date() }).where(eq(cases.id, caseId));
+        return row ?? null;
+      },
+      { caseId },
+    );
+  }
+
+  /**
+   * Releases the doctor-authored summary to the patient.
+   *
+   * The exact content shown is frozen here, so what the patient saw stays recoverable even if
+   * the doctor later revises their notes.
+   */
+  async releaseReview(
+    context: AccessContext,
+    input: { caseId: string; reviewId: string; releasedContent: unknown; releasedBy: string },
+  ) {
+    return this.#withAccess(
+      context,
+      {
+        action: 'review.release',
+        targetType: 'review',
+        targetId: input.reviewId,
+        metadata: { caseId: input.caseId, releasedBy: input.releasedBy },
+      },
+      async (tx) => {
+        const now = new Date();
+        const [row] = await tx
+          .update(doctorReviews)
+          .set({
+            status: 'released',
+            releasedContent: input.releasedContent,
+            releasedAt: now,
+            releasedBy: input.releasedBy,
+          })
+          .where(eq(doctorReviews.id, input.reviewId))
+          .returning();
+        await tx
+          .update(cases)
+          .set({ status: 'released', releasedAt: now, updatedAt: now })
+          .where(eq(cases.id, input.caseId));
+        return row ?? null;
+      },
+      { caseId: input.caseId },
+    );
+  }
+
+  async getReview(context: AccessContext, caseId: string) {
+    return this.#withAccess(
+      context,
+      { action: 'review.read', targetType: 'case', targetId: caseId },
+      async (tx) => {
+        const [row] = await tx
+          .select()
+          .from(doctorReviews)
+          .where(eq(doctorReviews.caseId, caseId))
+          .orderBy(desc(doctorReviews.createdAt))
+          .limit(1);
+        return row ?? null;
+      },
+      { caseId },
+    );
+  }
+
+  async listReviewDiffs(context: AccessContext, caseId: string, reviewId: string) {
+    return this.#withAccess(
+      context,
+      { action: 'review_diff.read', targetType: 'review', targetId: reviewId, metadata: { caseId } },
+      async (tx) => tx.select().from(reviewDiffs).where(eq(reviewDiffs.reviewId, reviewId)),
+      { caseId },
+    );
+  }
+
+  /* ---------------------------------------------------------------------------------------- */
+  /* Messages and acknowledgements                                                             */
+  /* ---------------------------------------------------------------------------------------- */
+
+  async sendMessage(context: AccessContext, caseId: string, senderId: string, body: string) {
+    return this.#withAccess(
+      context,
+      { action: 'message.send', targetType: 'case', targetId: caseId, metadata: { length: body.length } },
+      async (tx) => {
+        const [row] = await tx.insert(caseMessages).values({ caseId, senderId, body }).returning();
+        return row ?? null;
+      },
+      { caseId },
+    );
+  }
+
+  async listMessages(context: AccessContext, caseId: string) {
+    return this.#withAccess(
+      context,
+      { action: 'message.read', targetType: 'case', targetId: caseId },
+      async (tx) =>
+        tx.select().from(caseMessages).where(eq(caseMessages.caseId, caseId)).orderBy(asc(caseMessages.sentAt)),
+      { caseId },
+    );
+  }
+
+  /** Records that the patient saw the emergency advisory and chose to continue. */
+  async acknowledgeRedFlags(context: AccessContext, caseId: string) {
+    return this.#withAccess(
+      context,
+      { action: 'red_flag.acknowledge', targetType: 'case', targetId: caseId },
+      async (tx) =>
+        tx
+          .update(redFlagTriggers)
+          .set({ acknowledgedAt: new Date() })
+          .where(and(eq(redFlagTriggers.caseId, caseId), isNull(redFlagTriggers.acknowledgedAt)))
+          .returning({ id: redFlagTriggers.id }),
+      { caseId },
     );
   }
 }
