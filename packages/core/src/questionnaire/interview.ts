@@ -52,19 +52,6 @@ export interface Interview {
 
 const MAX_FIXPOINT_ITERATIONS = 1000;
 
-/** Every question some branching rule can reveal, directly or via a revealed group. */
-function revealableQuestionIds(index: TemplateIndex): Set<string> {
-  const revealable = new Set<string>();
-  for (const rule of index.version.rules) {
-    for (const questionId of rule.revealQuestionIds) revealable.add(questionId);
-    for (const groupId of rule.revealGroupIds) {
-      for (const question of index.questionsByGroup.get(groupId) ?? []) revealable.add(question.id);
-    }
-  }
-  return revealable;
-}
-
-
 export function computeInterview(input: InterviewInput): Interview {
   const { index, entryPointId, answers, subject } = input;
   const entryPoint = index.entryPointById.get(entryPointId);
@@ -86,14 +73,9 @@ export function computeInterview(input: InterviewInput): Interview {
     return true;
   };
 
-  // Groups are symptom clusters, so a group holds both the questions that open an interview
-  // and the follow-ups a rule reveals. Seeding the whole group would make every follow-up
-  // active from the first screen, so anything a rule can reveal is excluded from the seed and
-  // waits for its trigger.
-  const ruleRevealed = revealableQuestionIds(index);
-  for (const question of index.questionsByGroup.get(entryPoint.entryGroupId) ?? []) {
-    if (ruleRevealed.has(question.id)) continue;
-    addQuestion(question, null, 0);
+  for (const questionId of entryPoint.seedQuestionIds) {
+    const question = index.questionById.get(questionId);
+    if (question) addQuestion(question, null, 0);
   }
 
   const restrictAnswers = (): Map<string, AnswerValue> => {

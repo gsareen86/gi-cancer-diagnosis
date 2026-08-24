@@ -99,6 +99,12 @@ describe('dangling references', () => {
     expect(codes(template)).toContain('unknown_entry_group');
   });
 
+  it('refuses an entry point opening with a question that does not exist', () => {
+    const template = clone();
+    template.entryPoints[0]!.seedQuestionIds = ['q_gone'];
+    expect(codes(template)).toContain('unknown_seed_question');
+  });
+
   it('refuses a question in a group that does not exist', () => {
     const template = clone();
     template.questions[0]!.groupId = 'grp_gone';
@@ -156,7 +162,7 @@ describe('predicate and option agreement', () => {
 });
 
 describe('reachability', () => {
-  it('refuses a question no entry group holds and no rule reveals', () => {
+  it('refuses a question no entry point opens with and no rule reveals', () => {
     const template = clone();
     template.questions.push({
       ...structuredClone(template.questions[0]!),
@@ -203,15 +209,7 @@ describe('multiple problems', () => {
 
     const problems = validateForPublication(template).problems;
     expect(new Set(problems.map((problem) => problem.code))).toEqual(
-      new Set([
-        'unknown_entry_group',
-        'unknown_reveal_target',
-        'predicate_type_mismatch',
-        // Breaking the entry point orphans the questions that group held, so reachability
-        // legitimately fails too. Reporting the consequence alongside the cause is what lets
-        // the admin see the whole blast radius in one pass.
-        'unreachable_question',
-      ]),
+      new Set(['unknown_entry_group', 'unknown_reveal_target', 'predicate_type_mismatch']),
     );
   });
 });

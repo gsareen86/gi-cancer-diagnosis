@@ -22,8 +22,20 @@ export const bleedingTemplate: TemplateVersion = {
   status: 'published',
   approvedLocales: ['en', 'hi'],
   entryPoints: [
-    { id: 'ep_bleeding', labelKey: 'entry.bleeding', entryGroupId: 'grp_bleeding', order: 0 },
-    { id: 'ep_bowel', labelKey: 'entry.bowel', entryGroupId: 'grp_bowel', order: 1 },
+    {
+      id: 'ep_bleeding',
+      labelKey: 'entry.bleeding',
+      entryGroupId: 'grp_bleeding',
+      seedQuestionIds: ['q_blood'],
+      order: 0,
+    },
+    {
+      id: 'ep_bowel',
+      labelKey: 'entry.bowel',
+      entryGroupId: 'grp_bowel',
+      seedQuestionIds: ['q_bowel_change'],
+      order: 1,
+    },
   ],
   groups: [
     { id: 'grp_bleeding', labelKey: 'group.bleeding', cluster: 'bleeding', order: 0 },

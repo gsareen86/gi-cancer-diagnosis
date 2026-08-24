@@ -36,13 +36,13 @@
 
 ## 5. Data layer
 
-- [ ] 5.1 Write the Prisma schema for every entity in the proposal's data model, and verify `prisma validate` and an initial migration apply cleanly against the compose database
-- [ ] 5.2 Add the `pgvector` column and index for knowledge-base chunk embeddings, and verify a nearest-neighbour query returns ordered results on seeded fixtures
-- [ ] 5.3 Create the restricted application database role with insert/select-only privileges on the audit table, and verify an attempted `UPDATE` or `DELETE` on an audit row fails at the database level
-- [ ] 5.4 Implement the `ClinicalRepository` taking a required `AccessContext`, writing the audit entry in the same transaction as every clinical read and write, and verify a forced audit-write failure rolls back the clinical write
-- [ ] 5.5 Implement the consent gate inside the repository and verify a read for an unconsented purpose is refused before any clinical row is fetched
-- [ ] 5.6 Add the lint rule forbidding raw Prisma client imports outside `packages/db`, and verify it fires on a fixture that bypasses the repository
-- [ ] 5.7 Seed the disease taxonomy, the consent policy version, and a starter draft questionnaire template with red-flag rules, and verify the seed runs idempotently
+- [x] 5.1 Write the Drizzle schema for every entity in the proposal's data model, and verify the generated migration applies cleanly against a live PostgreSQL 16 database
+- [x] 5.2 Add the `pgvector` column and index for knowledge-base chunk embeddings, and verify a nearest-neighbour query returns ordered results on seeded fixtures
+- [x] 5.3 Create the restricted application database role with insert/select-only privileges on the audit table, and verify an attempted `UPDATE` or `DELETE` on an audit row fails at the database level
+- [x] 5.4 Implement the `ClinicalRepository` taking a required `AccessContext`, writing the audit entry in the same transaction as every clinical read and write, and verify a forced audit-write failure rolls back the clinical write
+- [x] 5.5 Implement the consent gate inside the repository and verify a read for an unconsented purpose is refused before any clinical row is fetched
+- [ ] 5.6 Add the lint rule forbidding raw database-client and schema imports outside `packages/db`, and verify it fires on a fixture that bypasses the repository
+- [x] 5.7 Seed the disease taxonomy, the consent policy version, and a starter draft questionnaire template with red-flag rules, and verify the seed runs idempotently
 
 ## 6. Authentication and access control
 

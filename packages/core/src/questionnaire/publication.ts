@@ -19,6 +19,7 @@ export type PublicationProblemCode =
   | 'missing_lay_explanation'
   | 'condition_too_deep'
   | 'unknown_entry_group'
+  | 'unknown_seed_question'
   | 'self_reveal'
   | 'missing_locale_approval';
 
@@ -54,8 +55,17 @@ export function validateForPublication(
     if (!groupIds.has(entryPoint.entryGroupId)) {
       problems.push({
         code: 'unknown_entry_group',
-        message: `Entry point "${entryPoint.id}" starts at unknown group "${entryPoint.entryGroupId}"`,
+        message: `Entry point "${entryPoint.id}" belongs to unknown group "${entryPoint.entryGroupId}"`,
       });
+    }
+    for (const questionId of entryPoint.seedQuestionIds) {
+      if (!questionIds.has(questionId)) {
+        problems.push({
+          code: 'unknown_seed_question',
+          message: `Entry point "${entryPoint.id}" opens with unknown question "${questionId}"`,
+          questionId,
+        });
+      }
     }
   }
 
@@ -231,9 +241,7 @@ function detectUnreachable(version: TemplateVersion): PublicationProblem[] {
   const index = indexTemplate(version);
   const reachable = new Set<string>();
   for (const entryPoint of version.entryPoints) {
-    for (const question of index.questionsByGroup.get(entryPoint.entryGroupId) ?? []) {
-      reachable.add(question.id);
-    }
+    for (const questionId of entryPoint.seedQuestionIds) reachable.add(questionId);
   }
   for (const rule of version.rules) {
     for (const questionId of rule.revealQuestionIds) reachable.add(questionId);
@@ -245,7 +253,7 @@ function detectUnreachable(version: TemplateVersion): PublicationProblem[] {
     .filter((question) => !reachable.has(question.id))
     .map((question) => ({
       code: 'unreachable_question' as const,
-      message: `Question "${question.id}" is in no entry group and no rule reveals it`,
+      message: `Question "${question.id}" opens no entry point and no rule reveals it`,
       questionId: question.id,
     }));
 }

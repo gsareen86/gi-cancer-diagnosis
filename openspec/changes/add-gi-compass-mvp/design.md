@@ -86,6 +86,19 @@ far below where a dedicated vector store earns its operational cost.
 *Alternative rejected:* a managed vector DB — better at scale we do not have, worse for data residency
 and for the "one place patient-adjacent data lives" story.
 
+### D4a. Drizzle ORM, not Prisma
+
+*Why:* three of this system's hard requirements are expressed in SQL that an ORM must not hide.
+The audit table's append-only guarantee is a `REVOKE UPDATE, DELETE` on the application role; the
+`ClinicalRepository` needs the audit write and the clinical write inside one explicit transaction
+(D5); and knowledge-base retrieval is a `pgvector` nearest-neighbour query. Drizzle is a typed
+query builder over real SQL, so all three live in the same migration and query files as everything
+else rather than in an escape hatch beside a generated client. It also ships as plain TypeScript
+with no engine binaries to download, which keeps migrations runnable in a restricted-network CI.
+*Alternative rejected:* Prisma — better ergonomics for ordinary CRUD, but its generated client
+pushes exactly the operations we care most about (grants, transactional audit, vector search) into
+`$queryRaw`, where the type safety that motivated the ORM stops applying.
+
 ### D5. Consent and audit are enforced in the data-access layer
 
 All patient clinical data is reached through a `ClinicalRepository` that takes an explicit
@@ -198,7 +211,7 @@ Each is implemented as the safer option and marked in code with a greppable
   patient-facing copy: the questionnaire is not a substitute for seeking care.
 - **Consent gating in the repository is bypassed by a raw query.** → The application database role's
   privileges are the backstop (audit table insert-only), and a lint rule forbids importing the raw
-  Prisma client outside `packages/db`. A test asserts every clinical route goes through the repository.
+  database client or `packages/db/src/schema` outside `packages/db`. A test asserts every clinical route goes through the repository.
 - **The condition grammar proves too limited for real GI triage.** → Extending it is a deliberate,
   reviewed change; the alternative (embedded scripting) trades a bounded inconvenience for an
   unbounded safety and analysability problem.
@@ -217,7 +230,7 @@ Greenfield, so "migration" is initial rollout:
 
 1. Provision Postgres 16 with `pgvector` in an India region; create a restricted application role with
    `INSERT, SELECT` only on `audit_log_entry` and no `UPDATE`/`DELETE` (D5's backstop).
-2. Apply the initial Prisma migration; seed the disease taxonomy, the consent policy document version,
+2. Apply the initial migration; seed the disease taxonomy, the consent policy document version,
    and a starter questionnaire template with red-flag rules, all marked draft.
 3. Bring up `services/ai` with the model provider key held only there; verify the core app cannot reach
    the provider directly.

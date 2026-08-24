@@ -15,6 +15,7 @@ export * from './questionnaire/template.js';
 export * from './questionnaire/answer-validation.js';
 export * from './questionnaire/interview.js';
 export * from './questionnaire/publication.js';
+export * from './questionnaire/document.js';
 
 export * from './safety/red-flags.js';
 export * from './consent/policy.js';

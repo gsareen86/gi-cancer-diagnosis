@@ -90,7 +90,15 @@ export type BranchingRule = z.infer<typeof branchingRuleSchema>;
 export const entryPointSchema = z.object({
   id: z.string().min(1),
   labelKey: z.string().min(1),
+  /** The cluster this area belongs to. Organizational — it does not decide what is asked first. */
   entryGroupId: z.string().min(1),
+  /**
+   * Exactly the questions this area opens with. Declared rather than inferred: a group is a
+   * symptom cluster holding both opening questions and rule-revealed follow-ups, and the same
+   * question can open one area while being a follow-up in another — right-upper-quadrant pain
+   * reveals the jaundice question, which is also where the liver area starts.
+   */
+  seedQuestionIds: z.array(z.string().min(1)).min(1),
   order: z.number().int().nonnegative(),
 });
 export type EntryPoint = z.infer<typeof entryPointSchema>;
