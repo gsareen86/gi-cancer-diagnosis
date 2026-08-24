@@ -204,10 +204,11 @@ function PreviewBadge({ label }: { label: string }) {
 }
 
 function AgeControl({ value, onChange }: { value: number; onChange: (value: number) => void }) {
+  const t = useTranslations('admin');
   return (
     <div className="flex items-center gap-3">
       <label className="gi-label mb-0" htmlFor="preview-age">
-        Age
+        {t('previewAge')}
       </label>
       <input
         id="preview-age"
@@ -218,10 +219,8 @@ function AgeControl({ value, onChange }: { value: number; onChange: (value: numb
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
       />
-      <span className="text-sm text-ink-muted">
-        {/* Age-dependent rules only fire when the age is known, so the preview makes it settable. */}
-        age-dependent rules
-      </span>
+      {/* Age-dependent rules only fire when the age is known, so the preview makes it settable. */}
+      <span className="text-sm text-ink-muted">{t('previewAgeHint')}</span>
     </div>
   );
 }

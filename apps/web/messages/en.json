@@ -250,7 +250,10 @@
     "released": "Released to the patient",
     "noPrescribing": "Prescribing is not part of this system. Write any prescription in your own system.",
     "messagesHeading": "Messages",
-    "sendMessage": "Send"
+    "sendMessage": "Send",
+    "likelihoodHigh": "High",
+    "likelihoodModerate": "Moderate",
+    "likelihoodLow": "Low"
   },
   "admin": {
     "heading": "Clinical content",
@@ -266,7 +269,9 @@
     "urgentReferralOnly": "Urgent referral category",
     "imagesHeading": "Reference images",
     "imageUnattributed": "Not publishable — source and licence missing",
-    "restart": "Start the preview again"
+    "restart": "Start the preview again",
+    "previewAge": "Age",
+    "previewAgeHint": "Age-dependent rules only fire once age is known."
   },
   "password": {
     "problem": {

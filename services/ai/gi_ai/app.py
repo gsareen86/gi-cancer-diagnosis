@@ -74,7 +74,7 @@ def assess(
         try:
             chunks = retrieval.retrieve(embeddings.embed(query), clusters)
             grounded = len(chunks) > 0
-        except Exception as error:  # noqa: BLE001 - retrieval failure must not lose the case
+        except Exception as error:
             # An assessment marked ungrounded is honest and still useful; a failed request is not.
             print(f"[retrieval] failed, continuing ungrounded: {error}")
 
@@ -132,5 +132,5 @@ def _retrieval_query(request: AssessmentRequest) -> str:
 def _kb_version() -> str:
     try:
         return retrieval.knowledge_base_version()
-    except Exception:  # noqa: BLE001 - the version is metadata, not the assessment
+    except Exception:
         return "kb-unavailable"

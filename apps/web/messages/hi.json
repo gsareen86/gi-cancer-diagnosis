@@ -250,7 +250,10 @@
     "released": "मरीज़ को जारी किया गया",
     "noPrescribing": "दवा लिखना इस प्रणाली का हिस्सा नहीं है। कोई भी पर्चा अपनी प्रणाली में लिखें।",
     "messagesHeading": "संदेश",
-    "sendMessage": "भेजें"
+    "sendMessage": "भेजें",
+    "likelihoodHigh": "अधिक",
+    "likelihoodModerate": "मध्यम",
+    "likelihoodLow": "कम"
   },
   "admin": {
     "heading": "नैदानिक सामग्री",
@@ -266,7 +269,9 @@
     "urgentReferralOnly": "अत्यावश्यक रेफ़रल श्रेणी",
     "imagesHeading": "संदर्भ चित्र",
     "imageUnattributed": "प्रकाशन योग्य नहीं — स्रोत और लाइसेंस अनुपस्थित",
-    "restart": "पूर्वावलोकन फिर से शुरू करें"
+    "restart": "पूर्वावलोकन फिर से शुरू करें",
+    "previewAge": "आयु",
+    "previewAgeHint": "आयु-आधारित नियम तभी लागू होते हैं जब आयु ज्ञात हो।"
   },
   "password": {
     "problem": {

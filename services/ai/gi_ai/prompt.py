@@ -63,7 +63,8 @@ def _rejection_reminder(rejections: list[Rejection]) -> str:
     ]
     for rejection in rejections:
         detail = "; ".join(rejection.details[:5]) if rejection.details else ""
-        lines.append(f"- [{rejection.code}] {rejection.message}" + (f" ({detail})" if detail else ""))
+        suffix = f" ({detail})" if detail else ""
+        lines.append(f"- [{rejection.code}] {rejection.message}{suffix}")
     lines.append(
         "Emit a complete response through the tool. Do not explain the correction; just produce a "
         "conforming answer."

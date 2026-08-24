@@ -239,3 +239,7 @@ packages/db/prisma/migrations/**/migration_lock.toml.bak
 # Local object storage / uploads (patient data must never reach the repo)
 .storage/
 uploads/
+
+# Local dev database and object storage
+/var/tmp/
+pgdata/

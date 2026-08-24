@@ -17,7 +17,13 @@ from dataclasses import dataclass, field
 
 REPORT_TYPE_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("colonoscopy report", re.compile(r"\bcolonoscop", re.I)),
-    ("upper GI endoscopy report", re.compile(r"\b(gastroscop|oesophagogastroduoden|esophagogastroduoden|upper gi endoscop)", re.I)),
+    (
+        "upper GI endoscopy report",
+        re.compile(
+            r"\b(gastroscop|oesophagogastroduoden|esophagogastroduoden|upper gi endoscop)",
+            re.I,
+        ),
+    ),
     ("abdominal ultrasound report", re.compile(r"\bultrasound|\busg\b|\bsonograph", re.I)),
     ("CT report", re.compile(r"\bct (scan|abdomen|report)|computed tomograph", re.I)),
     ("MRI report", re.compile(r"\bmri\b|magnetic resonance", re.I)),

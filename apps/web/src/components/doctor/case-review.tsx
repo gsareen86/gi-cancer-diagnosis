@@ -303,7 +303,7 @@ export function CaseReview({ caseId, data }: { caseId: string; data: CaseReviewD
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="font-medium">{item.condition}</span>
                       <Badge tone={item.likelihood === 'high' ? 'urgent' : 'neutral'}>
-                        {t('likelihood')}: {item.likelihood}
+                        {t('likelihood')}: {t(likelihoodKey(item.likelihood))}
                       </Badge>
                     </div>
                     <FindingList label={t('supporting')} items={item.supporting_findings} />
@@ -437,6 +437,13 @@ export function CaseReview({ caseId, data }: { caseId: string; data: CaseReviewD
   );
 }
 
+/** Maps a likelihood to its catalogue key, so the value the model emits is never displayed raw. */
+function likelihoodKey(likelihood: 'high' | 'moderate' | 'low'): 'likelihoodHigh' | 'likelihoodModerate' | 'likelihoodLow' {
+  if (likelihood === 'high') return 'likelihoodHigh';
+  if (likelihood === 'moderate') return 'likelihoodModerate';
+  return 'likelihoodLow';
+}
+
 function FindingList({ label, items }: { label: string; items: string[] }) {
   if (items.length === 0) return null;
   return (
@@ -493,9 +500,9 @@ function DifferentialEditor({
                   onChange(next);
                 }}
               >
-                <option value="high">high</option>
-                <option value="moderate">moderate</option>
-                <option value="low">low</option>
+                <option value="high">{t('likelihoodHigh')}</option>
+                <option value="moderate">{t('likelihoodModerate')}</option>
+                <option value="low">{t('likelihoodLow')}</option>
               </select>
 
               <button

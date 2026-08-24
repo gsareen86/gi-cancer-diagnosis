@@ -109,7 +109,9 @@ def generate_assessment(
         if block.type == "tool_use" and block.name == TOOL_NAME:
             # Tool inputs arrive already parsed by the SDK. Where a raw string is involved,
             # json.loads is the only safe reader — escaping varies between models.
-            return dict(block.input) if not isinstance(block.input, str) else json.loads(block.input)
+            if isinstance(block.input, str):
+                return json.loads(block.input)
+            return dict(block.input)
 
     raise ModelOutputError(
         f"Model responded with stop_reason={response.stop_reason} and never called {TOOL_NAME}"

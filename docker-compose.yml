@@ -1,0 +1,56 @@
+# Local development stack.
+#
+# Production runs these managed, in an India cloud region (AWS ap-south-1, Azure Central India,
+# GCP asia-south1), so DPDP cross-border transfer obligations stay simple. This file is the local
+# stand-in: same PostgreSQL major version, same extension, same migrations.
+#
+# TODO(confirm): Decision D — the cloud provider, which settles the storage endpoint and region.
+
+services:
+  postgres:
+    # pgvector is not optional: knowledge-base retrieval needs it, and migration 0000 creates a
+    # `vector` column that will not apply without it.
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gi_compass
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d gi_compass']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # S3-compatible object storage for uploaded reports. Encrypted at rest and never public in
+  # production; locally this stands in for the bucket.
+  storage:
+    image: minio/minio:latest
+    command: server /data --console-address ':9001'
+    environment:
+      MINIO_ROOT_USER: gi-compass-local
+      MINIO_ROOT_PASSWORD: gi-compass-local-secret
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - storage-data:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Catches outbound mail so verification and reset links are readable without a mail provider.
+  mail:
+    image: axllent/mailpit:latest
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+
+volumes:
+  postgres-data:
+  storage-data:

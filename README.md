@@ -2,67 +2,127 @@
 
 An AI-assisted gastrointestinal diagnostic-support platform for patients in India.
 
-A patient completes a guided, image-assisted, adaptive symptom questionnaire and uploads prior
+A patient answers a guided, image-assisted, adaptive symptom questionnaire and uploads prior
 reports. The system compiles a structured clinical summary, grounds an LLM call on a doctor-curated
 knowledge base, and produces a **decision-support differential assessment for a Registered Medical
-Practitioner** — never a diagnosis delivered to the patient.
+Practitioner** — who reviews, overrides, and explicitly releases everything the patient ever sees.
 
-> **The AI never diagnoses, never prescribes, and its raw output is never shown to the patient.**
-> A registered doctor reviews, overrides, and explicitly releases every clinical conclusion.
+> **The AI never diagnoses, never prescribes, and its output never reaches a patient.**
 > Emergency escalation is deterministic and never waits on a model call.
 
-## Status
+---
 
-Phase 1 (MVP) — specified under OpenSpec, implementation in progress.
+## The four guardrails, and where they live
 
-## Spec-driven development
+These are not policies written in a document and hoped for. Each is enforced somewhere a mistake
+cannot quietly bypass.
 
-This repository uses [OpenSpec](https://github.com/Fission-AI/OpenSpec). Behaviour is specified
-before it is built, and the specs are the contract the implementation is verified against.
+| Guardrail | How it is enforced | Where |
+|---|---|---|
+| The AI cannot state a diagnosis | The output schema has no field capable of holding one, and it is `strict()`, so an added field is a rejection rather than something to trim | `packages/core/src/assessment/schema.ts` |
+| Nothing reaches a patient unreviewed | The case state machine has **no edge** from any pre-review state to `released` | `packages/db/src/repositories/clinical-repository.ts` |
+| Emergencies never wait on a model | A test walks the red-flag evaluator's transitive import graph and fails on any HTTP client, AI client, database import, or asynchrony | `packages/core/src/safety/no-ai-dependency.test.ts` |
+| Clinical data is unreachable without consent and an audit trail | `@gi-compass/db` does not export the clinical tables at all — the only path is a repository that requires an `AccessContext`, applies the consent gate, and writes the audit entry in the same transaction | `packages/db/src/public-schema.ts` |
+
+The audit trail is append-only at the **privilege** level: the application role holds `INSERT` and
+`SELECT` on it and nothing else. A trigger refuses mutation even from the table owner.
+
+---
+
+## Running it
 
 ```bash
-npx @fission-ai/openspec list              # active changes
+npm ci
+./scripts/dev-postgres.sh          # PostgreSQL 16 + pgvector (or: docker compose up)
+npm run db:migrate && npm run db:seed
+npm run build -w @gi-compass/web
+./scripts/dev-server.sh            # http://localhost:3000
+
+npm test                           # 382 TypeScript tests
+cd services/ai && uv venv .venv && uv pip install --python .venv/bin/python -e ".[dev]"
+.venv/bin/python -m pytest         # 70 Python tests, no network
+```
+
+End-to-end browser walkthroughs live in [`e2e/`](e2e/README.md).
+
+---
+
+## Layout
+
+```
+packages/core     The clinical domain: questionnaire engine, red-flag rules, consent policy,
+                  clinical-summary compiler, AI output schema. No database, no network, no
+                  framework — so the safety-critical logic can be tested exhaustively.
+packages/db       Schema, migrations, and the audited, consent-gated ClinicalRepository.
+apps/web          Next.js 15 — patient, doctor, and admin interfaces plus the core REST API.
+services/ai       Python FastAPI — the only component that talks to a model provider.
+openspec/         Specifications and change proposals.
+e2e/              Browser walkthroughs of the patient and doctor loops.
+docs/RUNBOOK.md   Bringing it up from nothing, and what blocks a real launch.
+```
+
+---
+
+## Spec-driven
+
+Built with [OpenSpec](https://github.com/Fission-AI/OpenSpec): behaviour was specified before it was
+written, and the specs are the contract the implementation is verified against.
+
+```bash
 npx @fission-ai/openspec show add-gi-compass-mvp
-npx @fission-ai/openspec validate --strict # validate all specs and changes
+npx @fission-ai/openspec validate --strict
 ```
 
 | Artifact | Path |
 |---|---|
 | Why & scope | `openspec/changes/add-gi-compass-mvp/proposal.md` |
-| Behaviour contract (16 capabilities) | `openspec/changes/add-gi-compass-mvp/specs/**/spec.md` |
+| Behaviour contract, 16 capabilities | `openspec/changes/add-gi-compass-mvp/specs/**/spec.md` |
 | Architecture & decisions | `openspec/changes/add-gi-compass-mvp/design.md` |
 | Implementation checklist | `openspec/changes/add-gi-compass-mvp/tasks.md` |
-| Project conventions & context | `openspec/config.yaml` |
+
+Writing the specs first paid for itself twice. The seeded question bank failed publication
+validation on a four-hop branching cycle and an unreachable question — both real content bugs, both
+caught before a patient could hit them. And the spec's demand that the emergency path never depend
+on the AI pipeline is what turned into the import-graph test, rather than a comment nobody checks.
+
+---
 
 ## Regulatory frame
 
 Architecture is shaped by these, not retrofitted to them:
 
 - **Telemedicine Practice Guidelines 2020** — AI may only support a Registered Medical Practitioner.
-- **CDSCO / Medical Device Rules 2017** — Phase 1 ships as an internal clinical tool for affiliated
-  doctors, not a marketed public diagnostic product. A legal opinion is a launch blocker.
+- **CDSCO / Medical Device Rules 2017** — Phase 1 is framed as an internal clinical tool for
+  affiliated doctors. **A regulatory opinion is a launch blocker.**
 - **DPDP Act 2023 + DPDP Rules 2025** — health data is sensitive personal data; consent is a
   versioned, per-purpose, revocable object, and processing is gated on it in the data-access layer.
 - **Data residency** — patient data stays in an India cloud region.
 
-## Layout
+---
 
-```
-apps/web        Next.js 15 App Router — patient, doctor, and admin UI + core REST API
-packages/core   Framework-free domain logic: questionnaire engine, red-flag rules,
-                consent policy, clinical-summary compiler, AI output schema
-packages/db     Prisma schema and the audited, consent-gated ClinicalRepository
-services/ai     Python FastAPI — RAG, OCR/document parsing, guarded structured LLM call
-openspec/       Specifications and change proposals
-```
+## What is deliberately not finished
 
-## Open product decisions
+Stated plainly, because a healthcare system that looks complete is more dangerous than one that
+does not.
 
-Seven decisions await the clinical co-founder. Each is implemented as the safer default and marked in
-code — find them with:
+- **The clinical content is a starting point, not a validated instrument.** 61 questions, 29
+  branching rules, and 17 red-flag rules drawn from the build brief's warning signs. Every prompt,
+  branch, and threshold needs the clinical co-founder's review before a real patient sees it.
+- **Reference images ship unpublished.** Their source and licence are placeholders, so a caption
+  appears where a picture should be. Scraped clinical images are not an option.
+- **Embeddings are a declared placeholder.** Retrieval reports itself non-semantic, so assessments
+  are marked ungrounded rather than pretending to be grounded.
+- **The malware scanner and the breached-password list are development stubs.**
+- **Hindi clinical text is written but not clinician-approved**, so Hindi is not offered. The
+  interface catalogue is at full parity, ready for it.
+- **Retention ships with no periods set** — the job alerts rather than deletes until counsel sets
+  them.
+
+Seven product decisions are open. Each is implemented as the safer default and marked in code:
 
 ```bash
-grep -rn "TODO(confirm): Decision" .
+grep -rn "TODO(confirm): Decision" --include="*.ts" --include="*.tsx" --include="*.py" .
 ```
 
-See `openspec/changes/add-gi-compass-mvp/design.md` § D13 for the table of defaults taken.
+See `openspec/changes/add-gi-compass-mvp/design.md` § D13 for the table of defaults taken, and
+[`docs/RUNBOOK.md`](docs/RUNBOOK.md) for what must be true before the first real patient.
