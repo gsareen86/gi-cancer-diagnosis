@@ -46,24 +46,24 @@
 
 ## 6. Authentication and access control
 
-- [ ] 6.1 Implement registration with Argon2id hashing, the 12-character and breached-password policy, and verify weak-password rejection and that no log line contains a submitted password
-- [ ] 6.2 Implement email verification with a 24-hour single-use token, and verify token reuse is refused and unverified accounts cannot create a case
-- [ ] 6.3 Implement login issuing a ≤15-minute access token and a rotating `httpOnly` refresh cookie, and verify a replayed refresh token revokes the whole session family
-- [ ] 6.4 Implement failed-login rate limiting and verify the eleventh attempt within 15 minutes is refused and audit-logged
-- [ ] 6.5 Implement password reset with a ≤60-minute single-use token that revokes all sessions, and verify the unknown-address response is byte-identical to the known-address response
+- [x] 6.1 Implement registration with Argon2id hashing, the 12-character and breached-password policy, and verify weak-password rejection and that no log line contains a submitted password
+- [x] 6.2 Implement email verification with a 24-hour single-use token, and verify token reuse is refused and unverified accounts cannot create a case
+- [x] 6.3 Implement login issuing a ≤15-minute access token and a rotating `httpOnly` refresh cookie, and verify a replayed refresh token revokes the whole session family
+- [x] 6.4 Implement failed-login rate limiting and verify the eleventh attempt within 15 minutes is refused and audit-logged
+- [x] 6.5 Implement password reset with a ≤60-minute single-use token that revokes all sessions, and verify the unknown-address response is byte-identical to the known-address response
 - [ ] 6.6 Implement TOTP MFA and require it for doctor, clinical-admin, and platform-admin roles, and verify an unenrolled doctor's session can reach only the enrolment endpoints
 - [ ] 6.7 Implement the linked-external-identity model and verify a provider link with a verified matching email attaches to the existing account rather than creating a second identity
-- [ ] 6.8 Implement the RBAC middleware chain (`authenticate → authorize → consent-gate → audit`) and verify a direct API call bypassing the UI is refused with `403` and audit-logged
-- [ ] 6.9 Implement patient-ownership, doctor-assignment, clinical-admin, and platform-admin scoping rules, and verify the cross-patient request returns `404` and reads no clinical field
+- [x] 6.8 Implement the RBAC middleware chain (`authenticate → authorize → consent-gate → audit`) and verify a direct API call bypassing the UI is refused with `403` and audit-logged
+- [x] 6.9 Implement patient-ownership, doctor-assignment, clinical-admin, and platform-admin scoping rules, and verify the cross-patient request returns `404` and reads no clinical field
 - [ ] 6.10 Implement time-limited, reason-carrying break-glass elevation for platform admins, and verify unelevated clinical reads are refused and both elevation and read are logged
-- [ ] 6.11 Implement the under-18 case-creation guard with the `TODO(confirm): Decision E` marker, and verify a minor's case creation is refused
+- [x] 6.11 Implement the under-18 case-creation guard with the `TODO(confirm): Decision E` marker, and verify a minor's case creation is refused
 
 ## 7. Consent, audit, and data-subject rights
 
-- [ ] 7.1 Implement per-purpose consent capture presenting each purpose separately with nothing pre-selected, and verify partial consent leaves the account usable
-- [ ] 7.2 Implement immutable consent records with policy version and request metadata, and verify a withdraw-and-regrant cycle leaves all three facts independently readable
-- [ ] 7.3 Implement withdrawal in the patient's own account area and verify withdrawing `ai_assisted_analysis` stops a queued AI job and withdrawing doctor sharing ends the doctor's access
-- [ ] 7.4 Implement the consent-state view showing state, timestamp, policy version, and consequence of withdrawal, and verify the read is audit-logged
+- [x] 7.1 Implement per-purpose consent capture presenting each purpose separately with nothing pre-selected, and verify partial consent leaves the account usable
+- [x] 7.2 Implement immutable consent records with policy version and request metadata, and verify a withdraw-and-regrant cycle leaves all three facts independently readable
+- [x] 7.3 Implement withdrawal in the patient's own account area and verify withdrawing `ai_assisted_analysis` stops a queued AI job and withdrawing doctor sharing ends the doctor's access
+- [x] 7.4 Implement the consent-state view showing state, timestamp, policy version, and consequence of withdrawal, and verify the read is audit-logged
 - [ ] 7.5 Implement the audit query interface restricted to platform admins, and verify a doctor's query is refused and that refusal is itself logged
 - [ ] 7.6 Verify by test that no audit entry contains an answer value or document content
 - [ ] 7.7 Implement data-subject access export and verify it contains answers, documents, and released summaries and excludes the raw AI assessment and doctor working notes
@@ -73,27 +73,27 @@
 
 ## 8. Case lifecycle and questionnaire API
 
-- [ ] 8.1 Implement the case state machine with explicit permitted transitions, and verify an `in_progress` to `released` transition is refused and logged
-- [ ] 8.2 Implement case creation pinning the published template version, and verify an in-flight case is unaffected by a subsequent republish
-- [ ] 8.3 Implement the single-`in_progress`-case rule and verify starting a second draft offers resume or discard
-- [ ] 8.4 Implement the answer-write endpoint that validates, persists, evaluates red flags, and returns the next active question in one transaction, and verify the red-flag result is present in the same response
-- [ ] 8.5 Implement resume and verify a case reopened on a different device returns to the correct position with all answers intact
-- [ ] 8.6 Implement submission with required-question checking and consent-based routing, and verify submission without doctor-sharing consent is refused and submission without AI consent yields an `ai_skipped` case
-- [ ] 8.7 Implement doctor assignment and reassignment with retained history, and verify the previous doctor loses access immediately
-- [ ] 8.8 Implement the patient case-status endpoint and verify it returns state only for a case in `ai_processed` or `in_review`, with the attempt audit-logged — the `TODO(confirm): Decision A` marker
+- [x] 8.1 Implement the case state machine with explicit permitted transitions, and verify an `in_progress` to `released` transition is refused and logged
+- [x] 8.2 Implement case creation pinning the published template version, and verify an in-flight case is unaffected by a subsequent republish
+- [x] 8.3 Implement the single-`in_progress`-case rule and verify starting a second draft offers resume or discard
+- [x] 8.4 Implement the answer-write endpoint that validates, persists, evaluates red flags, and returns the next active question in one transaction, and verify the red-flag result is present in the same response
+- [x] 8.5 Implement resume and verify a case reopened on a different device returns to the correct position with all answers intact
+- [x] 8.6 Implement submission with required-question checking and consent-based routing, and verify submission without doctor-sharing consent is refused and submission without AI consent yields an `ai_skipped` case
+- [x] 8.7 Implement doctor assignment and reassignment with retained history, and verify the previous doctor loses access immediately
+- [x] 8.8 Implement the patient case-status endpoint and verify it returns state only for a case in `ai_processed` or `in_review`, with the attempt audit-logged — the `TODO(confirm): Decision A` marker
 - [ ] 8.9 Verify end-to-end that an emergency-flagged case abandoned before submission still appears in the doctor queue marked urgent
 
 ## 9. Document upload and extraction
 
-- [ ] 9.1 Implement upload with content-inspection type detection and the size limit, and verify a non-PDF renamed to `.pdf` is rejected and nothing is stored
-- [ ] 9.2 Integrate the malware scanner and verify an infected file is discarded, unreferenced, and logged, and that scanner unavailability holds the upload as pending rather than accepted
-- [ ] 9.3 Implement streaming to encrypted object storage with no app-filesystem persistence, and verify no temporary file remains after an upload
-- [ ] 9.4 Implement signed-URL issuance after an authorization check, capped at 15 minutes and scoped to one object, and verify an unassigned doctor receives no URL and the denial is logged
-- [ ] 9.5 Implement patient document tagging (type, approximate date) and verify tags persist when extraction fails
+- [x] 9.1 Implement upload with content-inspection type detection and the size limit, and verify a non-PDF renamed to `.pdf` is rejected and nothing is stored
+- [x] 9.2 Integrate the malware scanner and verify an infected file is discarded, unreferenced, and logged, and that scanner unavailability holds the upload as pending rather than accepted
+- [x] 9.3 Implement streaming to encrypted object storage with no app-filesystem persistence, and verify no temporary file remains after an upload
+- [x] 9.4 Implement signed-URL issuance after an authorization check, capped at 15 minutes and scoped to one object, and verify an unassigned doctor receives no URL and the denial is logged
+- [x] 9.5 Implement patient document tagging (type, approximate date) and verify tags persist when extraction fails
 - [ ] 9.6 Implement text extraction in `services/ai` — native PDF/DOCX plus OCR for scans — and verify a scanned fixture yields text and a corrupt fixture yields a not-machine-readable status
 - [ ] 9.7 Implement the LLM extraction summarizer producing report type, date, key findings, and flagged abnormal values, and verify the output is stored labelled AI-generated and unverified with the original unchanged
 - [ ] 9.8 Verify extraction is skipped entirely, with no content leaving the trust boundary, when `ai_assisted_analysis` consent is absent
-- [ ] 9.9 Implement pre-submission deletion and post-submission deletion refusal, and verify both paths including their audit entries
+- [x] 9.9 Implement pre-submission deletion and post-submission deletion refusal, and verify both paths including their audit entries
 
 ## 10. AI assessment pipeline
 
@@ -111,14 +111,14 @@
 
 ## 11. Doctor review dashboard
 
-- [ ] 11.1 Implement the review queue scoped to assigned cases, sortable by urgency and submission time, and verify emergency cases sort above non-flagged ones by default
-- [ ] 11.2 Implement the one-screen case view rendering answers by symptom cluster with branching context, documents with extracts, red flags with basis, and the assessment, and verify each panel read emits its own audit entry
-- [ ] 11.3 Implement the no-assessment case presentation and verify it states the reason plainly
-- [ ] 11.4 Implement inline override of likelihood, addition, removal, and rejection with reason, and verify the original AI assessment remains retrievable unmodified
-- [ ] 11.5 Implement structured feedback diffs with rationale and version pins, and verify diffs are queryable and that no automated path submits them for model training
-- [ ] 11.6 Implement the doctor-authored final summary and next-steps editor with no medication pre-fill, and verify finalization is refused when the AI summary is passed through untouched
-- [ ] 11.7 Implement release behind an explicit confirmation showing the patient-visible content, and verify nothing becomes patient-visible without that confirmation and that release is recorded with content version and timestamp
-- [ ] 11.8 Implement case messaging with no raw-AI-content insertion, and verify messages are stored with the case and audit-logged
+- [x] 11.1 Implement the review queue scoped to assigned cases, sortable by urgency and submission time, and verify emergency cases sort above non-flagged ones by default
+- [x] 11.2 Implement the one-screen case view rendering answers by symptom cluster with branching context, documents with extracts, red flags with basis, and the assessment, and verify each panel read emits its own audit entry
+- [x] 11.3 Implement the no-assessment case presentation and verify it states the reason plainly
+- [x] 11.4 Implement inline override of likelihood, addition, removal, and rejection with reason, and verify the original AI assessment remains retrievable unmodified
+- [x] 11.5 Implement structured feedback diffs with rationale and version pins, and verify diffs are queryable and that no automated path submits them for model training
+- [x] 11.6 Implement the doctor-authored final summary and next-steps editor with no medication pre-fill, and verify finalization is refused when the AI summary is passed through untouched
+- [x] 11.7 Implement release behind an explicit confirmation showing the patient-visible content, and verify nothing becomes patient-visible without that confirmation and that release is recorded with content version and timestamp
+- [x] 11.8 Implement case messaging with no raw-AI-content insertion, and verify messages are stored with the case and audit-logged
 
 ## 12. Clinical admin console
 
@@ -157,10 +157,10 @@
 
 ## 15. Notifications
 
-- [ ] 15.1 Implement the transactional email sender with templates for verification, reset, submission, review-released, and doctor-queue notification, and verify each renders in both languages
-- [ ] 15.2 Implement the clinical-content guard that fails rendering when a template variable holds clinical content, and verify the notification is not sent
-- [ ] 15.3 Implement delivery recording with outcome and operator-visible permanent failures, and verify a hard bounce leaves the release standing and the summary readable on sign-in
-- [ ] 15.4 Verify a queued notification for an erased account is dropped and the drop recorded
+- [x] 15.1 Implement the transactional email sender with templates for verification, reset, submission, review-released, and doctor-queue notification, and verify each renders in both languages
+- [x] 15.2 Implement the clinical-content guard that fails rendering when a template variable holds clinical content, and verify the notification is not sent
+- [x] 15.3 Implement delivery recording with outcome and operator-visible permanent failures, and verify a hard bounce leaves the release standing and the summary readable on sign-in
+- [x] 15.4 Verify a queued notification for an erased account is dropped and the drop recorded
 
 ## 16. Integration verification and rollout readiness
 
