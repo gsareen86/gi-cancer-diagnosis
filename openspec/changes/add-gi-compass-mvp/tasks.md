@@ -9,30 +9,30 @@
 
 ## 2. Domain core — condition grammar and questionnaire engine
 
-- [ ] 2.1 Define the closed condition grammar types (`all`/`any`/`not` over `answered`, `equals`, `includes`, `gt`, `lt`, `between`, `duration_gte`, `age_gte`) with a Zod schema, and verify malformed condition trees are rejected by unit test
-- [ ] 2.2 Implement the deterministic condition evaluator over an answer set, and verify a table-driven test covers every predicate plus nesting, negation, and missing-answer behaviour
-- [ ] 2.3 Implement answer-type validation for all nine question types with per-type contracts, and verify unit tests cover the numeric-out-of-range and unknown-option rejections named in `questionnaire/engine`
-- [ ] 2.4 Implement adaptive path computation (which questions are active given an answer set), and verify a five-hop chain fixture reveals questions in order
-- [ ] 2.5 Implement branch retraction when an earlier answer changes, marking orphaned answers inactive rather than deleting them, and verify the retraction scenario from `questionnaire/engine`
-- [ ] 2.6 Implement branching-graph validation (cycle detection, unreachable target, retired-question target), and verify a cyclic template fixture is refused with the cycle identified
-- [ ] 2.7 Implement adaptive progress computation against the active path, and verify progress recomputes when a branch opens
-- [ ] 2.8 Verify engine determinism with a property test asserting the same answer set always yields the same active path and progress
+- [x] 2.1 Define the closed condition grammar types (`all`/`any`/`not` over `answered`, `equals`, `includes`, `gt`, `lt`, `between`, `duration_gte`, `age_gte`) with a Zod schema, and verify malformed condition trees are rejected by unit test
+- [x] 2.2 Implement the deterministic condition evaluator over an answer set, and verify a table-driven test covers every predicate plus nesting, negation, and missing-answer behaviour
+- [x] 2.3 Implement answer-type validation for all nine question types with per-type contracts, and verify unit tests cover the numeric-out-of-range and unknown-option rejections named in `questionnaire/engine`
+- [x] 2.4 Implement adaptive path computation (which questions are active given an answer set), and verify a five-hop chain fixture reveals questions in order
+- [x] 2.5 Implement branch retraction when an earlier answer changes, marking orphaned answers inactive rather than deleting them, and verify the retraction scenario from `questionnaire/engine`
+- [x] 2.6 Implement branching-graph validation (cycle detection, unreachable target, retired-question target), and verify a cyclic template fixture is refused with the cycle identified
+- [x] 2.7 Implement adaptive progress computation against the active path, and verify progress recomputes when a branch opens
+- [x] 2.8 Verify engine determinism with a property test asserting the same answer set always yields the same active path and progress
 
 ## 3. Domain core — red-flag triage
 
-- [ ] 3.1 Define the red-flag rule type (id, basis, urgency, condition, ruleset version) reusing the grammar from 2.1, and verify rules round-trip through Zod validation
-- [ ] 3.2 Implement the synchronous red-flag evaluator returning triggered flags with their contributing answers, and verify the black-tarry-stool AND (lightheadedness OR fainting) combination fixture
-- [ ] 3.3 Implement the publication guard rejecting escalation copy containing any disease-taxonomy term, and verify a condition-naming message is refused
-- [ ] 3.4 Verify by test that the evaluator has no import path reaching the AI client, HTTP, or any async boundary — the negative scenario in `safety/red-flag-triage`
-- [ ] 3.5 Benchmark the evaluator against a realistic rule set and verify p99 evaluation stays under 100 ms
+- [x] 3.1 Define the red-flag rule type (id, basis, urgency, condition, ruleset version) reusing the grammar from 2.1, and verify rules round-trip through Zod validation
+- [x] 3.2 Implement the synchronous red-flag evaluator returning triggered flags with their contributing answers, and verify the black-tarry-stool AND (lightheadedness OR fainting) combination fixture
+- [x] 3.3 Implement the publication guard rejecting escalation copy containing any disease-taxonomy term, and verify a condition-naming message is refused
+- [x] 3.4 Verify by test that the evaluator has no import path reaching the AI client, HTTP, or any async boundary — the negative scenario in `safety/red-flag-triage`
+- [x] 3.5 Benchmark the evaluator against a realistic rule set and verify p99 evaluation stays under 100 ms
 
 ## 4. Domain core — consent policy, summary compiler, AI schema
 
-- [ ] 4.1 Implement the consent purpose enum and the active-consent decision function (grant, withdrawal, superseded policy version), and verify each state transition by unit test
-- [ ] 4.2 Implement the deterministic clinical-summary compiler producing narrative plus fact table, distinguishing explicitly-denied from never-asked, and verify the same case compiles identically twice
-- [ ] 4.3 Define the AI assessment Zod schema exactly as specified in `assessment/ai-pipeline`, as a strict object with taxonomy-constrained condition identifiers, and verify a response containing `final_diagnosis` or any extra key is rejected
-- [ ] 4.4 Implement JSON-Schema generation from that Zod schema for the model tool definition, and verify the generated schema and the validator accept and reject the same fixtures
-- [ ] 4.5 Verify by test that no code path can construct an assessment lacking the mandatory disclaimer
+- [x] 4.1 Implement the consent purpose enum and the active-consent decision function (grant, withdrawal, superseded policy version), and verify each state transition by unit test
+- [x] 4.2 Implement the deterministic clinical-summary compiler producing narrative plus fact table, distinguishing explicitly-denied from never-asked, and verify the same case compiles identically twice
+- [x] 4.3 Define the AI assessment Zod schema exactly as specified in `assessment/ai-pipeline`, as a strict object with taxonomy-constrained condition identifiers, and verify a response containing `final_diagnosis` or any extra key is rejected
+- [x] 4.4 Implement JSON-Schema generation from that Zod schema for the model tool definition, and verify the generated schema and the validator accept and reject the same fixtures
+- [x] 4.5 Verify by test that no code path can construct an assessment lacking the mandatory disclaimer
 
 ## 5. Data layer
 

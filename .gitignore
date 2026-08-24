@@ -216,3 +216,26 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- GI Compass (Node / Next.js) ---
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+.turbo/
+coverage/
+.vitest/
+
+# Local environment — never commit real credentials or provider keys
+.env
+.env.*
+!.env.example
+
+# Prisma
+packages/db/prisma/*.db
+packages/db/prisma/migrations/**/migration_lock.toml.bak
+
+# Local object storage / uploads (patient data must never reach the repo)
+.storage/
+uploads/
