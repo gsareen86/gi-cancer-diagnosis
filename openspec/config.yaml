@@ -1,0 +1,65 @@
+schema: spec-driven
+
+context: |
+  Project: "GI Compass" — an AI-assisted gastrointestinal (GI) diagnostic-support
+  platform for patients in India. A patient completes an adaptive, image-assisted
+  symptom questionnaire and uploads prior reports; the system compiles a structured
+  clinical summary, grounds an LLM call on a doctor-curated knowledge base, and
+  produces a *decision-support* differential assessment that a Registered Medical
+  Practitioner (RMP) must review and release. The AI never diagnoses, never
+  prescribes, and its raw output is never shown to the patient.
+
+  Regulatory frame (shapes architecture, never bolted on):
+  - India Telemedicine Practice Guidelines 2020: AI may only support an RMP.
+  - CDSCO Medical Device Rules 2017 / MDSW guidance: Phase 1 ships as an internal
+    clinical tool for affiliated doctors, not a marketed public diagnostic product.
+  - DPDP Act 2023 + DPDP Rules 2025: health data is sensitive personal data.
+    Consent is a versioned, per-purpose, revocable first-class object — never a boolean.
+  - Data residency: patient data stays in an India cloud region.
+
+  Tech stack:
+  - Monorepo via npm workspaces.
+  - apps/web: Next.js 15 (App Router) + TypeScript + Tailwind CSS. Serves both the
+    patient/doctor/admin UI and the core REST API via Route Handlers.
+  - packages/core: framework-agnostic TypeScript domain logic (questionnaire engine,
+    red-flag rules, consent, AI output schema) — unit-testable without a DB or network.
+  - packages/db: Prisma schema + client for PostgreSQL 16 (+ pgvector).
+  - services/ai: Python 3.11 FastAPI microservice for RAG, OCR/document parsing, and
+    the structured LLM call (Claude API with tool/structured output).
+  - Storage: S3-compatible object storage (India region), signed short-lived URLs.
+
+  Conventions:
+  - TypeScript strict mode. Zod for all runtime validation at trust boundaries.
+  - Every patient-clinical-data read/write goes through audit-logging + consent-check
+    hooks. These are enforced in the data-access layer, not the UI.
+  - RBAC enforced at the API layer, never by hiding UI.
+  - All patient-facing strings go through an i18n layer (en + hi) from day one.
+  - Conventional commits.
+  - Unresolved product decisions are marked in code as `TODO(confirm): Decision X`
+    referring to the build brief's open-decisions list.
+
+rules:
+  proposal:
+    - State the regulatory constraint that motivates a requirement whenever one applies.
+    - Always include a "Non-goals" section that explicitly excludes autonomous diagnosis,
+      prescribing, and patient-facing raw AI output.
+  specs:
+    - Every requirement that touches patient clinical data must have a scenario covering
+      the audit-log and consent-check behaviour.
+    - Safety-critical requirements (red flags, AI output constraints) must include at
+      least one negative scenario proving the unsafe path is blocked.
+  design:
+    - Record every deviation from the build brief's suggested stack with its rationale.
+    - Name the open decisions the design assumes a default for, and the marker used in code.
+  tasks:
+    - Group tasks by capability, and keep each task independently verifiable.
+
+operations:
+  apply:
+    guidance:
+      - Implement safety-critical logic (red-flag evaluation, AI schema validation,
+        consent gating) with unit tests before wiring any UI.
+      - Never let an LLM call be on the critical path of an emergency escalation.
+  archive:
+    guidance:
+      - Summarize which regulatory guardrails the shipped change satisfies.
