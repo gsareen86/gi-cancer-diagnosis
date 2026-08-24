@@ -1,4 +1,12 @@
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import createNextIntlPlugin from 'next-intl/plugin';
+import { loadAncestorEnvFiles } from './load-root-env.mjs';
+
+// Next reads .env from this directory only, so a monorepo-root .env would otherwise be invisible
+// to dev, build, and start. Loaded here, before the config object is built, so every later stage
+// sees it. Real environment variables still win — see load-root-env.mjs for the precedence.
+loadAncestorEnvFiles(dirname(fileURLToPath(import.meta.url)));
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 

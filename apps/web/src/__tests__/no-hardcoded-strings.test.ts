@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -13,7 +14,10 @@ import { describe, expect, it } from 'vitest';
  * the same command as everything else.
  */
 
-const SRC = resolve(new URL('../', import.meta.url).pathname);
+// fileURLToPath, not URL.pathname — on Windows the latter yields '/C:/AI%20Projects/...',
+// which resolves to a nonexistent 'C:\C:\AI%20Projects' and made this guard error out
+// instead of running.
+const SRC = fileURLToPath(new URL('../', import.meta.url));
 const COMPONENTS = join(SRC, 'components');
 const APP = join(SRC, 'app');
 

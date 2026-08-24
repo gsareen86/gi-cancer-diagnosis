@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
@@ -77,7 +77,11 @@ describe('the emergency path cannot reach the AI pipeline', () => {
   const graph = transitiveImports(entry).filter((file) => !file.endsWith('.test.ts'));
 
   it('pulls in only the condition grammar, the answer types, and the taxonomy', () => {
-    const relative = graph.map((file) => file.slice(srcRoot.length + 1)).sort();
+    // Normalised to forward slashes so the expectation reads the same on every platform —
+    // Windows produced 'conditions\evaluate.ts' and failed a guard that was otherwise working.
+    const relative = graph
+      .map((file) => file.slice(srcRoot.length + 1).split(sep).join('/'))
+      .sort();
     expect(relative).toEqual([
       'conditions/evaluate.ts',
       'conditions/grammar.ts',

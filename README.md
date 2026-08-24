@@ -33,15 +33,22 @@ The audit trail is append-only at the **privilege** level: the application role 
 
 ```bash
 npm ci
-./scripts/dev-postgres.sh          # PostgreSQL 16 + pgvector (or: docker compose up)
+cp .env.example .env               # in the repository root — see the note below
+docker compose up -d               # PostgreSQL 16 + pgvector  (or ./scripts/dev-postgres.sh)
 npm run db:migrate && npm run db:seed
 npm run build -w @gi-compass/web
 ./scripts/dev-server.sh            # http://localhost:3000
 
-npm test                           # 382 TypeScript tests
+npm test                           # 393 TypeScript tests
 cd services/ai && uv venv .venv && uv pip install --python .venv/bin/python -e ".[dev]"
 .venv/bin/python -m pytest         # 70 Python tests, no network
 ```
+
+`.env` goes in the **repository root**. The web app walks up from `apps/web` to find it, since
+Next.js only reads `.env` from its own directory and does not walk up in a monorepo. A `.env`
+inside `apps/web` also works and takes precedence, and real environment variables beat both. The
+server validates its configuration at startup and refuses to boot if anything required is missing,
+rather than failing later on a request.
 
 End-to-end browser walkthroughs live in [`e2e/`](e2e/README.md).
 

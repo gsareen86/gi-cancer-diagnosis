@@ -3,6 +3,9 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     include: ['src/**/*.test.ts'],
+    // Loads the repository's own .env so these tests run against the configured database rather
+    // than a hardcoded default that only matched one machine.
+    setupFiles: ['./src/__tests__/setup.ts'],
     // These tests exercise real database guarantees against one shared PostgreSQL and each
     // truncates between cases, so running files in parallel would have them clear each other's
     // fixtures. Correctness here is worth more than the second these tests save.

@@ -88,6 +88,19 @@ Two things it ships without, on purpose:
 
 ## 5. Application
 
+```bash
+cp .env.example .env    # in the repository root
+```
+
+`.env` belongs in the **repository root**. The web app walks up from `apps/web` to find it, and
+the migrate and seed scripts load it directly. A `.env` inside `apps/web` also works and takes
+precedence; real environment variables beat both, so a container or systemd unit that sets them is
+never overridden by a file left in a checkout.
+
+The server validates its configuration at startup and refuses to boot if anything required is
+missing, naming exactly what. It will not start half-configured and then fail on someone's first
+registration.
+
 Set every variable in `.env.example`. Two matter more than the rest:
 
 - `FIELD_ENCRYPTION_KEY` encrypts the direct identifiers (name, phone, emergency contact). **Rotating

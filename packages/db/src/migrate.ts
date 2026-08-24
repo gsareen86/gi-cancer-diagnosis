@@ -25,9 +25,9 @@ export async function runMigrations(connectionString: string): Promise<void> {
 
 const isDirectInvocation = process.argv[1]?.endsWith('migrate.ts') === true;
 if (isDirectInvocation) {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = process.env.MIGRATION_DATABASE_URL ?? process.env.DATABASE_URL;
   if (connectionString === undefined) {
-    console.error('DATABASE_URL is not set');
+    console.error('Neither MIGRATION_DATABASE_URL nor DATABASE_URL is set');
     process.exit(1);
   }
   runMigrations(connectionString)

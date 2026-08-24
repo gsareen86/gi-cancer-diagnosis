@@ -1,5 +1,6 @@
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
 /**
@@ -31,7 +32,9 @@ export interface ObjectStorage {
 }
 
 function storageRoot(): string {
-  return resolve(process.env.LOCAL_STORAGE_ROOT ?? '/var/tmp/gi-compass-storage');
+  // Defaults to the operating system's temp directory rather than a hardcoded '/var/tmp', which
+  // only exists on Linux — on Windows that resolved to a stray 'C:\var\tmp'.
+  return resolve(process.env.LOCAL_STORAGE_ROOT ?? join(tmpdir(), 'gi-compass-storage'));
 }
 
 /**

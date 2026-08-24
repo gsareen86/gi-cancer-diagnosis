@@ -1,0 +1,25 @@
+# Line endings, made deterministic.
+#
+# This repository is developed on Windows and built on Linux CI. Without this file the result
+# depends on each machine's core.autocrlf setting, and a shell script checked out with CRLF fails
+# on Linux with "bad interpreter: /usr/bin/env bash^M" — a confusing error a long way from its
+# cause.
+
+# Normalise to LF in the repository; check out with the platform's convention.
+* text=auto
+
+# These are executed by a shell or a container and must be LF everywhere, whatever the platform.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binary, so git must never try to translate them.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.ico binary
+*.woff binary
+*.woff2 binary

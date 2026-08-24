@@ -10,8 +10,17 @@ import type { Database } from '../client';
  * a mock would assert only that we wrote the mock correctly.
  */
 
+/**
+ * The database these tests run against.
+ *
+ * Prefers the repository's own configuration over a hardcoded guess: the previous default named
+ * a port that existed only on the machine these tests were written on, so a fresh checkout failed
+ * with a connection refusal that said nothing about why.
+ */
 export const TEST_DATABASE_URL =
-  process.env.TEST_DATABASE_URL ?? 'postgres://postgres@127.0.0.1:55432/gi_compass';
+  process.env.TEST_DATABASE_URL ??
+  process.env.DATABASE_URL ??
+  'postgres://postgres:postgres@localhost:5432/gi_compass';
 
 export interface TestContext {
   db: Database;
