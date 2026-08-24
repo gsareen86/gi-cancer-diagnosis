@@ -10,7 +10,7 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present && npm run test:repo",
     "lint": "eslint .",
     "spec:validate": "openspec validate --strict",
     "db:up": "./scripts/dev-postgres.sh",
@@ -18,7 +18,8 @@
     "db:seed": "tsx packages/db/src/seed/index.ts",
     "dev:web": "./scripts/dev-server.sh",
     "e2e:patient": "node e2e/patient-walkthrough.mjs",
-    "e2e:doctor": "node e2e/doctor-review.mjs"
+    "e2e:doctor": "node e2e/doctor-review.mjs",
+    "test:repo": "vitest run --config vitest.repo.config.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

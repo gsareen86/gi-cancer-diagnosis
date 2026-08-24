@@ -1,3 +1,8 @@
+# This repository started from a Python .gitignore. It is now a polyglot monorepo, so the
+# directory patterns below are anchored: unanchored, `lib/` and `build/` match at ANY depth and
+# silently swallow application source such as apps/web/src/lib/. `tools/repo-hygiene.test.ts`
+# fails if a source file ever becomes untracked again.
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -8,18 +13,30 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
+/build/
+services/ai/build/
+/develop-eggs/
+services/ai/develop-eggs/
+/dist/
+services/ai/dist/
+/downloads/
+services/ai/downloads/
+/eggs/
+services/ai/eggs/
+/.eggs/
+services/ai/.eggs/
+/lib/
+services/ai/lib/
+/lib64/
+services/ai/lib64/
+/parts/
+services/ai/parts/
+/sdist/
+services/ai/sdist/
+/var/
+services/ai/var/
+/wheels/
+services/ai/wheels/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
@@ -49,7 +66,8 @@ coverage.xml
 *.py.cover
 .hypothesis/
 .pytest_cache/
-cover/
+/cover/
+services/ai/cover/
 
 # Translations
 *.mo
@@ -62,7 +80,8 @@ db.sqlite3
 db.sqlite3-journal
 
 # Flask stuff:
-instance/
+/instance/
+services/ai/instance/
 .webassets-cache
 
 # Scrapy stuff:
@@ -73,7 +92,8 @@ docs/_build/
 
 # PyBuilder
 .pybuilder/
-target/
+/target/
+services/ai/target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -221,7 +241,8 @@ __marimo__/
 node_modules/
 .next/
 out/
-dist/
+/dist/
+services/ai/dist/
 *.tsbuildinfo
 .turbo/
 coverage/
@@ -243,3 +264,8 @@ uploads/
 # Local dev database and object storage
 /var/tmp/
 pgdata/
+
+# --- Build output that is legitimately ignored wherever it appears -------------------
+packages/*/dist/
+apps/*/.next/
+apps/*/out/
