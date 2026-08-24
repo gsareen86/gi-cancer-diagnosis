@@ -49,8 +49,9 @@ grounding context. The prompt SHALL instruct the model to reason from that conte
 The system prompt SHALL require the model to: never phrase output as a diagnosis; never name a
 medication, dose, or treatment plan; attach a likelihood of `high`, `moderate`, or `low` to every
 differential item; list red flags separately from differentials; and emit only the fields of the
-defined schema. The call SHALL use a low temperature and SHALL use the provider's structured-output
-mode.
+defined schema. The call SHALL obtain its answer through a forced structured-output mechanism —
+the model's only permitted reply is one conforming structured object — and SHALL NOT permit more
+than one such object per case.
 
 #### Scenario: Treatment content is rejected
 

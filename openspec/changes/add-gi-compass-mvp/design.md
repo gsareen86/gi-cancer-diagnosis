@@ -145,6 +145,14 @@ the model is told the exact shape, and anything else is rejected rather than rep
 *Implementation note:* validation failure paths must never fall back to "save what parsed". The
 retry budget is bounded and exhaustion routes the case to the doctor with the assessment absent.
 
+*Correction from implementation:* an earlier draft of this decision said the call would use a low
+temperature. Sampling parameters were removed on the Claude 5 model family and sending one now
+returns a 400, so that is no longer available and would have been a startup failure. It is also
+not the control it appeared to be: a low temperature makes a wrong answer more reproducible, not
+less wrong. The actual controls are the forced single tool call with `strict: true` — the
+provider itself rejects a malformed shape — parallel tool use disabled so one case yields one
+assessment, and the server-side validation that runs on every response regardless of sampling.
+
 ### D9. Template versions are immutable; cases pin the version they started on
 
 Publishing a draft creates a new immutable `QuestionnaireTemplateVersion`. A `Case` stores its
