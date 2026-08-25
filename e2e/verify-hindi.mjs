@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
 import { execSync } from 'node:child_process';
+import { visibleText } from './support/page-text.mjs';
 
 /**
  * Verifies the Hindi path, once the clinical text has been clinician-approved.
@@ -35,7 +36,7 @@ console.log(`switcher now offered: ${switcher !== null}`);
 if (switcher !== null) {
   await page.selectOption('#locale-switcher', 'hi');
   await page.waitForTimeout(1500);
-  const text = (await page.textContent('body')) ?? '';
+  const text = await visibleText(page);
   console.log(`interface renders Devanagari: ${/[ऀ-ॿ]/.test(text)}`);
   await page.screenshot({ path: '/var/tmp/gi-final/hindi-home.png', fullPage: true });
 }

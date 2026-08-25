@@ -2,7 +2,7 @@
   "name": "gi-compass",
   "private": true,
   "version": "0.1.0",
-  "description": "AI-assisted GI diagnostic-support platform (India) \u2014 doctor-in-the-loop by design",
+  "description": "AI-assisted GI diagnostic-support platform (India) — doctor-in-the-loop by design",
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -20,7 +20,8 @@
     "e2e:patient": "node e2e/patient-walkthrough.mjs",
     "e2e:doctor": "node e2e/doctor-review.mjs",
     "test:repo": "vitest run --config vitest.repo.config.ts",
-    "user": "tsx --env-file-if-exists=.env apps/web/scripts/manage-users.ts"
+    "user": "tsx --env-file-if-exists=.env apps/web/scripts/manage-users.ts",
+    "demo-case": "tsx --tsconfig apps/web/tsconfig.json --env-file-if-exists=.env apps/web/scripts/seed-review-case.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

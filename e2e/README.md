@@ -40,11 +40,27 @@ immutable, so the app caches it per version id and never expects one to change u
 ## Doctor-side walkthroughs
 
 ```bash
-DOCTOR_EMAIL=... DOCTOR_PASSWORD=... node e2e/doctor-onboarding.mjs
+node e2e/doctor-onboarding.mjs
 
 node e2e/stub-llama-server.mjs &                 # stands in for llama-server, port 8080
-DOCTOR_EMAIL=... DOCTOR_PASSWORD=... node e2e/ai-analysis.mjs
+node e2e/ai-analysis.mjs
 ```
+
+Both create their own throwaway doctor, and `ai-analysis.mjs` seeds its own case for that doctor to
+open. They read the enrolment secret off the screen, so they need an account with no second factor —
+and getting that by clearing an existing one silently invalidates whatever is in that person's
+authenticator app, with no way back except enrolling again. `DOCTOR_EMAIL` and `DOCTOR_PASSWORD`
+still override, but the account you name must already be un-enrolled: the scripts will not clear a
+factor for you. `npm run user -- list` shows which accounts have one.
+
+To put a case in your own doctor's queue without answering the interview by hand:
+
+```bash
+npm run demo-case -- doctor@example.com
+```
+
+It drives the app's own interview service and state machine rather than inserting rows, so the case
+it leaves behind went through validation, red-flag evaluation, and the transitions a real one does.
 
 **`doctor-onboarding.mjs`** — a privileged account lands on the second-factor gate and cannot pass
 it without a code; enrolment offers both a QR and a typed key; the queue is reachable afterwards;
@@ -59,3 +75,13 @@ disclaimer. Finishes by adopting the investigations into the doctor's own next s
 that path without a multi-gigabyte download. It answers from the JSON Schema it is sent rather than
 from a fixed fixture, so the taxonomy enum actually reaching the model is genuinely covered. It
 says nothing about whether a real model's clinical reasoning is any good.
+
+## Reading the screen
+
+Assertions go through `support/page-text.mjs`, which exists because the obvious thing is wrong.
+`textContent('body')` includes `<script>` contents, and Next inlines the entire message catalogue
+into the document — so a substring check against it matched the English translation of the key and
+passed on a blank screen. `visibleText()` uses `innerText`, which is computed from layout. Because
+that reflects CSS, `text-transform: uppercase` headings come back uppercased, so `has()` compares
+case-insensitively. `deliveredText()` returns everything the browser was sent and is for leak checks
+only — content that reached a patient's device leaked whether or not anything drew it.

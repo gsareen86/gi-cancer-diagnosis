@@ -2,6 +2,7 @@ import { chromium } from 'playwright';
 import { execSync } from 'node:child_process';
 import { writeFileSync, unlinkSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
+import { deliveredText, has, visibleText } from './support/page-text.mjs';
 
 /**
  * The doctor's half of the loop: queue → case → override → finalize → release,
@@ -108,25 +109,25 @@ sql(`UPDATE sessions SET mfa_pending = false WHERE user_id='${doctorId}'`);
 await doctor.goto(`${BASE}/doctor/queue`);
 await doctor.waitForTimeout(1500);
 await doctor.screenshot({ path: `${SHOTS}/02-queue.png`, fullPage: true });
-const queueText = (await doctor.textContent('body')) ?? '';
-console.log(`   queue shows an emergency case: ${queueText.includes('Emergency')}`);
+const queueText = await visibleText(doctor);
+console.log(`   queue shows an emergency case: ${has(queueText, 'Emergency')}`);
 
 console.log('4. open the case');
 await doctor.goto(`${BASE}/doctor/cases/${caseId}`);
 await doctor.waitForTimeout(2000);
 await doctor.screenshot({ path: `${SHOTS}/03-case-review.png`, fullPage: true });
-const caseText = (await doctor.textContent('body')) ?? '';
-console.log(`   answers shown: ${caseText.includes('blood look like') || caseText.includes('Black')}`);
-console.log(`   AI assessment shown: ${caseText.includes('Peptic ulcer disease')}`);
-console.log(`   version pins shown: ${caseText.includes('test-model-1')}`);
-console.log(`   disclaimer shown: ${caseText.includes('not a medical diagnosis')}`);
+const caseText = await visibleText(doctor);
+console.log(`   answers shown: ${has(caseText, 'blood look like') || has(caseText, 'Black')}`);
+console.log(`   AI assessment shown: ${has(caseText, 'Peptic ulcer disease')}`);
+console.log(`   version pins shown: ${has(caseText, 'test-model-1')}`);
+console.log(`   disclaimer shown: ${has(caseText, 'not a medical diagnosis')}`);
 
 console.log('5. try to finalize with the AI summary passed through');
 await doctor.fill('#impression', aiSummary);
 await doctor.fill('#patient-summary', 'You need an urgent camera test of your stomach, please attend.');
 await doctor.click('button:has-text("Finalize")');
 await doctor.waitForTimeout(1500);
-const passthroughRefused = ((await doctor.textContent('body')) ?? '').includes('your own words');
+const passthroughRefused = has(await visibleText(doctor), 'your own words');
 console.log(`   pass-through refused: ${passthroughRefused}`);
 await doctor.screenshot({ path: `${SHOTS}/04-passthrough-refused.png`, fullPage: true });
 
@@ -135,7 +136,7 @@ await doctor.fill('#impression', 'My impression is upper GI bleeding needing urg
 await doctor.fill('#next-steps', 'Start omeprazole 40 mg daily');
 await doctor.click('button:has-text("Finalize")');
 await doctor.waitForTimeout(1500);
-const treatmentRefused = ((await doctor.textContent('body')) ?? '').includes('Remove the medication');
+const treatmentRefused = has(await visibleText(doctor), 'Remove the medication');
 console.log(`   prescribing refused: ${treatmentRefused}`);
 await doctor.screenshot({ path: `${SHOTS}/05-prescribing-refused.png`, fullPage: true });
 
@@ -160,10 +161,11 @@ const patient = await signedInPage(patientEmail, 'patient');
 await patient.goto(`${BASE}/cases/${caseId}`);
 await patient.waitForTimeout(1500);
 await patient.screenshot({ path: `${SHOTS}/08-patient-result.png`, fullPage: true });
-const patientText = (await patient.textContent('body')) ?? '';
-console.log(`   released summary visible: ${patientText.includes('camera test')}`);
-console.log(`   AI summary leaked: ${patientText.includes(aiSummary)}`);
-console.log(`   model version leaked: ${patientText.includes('test-model-1')}`);
-console.log(`   standing notice shown: ${patientText.includes('not a final diagnosis')}`);
+const patientText = await visibleText(patient);
+const delivered = await deliveredText(patient);
+console.log(`   released summary visible: ${has(patientText, 'camera test')}`);
+console.log(`   AI summary leaked: ${delivered.includes(aiSummary)}`);
+console.log(`   model version leaked: ${delivered.includes('test-model-1')}`);
+console.log(`   standing notice shown: ${has(patientText, 'not a final diagnosis')}`);
 
 await browser.close();

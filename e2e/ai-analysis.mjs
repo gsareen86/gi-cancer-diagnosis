@@ -1,5 +1,7 @@
 import { chromium } from 'playwright';
 import { createHmac } from 'node:crypto';
+import { provisionCase, resolveDoctor } from './support/test-doctor.mjs';
+import { has, visibleText } from './support/page-text.mjs';
 
 /**
  * The doctor asking for an AI analysis from the review screen.
@@ -10,9 +12,15 @@ import { createHmac } from 'node:crypto';
  */
 
 const BASE = process.env.BASE ?? 'http://localhost:3000';
-const EMAIL = process.env.DOCTOR_EMAIL;
-const PASSWORD = process.env.DOCTOR_PASSWORD;
 const SHOTS = process.env.SHOTS ?? '/tmp/gi-ai';
+
+// Brings its own account, for the same reason as the onboarding walkthrough: enrolment replaces
+// any existing second factor, and a script must not do that to a real person's account.
+console.log('0. account');
+const { email: EMAIL, password: PASSWORD, provisioned } = resolveDoctor();
+// And its own case: a brand-new doctor's queue is empty, and waiting for someone else's case to
+// appear would make this run depend on whatever happens to be in the database.
+if (provisioned) provisionCase(EMAIL);
 
 const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
@@ -54,7 +62,7 @@ const shot = async (name) => {
   console.log(`  → ${name}.png`);
 };
 
-console.log('1. sign in and clear the second factor');
+console.log('1. sign in and enrol a second factor');
 await page.goto(`${BASE}/login`);
 await page.fill('#email', EMAIL);
 await page.fill('#password', PASSWORD);
@@ -80,9 +88,9 @@ if (claim !== null) {
 await page.waitForTimeout(1500);
 await shot('01-before-analysis');
 
-const before = (await page.textContent('body')) ?? '';
-console.log(`   shows why there is no analysis yet: ${before.includes('last attempt failed')}`);
-console.log(`   offers the button                 : ${before.includes('Generate AI analysis')}`);
+const before = await visibleText(page);
+console.log(`   shows why there is no analysis yet: ${has(before, 'last attempt failed')}`);
+console.log(`   offers the button                 : ${has(before, 'Generate AI analysis')}`);
 
 console.log('3. press Generate AI analysis');
 await page.click('button:has-text("Generate AI analysis")');
@@ -91,17 +99,17 @@ await page.waitForSelector('text=Possibilities to consider', { timeout: 120000 }
 await page.waitForTimeout(1000);
 await shot('02-analysis');
 
-const after = (await page.textContent('body')) ?? '';
+const after = await visibleText(page);
 for (const [label, present] of [
-  ['summary for the doctor', after.includes('Summary for you')],
-  ['differential with likelihood', after.includes('Possibilities to consider')],
-  ['supporting findings', after.includes('Supporting')],
-  ['concerns the model raised', after.includes('Concerns the model raised')],
-  ['suggested investigations', after.includes('Suggested investigations')],
+  ['summary for the doctor', has(after, 'Summary for you')],
+  ['differential with likelihood', has(after, 'Possibilities to consider')],
+  ['supporting findings', has(after, 'Supporting')],
+  ['concerns the model raised', has(after, 'Concerns the model raised')],
+  ['suggested investigations', has(after, 'Suggested investigations')],
   // The recorded model name comes from the service's LOCAL_MODEL_NAME, not the stub's own id.
-  ['version pins', /Model .+ · prompt .+ · knowledge base/.test(after)],
-  ['disclaimer', after.includes('not a medical diagnosis')],
-  ['stated as not a diagnosis', after.includes('Not a diagnosis')],
+  ['version pins', /Model .+ · prompt .+ · knowledge base/i.test(after)],
+  ['disclaimer', has(after, 'not a medical diagnosis')],
+  ['stated as not a diagnosis', has(after, 'Not a diagnosis')],
 ]) {
   console.log(`   ${present ? 'shown' : 'MISSING'}: ${label}`);
 }

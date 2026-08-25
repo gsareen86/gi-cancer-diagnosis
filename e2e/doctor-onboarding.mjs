@@ -1,5 +1,7 @@
 import { chromium } from 'playwright';
 import { createHmac } from 'node:crypto';
+import { resolveDoctor } from './support/test-doctor.mjs';
+import { has, visibleText } from './support/page-text.mjs';
 
 /**
  * The doctor's way in: sign in, enrol a second factor, reach the review queue.
@@ -12,14 +14,12 @@ import { createHmac } from 'node:crypto';
  */
 
 const BASE = process.env.BASE ?? 'http://localhost:3000';
-const EMAIL = process.env.DOCTOR_EMAIL;
-const PASSWORD = process.env.DOCTOR_PASSWORD;
 const SHOTS = process.env.SHOTS ?? '/tmp/gi-doctor-onboarding';
 
-if (EMAIL === undefined || PASSWORD === undefined) {
-  console.error('Set DOCTOR_EMAIL and DOCTOR_PASSWORD (from `npm run user -- create doctor ...`)');
-  process.exit(1);
-}
+// Brings its own account. Enrolment replaces whatever second factor an account has, so borrowing
+// a real one would silently lock its owner out of their authenticator app.
+console.log('0. account');
+const { email: EMAIL, password: PASSWORD } = resolveDoctor();
 
 const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
@@ -85,9 +85,9 @@ await page.waitForURL('**/doctor/queue', { timeout: 20000 });
 console.log('   reached the review queue');
 await shot('03-queue');
 
-const queue = (await page.textContent('body')) ?? '';
-console.log(`   queue is empty: ${queue.includes('Nothing waiting')}`);
-console.log(`   shows a case  : ${queue.includes('Open')}`);
+const queue = await visibleText(page);
+console.log(`   queue is empty: ${has(queue, 'Nothing waiting')}`);
+console.log(`   shows a case  : ${has(queue, 'Open')}`);
 
 console.log('4. the second factor persists — sign out and back in');
 await page.goto(`${BASE}/login`);
@@ -96,8 +96,8 @@ await page.fill('#password', PASSWORD);
 await page.click('button[type=submit]');
 await page.waitForURL('**/mfa', { timeout: 15000 });
 
-const second = (await page.textContent('body')) ?? '';
-console.log(`   asks for a code, not a fresh QR: ${second.includes('Enter your code')}`);
+const second = await visibleText(page);
+console.log(`   asks for a code, not a fresh QR: ${has(second, 'Enter your code')}`);
 await page.fill('#code', totp(secret));
 await page.click('button[type=submit]');
 await page.waitForURL('**/doctor/queue', { timeout: 20000 });

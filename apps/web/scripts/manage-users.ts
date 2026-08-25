@@ -15,7 +15,7 @@ import { checkPassword } from '../src/server/auth/password-policy';
  *
  *   npm run user -- create  doctor  doctor@example.com
  *   npm run user -- grant   doctor  someone@example.com
- *   npm run user -- reset-mfa       doctor@example.com
+ *   npm run user -- reset-mfa       doctor@example.com   (destroys a working authenticator)
  *   npm run user -- list
  *
  * Nothing here bypasses a clinical control. It creates accounts and assigns roles; the second
@@ -139,14 +139,26 @@ async function resetMfa(email: string): Promise<void> {
     .where(eq(tables.totpFactors.userId, user.id))
     .returning({ id: tables.totpFactors.id });
 
-  console.log(`  Cleared ${removed.length} second factor(s) for ${normalized}.`);
-  console.log('  Next sign-in will start enrolment again.');
+  if (removed.length === 0) {
+    console.log(`  ${normalized} had no second factor. Nothing changed.`);
+    return;
+  }
+
+  console.log('');
+  console.log(`  Cleared the second factor for ${normalized}.`);
+  console.log('');
+  // Stated plainly because it is not recoverable: whatever is in that authenticator app is now
+  // useless, and the only way back is to enrol again.
+  console.log('  Any code in their authenticator app will now be rejected. They must delete the');
+  console.log('  old "GI Compass" entry and enrol again at the next sign-in.');
+  console.log('');
 }
 
 async function list(): Promise<void> {
   const db = database();
   const users = await db
     .select({
+      id: tables.users.id,
       email: tables.users.email,
       role: tables.users.role,
       status: tables.users.status,
@@ -160,13 +172,30 @@ async function list(): Promise<void> {
   }
 
   const factors = await db
-    .select({ userId: tables.totpFactors.userId, confirmedAt: tables.totpFactors.confirmedAt })
+    .select({
+      userId: tables.totpFactors.userId,
+      confirmedAt: tables.totpFactors.confirmedAt,
+      createdAt: tables.totpFactors.createdAt,
+    })
     .from(tables.totpFactors);
-  void factors;
 
   console.log('');
   for (const user of users) {
-    console.log(`  ${user.role.padEnd(15)} ${user.status.padEnd(11)} ${user.email}`);
+    const factor = factors.find((entry) => entry.userId === user.id);
+    // When a factor was enrolled matters: if it is newer than the authenticator entry someone is
+    // holding, their codes will be rejected and the reason is otherwise invisible.
+    const mfa =
+      factor === undefined
+        ? user.role === 'patient'
+          ? '—'
+          : 'not enrolled'
+        : factor.confirmedAt === null
+          ? 'enrolment started'
+          : `enrolled ${factor.createdAt.toISOString().slice(0, 16).replace('T', ' ')}`;
+
+    console.log(
+      `  ${user.role.padEnd(15)} ${user.status.padEnd(11)} ${mfa.padEnd(24)} ${user.email}`,
+    );
   }
   console.log('');
 }
