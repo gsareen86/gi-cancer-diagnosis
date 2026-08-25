@@ -36,3 +36,26 @@ output.
 **`verify-hindi.mjs`** — approving a language is a two-part act, because the question bank and the
 red-flag rule set are versioned separately. It also needs a restart: a published version is
 immutable, so the app caches it per version id and never expects one to change underneath.
+
+## Doctor-side walkthroughs
+
+```bash
+DOCTOR_EMAIL=... DOCTOR_PASSWORD=... node e2e/doctor-onboarding.mjs
+
+node e2e/stub-llama-server.mjs &                 # stands in for llama-server, port 8080
+DOCTOR_EMAIL=... DOCTOR_PASSWORD=... node e2e/ai-analysis.mjs
+```
+
+**`doctor-onboarding.mjs`** — a privileged account lands on the second-factor gate and cannot pass
+it without a code; enrolment offers both a QR and a typed key; the queue is reachable afterwards;
+and the factor persists across a second sign-in. The TOTP code is computed the way a phone would.
+
+**`ai-analysis.mjs`** — the doctor's *Generate AI analysis* button. Shows the recorded reason when
+a previous run failed, then produces the structured panel: summary, ranked possibilities with the
+findings behind each, the model's own concerns, suggested investigations, version pins, and the
+disclaimer. Finishes by adopting the investigations into the doctor's own next steps.
+
+**`stub-llama-server.mjs`** — speaks just enough of llama.cpp's OpenAI-compatible API to exercise
+that path without a multi-gigabyte download. It answers from the JSON Schema it is sent rather than
+from a fixed fixture, so the taxonomy enum actually reaching the model is genuinely covered. It
+says nothing about whether a real model's clinical reasoning is any good.

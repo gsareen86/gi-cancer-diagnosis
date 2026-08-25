@@ -265,7 +265,22 @@
     "likelihoodLow": "Low",
     "unassignedHeading": "Unassigned cases",
     "unassignedIntro": "These were submitted with no doctor assigned. Claim one to take responsibility for reviewing it.",
-    "claim": "Claim for review"
+    "claim": "Claim for review",
+    "assessmentGenerate": "Generate AI analysis",
+    "assessmentRegenerate": "Run again",
+    "assessmentRunning": "Analysing…",
+    "assessmentRunningHint": "Analysing this case. A locally hosted model can take a minute or two.",
+    "assessmentFailed": "The analysis could not be produced",
+    "assessmentPreviouslyFailed": "No analysis yet — the last attempt failed ({reason}). Try again once the AI service is running.",
+    "assessmentSummaryHeading": "Summary for you",
+    "assessmentDifferentialHeading": "Possibilities to consider",
+    "assessmentDifferentialHint": "Ranked possibilities with the findings behind each. Not a diagnosis — your finalised impression is the only part of the record that may state one.",
+    "assessmentRedFlagsHeading": "Concerns the model raised",
+    "assessmentRedFlagsHint": "Separate from the deterministic red flags on the left, which were raised before any model ran and are not the model's to change.",
+    "assessmentNextStepsHeading": "Suggested investigations",
+    "assessmentAdoptSteps": "Use these as my next steps",
+    "assessmentAdoptStepsHint": "Copies them into your own next steps, where you can edit them. Medication is never suggested here and cannot be released.",
+    "assessmentGeneratedAt": "Generated {date}"
   },
   "admin": {
     "heading": "Clinical content",
@@ -348,5 +363,13 @@
   "auth.mfa.not_enrolled": "No second factor is set up yet. Reload this page to start.",
   "auth.mfa.invalid_code": "That code is not right. Check your authenticator app and try the current code.",
   "auth.mfa.secret_unreadable": "Your second factor cannot be read on this server. An administrator needs to reset it.",
-  "doctor.claim.already_assigned": "Another doctor has already taken this case."
+  "doctor.claim.already_assigned": "Another doctor has already taken this case.",
+  "doctor.assessment.not_consented": "This patient did not consent to AI-assisted analysis, so none can be produced. Review the answers directly.",
+  "doctor.assessment.ai_service_not_configured": "AI_SERVICE_URL is not configured on the server.",
+  "doctor.assessment.ai_service_unreachable": "The AI service is not reachable. Start it and try again.",
+  "doctor.assessment.ai_service_timeout": "The AI service took too long to answer. A locally hosted model may need a longer timeout.",
+  "doctor.assessment.ai_service_unauthorised": "The AI service rejected this request. Check AI_SERVICE_TOKEN on both sides.",
+  "doctor.assessment.model_unavailable": "The AI service is running but its model is not answering. Check that the model server is up.",
+  "doctor.assessment.schema_violations_exhausted": "The model could not produce a valid analysis after several attempts. Nothing was saved.",
+  "doctor.assessment.failed": "The analysis could not be produced. Nothing was saved."
 }

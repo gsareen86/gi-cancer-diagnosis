@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { api, type ApiProblem } from '@/lib/api-client';
 import { Badge, Card, Notice, type Tone } from '@/components/primitives';
 import { ReleaseDialog } from './release-dialog';
+import { AiAnalysis, type AssessmentPayload } from './ai-analysis';
 
 /**
  * Everything the doctor needs on one screen: the answers grouped by symptom cluster with the
@@ -59,6 +60,7 @@ export interface CaseReviewData {
     promptVersion: string;
     kbVersion: string;
     groundingChunkCount: number;
+    generatedAt?: string | null;
     failureReason: string | null;
     payload: AssessmentPayload | null;
   } | null;
@@ -68,20 +70,6 @@ export interface CaseReviewData {
     finalSummary: unknown;
     doctorNotes: string | null;
   } | null;
-}
-
-interface AssessmentPayload {
-  differential_assessment: Array<{
-    condition: string;
-    likelihood: 'high' | 'moderate' | 'low';
-    supporting_findings: string[];
-    contradicting_or_atypical_findings: string[];
-    suggested_confirmatory_steps: string[];
-  }>;
-  red_flags: Array<{ flag: string; basis: string; urgency: string }>;
-  recommended_next_steps: string[];
-  clinician_summary: string;
-  disclaimer: string;
 }
 
 interface DifferentialDraft {
@@ -268,58 +256,19 @@ export function CaseReview({ caseId, data }: { caseId: string; data: CaseReviewD
 
       {/* Right column: the AI summary, then the doctor's own review. */}
       <div className="space-y-5">
-        <Card>
-          <h2 className="text-lg">{t('assessmentHeading')}</h2>
-
-          {payload === null ? (
-            <div className="mt-3">
-              <Notice tone="neutral" role="note">
-                {data.case.aiSkipReason ?? t('assessmentAbsent')}
-              </Notice>
-            </div>
-          ) : (
-            <>
-              {data.assessment?.outcome === 'ungrounded' && (
-                <div className="mt-3">
-                  <Notice tone="urgent" role="note">
-                    {t('assessmentUngrounded')}
-                  </Notice>
-                </div>
-              )}
-
-              <p className="gi-hint">
-                {t('assessmentVersions', {
-                  model: data.assessment?.modelVersion ?? '',
-                  prompt: data.assessment?.promptVersion ?? '',
-                  kb: data.assessment?.kbVersion ?? '',
-                })}
-              </p>
-
-              <p className="mt-4 whitespace-pre-wrap text-ink-muted">{payload.clinician_summary}</p>
-
-              <ul className="mt-5 space-y-4">
-                {payload.differential_assessment.map((item) => (
-                  <li key={item.condition} className="rounded-lg border border-line p-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="font-medium">{item.condition}</span>
-                      <Badge tone={item.likelihood === 'high' ? 'urgent' : 'neutral'}>
-                        {t('likelihood')}: {t(likelihoodKey(item.likelihood))}
-                      </Badge>
-                    </div>
-                    <FindingList label={t('supporting')} items={item.supporting_findings} />
-                    <FindingList
-                      label={t('contradicting')}
-                      items={item.contradicting_or_atypical_findings}
-                    />
-                    <FindingList label={t('confirmatory')} items={item.suggested_confirmatory_steps} />
-                  </li>
-                ))}
-              </ul>
-
-              <p className="mt-4 text-sm text-ink-faint">{payload.disclaimer}</p>
-            </>
-          )}
-        </Card>
+        <AiAnalysis
+          caseId={caseId}
+          assessment={
+            data.assessment === null
+              ? null
+              : { ...data.assessment, generatedAt: data.assessment.generatedAt ?? null }
+          }
+          aiSkipReason={data.case.aiSkipReason}
+          // Investigations may be adopted; the model's prose may not. The finalisation check
+          // refuses a pass-through of its summary either way.
+          onAdoptNextSteps={(steps) => setNextSteps(steps.join('\n'))}
+          readOnly={released}
+        />
 
         <Card>
           <h2 className="text-lg">{t('yourReviewHeading')}</h2>
@@ -433,27 +382,6 @@ export function CaseReview({ caseId, data }: { caseId: string; data: CaseReviewD
           }}
         />
       )}
-    </div>
-  );
-}
-
-/** Maps a likelihood to its catalogue key, so the value the model emits is never displayed raw. */
-function likelihoodKey(likelihood: 'high' | 'moderate' | 'low'): 'likelihoodHigh' | 'likelihoodModerate' | 'likelihoodLow' {
-  if (likelihood === 'high') return 'likelihoodHigh';
-  if (likelihood === 'moderate') return 'likelihoodModerate';
-  return 'likelihoodLow';
-}
-
-function FindingList({ label, items }: { label: string; items: string[] }) {
-  if (items.length === 0) return null;
-  return (
-    <div className="mt-2">
-      <p className="text-sm font-medium text-ink-muted">{label}</p>
-      <ul className="list-inside list-disc text-sm">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
     </div>
   );
 }

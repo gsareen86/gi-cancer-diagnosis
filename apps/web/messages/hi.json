@@ -265,7 +265,22 @@
     "likelihoodLow": "कम",
     "unassignedHeading": "अनासाइन किए गए केस",
     "unassignedIntro": "ये बिना किसी डॉक्टर को सौंपे जमा किए गए थे। समीक्षा की ज़िम्मेदारी लेने के लिए कोई एक चुनें।",
-    "claim": "समीक्षा के लिए लें"
+    "claim": "समीक्षा के लिए लें",
+    "assessmentGenerate": "AI विश्लेषण तैयार करें",
+    "assessmentRegenerate": "फिर चलाएँ",
+    "assessmentRunning": "विश्लेषण हो रहा है…",
+    "assessmentRunningHint": "इस केस का विश्लेषण हो रहा है। स्थानीय मॉडल में एक-दो मिनट लग सकते हैं।",
+    "assessmentFailed": "विश्लेषण तैयार नहीं हो सका",
+    "assessmentPreviouslyFailed": "अभी कोई विश्लेषण नहीं — पिछला प्रयास विफल रहा ({reason})। AI सेवा चलने पर फिर कोशिश करें।",
+    "assessmentSummaryHeading": "आपके लिए सारांश",
+    "assessmentDifferentialHeading": "विचार करने योग्य संभावनाएँ",
+    "assessmentDifferentialHint": "हर संभावना के पीछे के निष्कर्षों सहित क्रमबद्ध सूची। यह निदान नहीं है — रिकॉर्ड में केवल आपकी अंतिम राय ही निष्कर्ष बता सकती है।",
+    "assessmentRedFlagsHeading": "मॉडल द्वारा उठाई गई चिंताएँ",
+    "assessmentRedFlagsHint": "बाईं ओर के नियम-आधारित चेतावनी संकेतों से अलग, जो किसी भी मॉडल से पहले उठाए गए थे।",
+    "assessmentNextStepsHeading": "सुझाई गई जाँचें",
+    "assessmentAdoptSteps": "इन्हें मेरे अगले कदम बनाएँ",
+    "assessmentAdoptStepsHint": "ये आपके अपने अगले कदमों में कॉपी हो जाएँगे। दवा यहाँ कभी सुझाई नहीं जाती।",
+    "assessmentGeneratedAt": "{date} को तैयार"
   },
   "admin": {
     "heading": "नैदानिक सामग्री",
@@ -348,5 +363,13 @@
   "auth.mfa.not_enrolled": "अभी कोई दूसरा सुरक्षा चरण सेट नहीं है। शुरू करने के लिए यह पृष्ठ फिर लोड करें।",
   "auth.mfa.invalid_code": "यह कोड सही नहीं है। अपना ऑथेंटिकेटर ऐप देखें और वर्तमान कोड आज़माएँ।",
   "auth.mfa.secret_unreadable": "इस सर्वर पर आपका दूसरा सुरक्षा चरण पढ़ा नहीं जा सकता। प्रशासक को इसे रीसेट करना होगा।",
-  "doctor.claim.already_assigned": "यह केस पहले ही किसी अन्य डॉक्टर ने ले लिया है।"
+  "doctor.claim.already_assigned": "यह केस पहले ही किसी अन्य डॉक्टर ने ले लिया है।",
+  "doctor.assessment.not_consented": "इस मरीज़ ने AI-सहायित विश्लेषण की सहमति नहीं दी। सीधे उत्तर देखें।",
+  "doctor.assessment.ai_service_not_configured": "सर्वर पर AI_SERVICE_URL कॉन्फ़िगर नहीं है।",
+  "doctor.assessment.ai_service_unreachable": "AI सेवा तक पहुँच नहीं हो पा रही। उसे चालू करके फिर कोशिश करें।",
+  "doctor.assessment.ai_service_timeout": "AI सेवा ने उत्तर देने में बहुत समय लिया।",
+  "doctor.assessment.ai_service_unauthorised": "AI सेवा ने यह अनुरोध अस्वीकार किया। दोनों ओर AI_SERVICE_TOKEN जाँचें।",
+  "doctor.assessment.model_unavailable": "AI सेवा चल रही है पर उसका मॉडल उत्तर नहीं दे रहा।",
+  "doctor.assessment.schema_violations_exhausted": "कई प्रयासों के बाद भी मॉडल मान्य विश्लेषण नहीं दे सका।",
+  "doctor.assessment.failed": "विश्लेषण तैयार नहीं हो सका। कुछ सहेजा नहीं गया।"
 }

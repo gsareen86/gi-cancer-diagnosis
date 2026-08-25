@@ -97,7 +97,23 @@ export type AssessmentOutcome =
  * already in the doctor's queue — the assessment is an addition to that review, never a
  * precondition for it.
  */
-export async function requestAssessment(caseId: string): Promise<AssessmentOutcome> {
+export interface AssessmentRunOptions {
+  /**
+   * Whether this run drives the case through `ai_processing` to `ai_processed`.
+   *
+   * True for the automatic run after submission, which is part of the case's lifecycle. False
+   * when a doctor asks for a fresh analysis from the review screen: the case is already in
+   * review, those transitions are not legal from there, and how many times the model ran is not
+   * a fact about where the case sits in its lifecycle.
+   */
+  driveCaseStatus?: boolean;
+}
+
+export async function requestAssessment(
+  caseId: string,
+  options: AssessmentRunOptions = {},
+): Promise<AssessmentOutcome> {
+  const driveCaseStatus = options.driveCaseStatus ?? true;
   const db = database();
   const repo = clinical();
 
@@ -107,15 +123,17 @@ export async function requestAssessment(caseId: string): Promise<AssessmentOutco
   // The consent check happens immediately before any clinical content could leave the platform.
   // A patient who withdrew between submitting and this job running sends nothing.
   if (!(await hasConsentFor(db, meta.patientId, 'ai_assisted_analysis'))) {
-    const context = systemContext(meta.patientId, 'account_processing');
-    await repo.transitionCase(context, caseId, 'ai_skipped', {
-      aiSkipReason: 'Consent for AI-assisted analysis was withdrawn before processing began.',
-    });
+    if (driveCaseStatus) {
+      const skipContext = systemContext(meta.patientId, 'account_processing');
+      await repo.transitionCase(skipContext, caseId, 'ai_skipped', {
+        aiSkipReason: 'Consent for AI-assisted analysis was withdrawn before processing began.',
+      });
+    }
     return { status: 'skipped', reason: 'consent_withdrawn' };
   }
 
   const context = systemContext(meta.patientId, 'ai_assisted_analysis');
-  await repo.transitionCase(context, caseId, 'ai_processing');
+  if (driveCaseStatus) await repo.transitionCase(context, caseId, 'ai_processing');
 
   const summary = await compileSummaryForCase(caseId, meta);
   const taxonomy = await loadTaxonomy();
@@ -161,7 +179,7 @@ export async function requestAssessment(caseId: string): Promise<AssessmentOutco
         payload: { ...validation.assessment, disclaimer: MANDATORY_DISCLAIMER },
       });
 
-      await repo.transitionCase(context, caseId, 'ai_processed');
+      if (driveCaseStatus) await repo.transitionCase(context, caseId, 'ai_processed');
       return {
         status: 'generated',
         assessmentId: stored?.id ?? '',
@@ -170,23 +188,47 @@ export async function requestAssessment(caseId: string): Promise<AssessmentOutco
     } catch (error) {
       console.error('[assessment] attempt failed', { caseId, attempt, error });
       if (attempt === MAX_ASSESSMENT_ATTEMPTS) {
-        return recordUnavailable(caseId, context, 'provider_error', rejections);
+        return recordUnavailable(caseId, context, describeFailure(error), rejections, driveCaseStatus);
       }
     }
   }
 
-  return recordUnavailable(caseId, context, 'schema_violations_exhausted', rejections);
+  return recordUnavailable(caseId, context, 'schema_violations_exhausted', rejections, driveCaseStatus);
 }
 
 /**
  * Retry budget spent. The case goes to the doctor marked "AI assessment unavailable" and is
  * reviewed from the raw answers — which is a worse review, not an absent one.
  */
+/**
+ * Turns a thrown error into something a reviewing doctor can act on.
+ *
+ * "provider_error" told them nothing — not whether the service was down, unreachable, or refusing
+ * the request — so a failed analysis looked identical to one that was never asked for.
+ */
+function describeFailure(error: unknown): string {
+  if (!(error instanceof Error)) return 'provider_error';
+  const message = error.message.toLowerCase();
+
+  if (message.includes('ai_service_url')) return 'ai_service_not_configured';
+  if (message.includes('fetch failed') || message.includes('econnrefused')) {
+    return 'ai_service_unreachable';
+  }
+  if (message.includes('timed out') || error.name === 'TimeoutError') return 'ai_service_timeout';
+  if (message.includes('responded 401') || message.includes('responded 403')) {
+    return 'ai_service_unauthorised';
+  }
+  if (message.includes('responded 502')) return 'model_unavailable';
+  if (message.includes('responded')) return `ai_service_error:${error.message.slice(0, 80)}`;
+  return 'provider_error';
+}
+
 async function recordUnavailable(
   caseId: string,
   context: ReturnType<typeof systemContext>,
   reason: string,
   rejections: AssessmentRejection[] | undefined,
+  driveCaseStatus = true,
 ): Promise<AssessmentOutcome> {
   const repo = clinical();
   await repo.recordAssessment(context, {
@@ -199,7 +241,7 @@ async function recordUnavailable(
     payload: null,
     failureReason: reason,
   });
-  await repo.transitionCase(context, caseId, 'ai_processed');
+  if (driveCaseStatus) await repo.transitionCase(context, caseId, 'ai_processed');
   return rejections === undefined
     ? { status: 'unavailable', reason }
     : { status: 'unavailable', reason, rejections };
