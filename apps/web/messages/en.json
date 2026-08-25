@@ -52,7 +52,16 @@
     "verifyFailed": "That link is no longer valid. It may have been used already or expired.",
     "adultsOnly": "This service is currently for adults. If you are under 18, please see a doctor directly.",
     "mfaHeading": "Set up your second factor",
-    "mfaBody": "Accounts that can see patient records need a second factor. You cannot open a case until this is set up."
+    "mfaBody": "Accounts that can see patient records need a second factor. You cannot open a case until this is set up.",
+    "mfaSignInHeading": "Enter your code",
+    "mfaSignInBody": "Open your authenticator app and enter the current 6-digit code.",
+    "mfaScanHeading": "Scan this with your authenticator app",
+    "mfaScanBody": "Use any authenticator app — Google Authenticator, Authy, 1Password, or your password manager.",
+    "mfaQrAlt": "QR code for setting up your authenticator app",
+    "mfaCannotScan": "Cannot scan? Enter this key by hand",
+    "mfaCodeLabel": "6-digit code",
+    "mfaCodeHint": "The code changes every 30 seconds.",
+    "mfaVerify": "Verify and continue"
   },
   "profile": {
     "heading": "A few details about you",
@@ -253,7 +262,10 @@
     "sendMessage": "Send",
     "likelihoodHigh": "High",
     "likelihoodModerate": "Moderate",
-    "likelihoodLow": "Low"
+    "likelihoodLow": "Low",
+    "unassignedHeading": "Unassigned cases",
+    "unassignedIntro": "These were submitted with no doctor assigned. Claim one to take responsibility for reviewing it.",
+    "claim": "Claim for review"
   },
   "admin": {
     "heading": "Clinical content",
@@ -331,5 +343,10 @@
   "review.finalize.contains_treatment": "Remove the medication or dose. Prescribing is not part of this system.",
   "review.release.no_review": "There is no review to release.",
   "review.release.not_finalized": "Finalize the review before releasing it.",
-  "review.release.already_released": "This has already been released."
+  "review.release.already_released": "This has already been released.",
+  "auth.mfa.already_enrolled": "A second factor is already set up for this account. Contact an administrator to reset it.",
+  "auth.mfa.not_enrolled": "No second factor is set up yet. Reload this page to start.",
+  "auth.mfa.invalid_code": "That code is not right. Check your authenticator app and try the current code.",
+  "auth.mfa.secret_unreadable": "Your second factor cannot be read on this server. An administrator needs to reset it.",
+  "doctor.claim.already_assigned": "Another doctor has already taken this case."
 }

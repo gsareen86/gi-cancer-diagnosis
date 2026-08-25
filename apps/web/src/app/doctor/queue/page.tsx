@@ -1,7 +1,8 @@
 import { getFormatter, getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Badge, Card, PageHeading, type Tone } from '@/components/primitives';
+import { Badge, Card, Notice, PageHeading, type Tone } from '@/components/primitives';
+import { ClaimButton } from '@/components/doctor/claim-button';
 import { clinical } from '@/server/db';
 import { currentUser } from '@/lib/session';
 
@@ -21,7 +22,11 @@ export default async function DoctorQueuePage() {
   if (user.role !== 'doctor') redirect('/');
   if (user.mfaPending) redirect('/mfa');
 
-  const cases = await clinical().listDoctorQueue(user.id, 'doctor');
+  const repo = clinical();
+  const cases = await repo.listDoctorQueue(user.id, 'doctor');
+  // Cases nobody owns. Assignment happens at submission, so one submitted before any doctor
+  // existed has no owner and would otherwise be invisible to every queue.
+  const claimable = await repo.listClaimableCases('doctor');
 
   const rank = (urgency: string | null): number =>
     urgency === 'emergency' ? 0 : urgency === 'urgent' ? 1 : urgency === 'routine-but-flagged' ? 2 : 3;
@@ -46,6 +51,43 @@ export default async function DoctorQueuePage() {
   return (
     <div>
       <PageHeading>{t('queueHeading')}</PageHeading>
+
+      {claimable.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-lg">{t('unassignedHeading')}</h2>
+          <div className="mt-1">
+            <Notice tone="urgent" role="note">
+              {t('unassignedIntro')}
+            </Notice>
+          </div>
+
+          <ul className="mt-4 space-y-3">
+            {claimable.map((entry) => (
+              <Card key={entry.id} as="li" className="border-l-4 border-l-urgent">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {entry.highestUrgency === null ? (
+                        <Badge tone="neutral">{t('noFlags')}</Badge>
+                      ) : (
+                        <Badge tone={tone[entry.highestUrgency] ?? 'neutral'}>
+                          {label[entry.highestUrgency] ?? entry.highestUrgency}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm text-ink-muted">
+                      {t('submittedAgo', {
+                        date: format.relativeTime(entry.submittedAt ?? entry.createdAt),
+                      })}
+                    </p>
+                  </div>
+                  <ClaimButton caseId={entry.id} />
+                </div>
+              </Card>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {sorted.length === 0 ? (
         <p className="text-ink-muted">{t('queueEmpty')}</p>

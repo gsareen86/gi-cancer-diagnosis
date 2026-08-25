@@ -19,7 +19,8 @@
     "dev:web": "./scripts/dev-server.sh",
     "e2e:patient": "node e2e/patient-walkthrough.mjs",
     "e2e:doctor": "node e2e/doctor-review.mjs",
-    "test:repo": "vitest run --config vitest.repo.config.ts"
+    "test:repo": "vitest run --config vitest.repo.config.ts",
+    "user": "tsx --env-file-if-exists=.env apps/web/scripts/manage-users.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

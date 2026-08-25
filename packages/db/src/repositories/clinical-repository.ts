@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, notInArray } from 'drizzle-orm';
 import type { AnswerValue, RecordedAnswer, TriggeredRedFlag } from '@gi-compass/core';
 import {
   aiAssessments,
@@ -487,6 +487,112 @@ export class ClinicalRepository {
    * queue spans many patients. It is scoped by live assignment instead, carries no clinical
    * findings beyond each case's highest red-flag urgency, and writes its own audit entry.
    */
+  /**
+   * Submitted cases that no doctor is responsible for.
+   *
+   * These exist because assignment happens at submission: a case submitted before any doctor
+   * account existed found nobody to assign, and — since a doctor only ever sees cases assigned to
+   * them — became invisible to everyone. A submitted case with no owner is the one state a
+   * clinical queue must never hide, so it is surfaced for any doctor to claim.
+   */
+  async listClaimableCases(actorRole: AccessContext['actor']['role']) {
+    if (actorRole !== 'doctor') {
+      throw new AuthorizationError('only a doctor may load the unassigned queue');
+    }
+
+    const liveAssignments = this.#db
+      .select({ caseId: caseAssignments.caseId })
+      .from(caseAssignments)
+      .where(isNull(caseAssignments.endedAt));
+
+    const rows = await this.#db
+      .select({
+        id: cases.id,
+        status: cases.status,
+        entryPointId: cases.entryPointId,
+        patientId: cases.patientId,
+        createdAt: cases.createdAt,
+        submittedAt: cases.submittedAt,
+        aiSkipReason: cases.aiSkipReason,
+      })
+      .from(cases)
+      .where(
+        and(
+          isNull(cases.assignedDoctorId),
+          notInArray(cases.id, liveAssignments),
+          inArray(cases.status, [
+            'submitted',
+            'ai_processing',
+            'ai_processed',
+            'ai_skipped',
+            'in_review',
+          ]),
+        ),
+      )
+      .orderBy(asc(cases.submittedAt));
+
+    return this.#withUrgency(rows);
+  }
+
+  /**
+   * Takes responsibility for an unassigned case.
+   *
+   * Refuses one that already has a live assignment, so two doctors opening the queue at the same
+   * moment cannot both come away believing the case is theirs.
+   */
+  async claimCase(context: AccessContext, caseId: string, doctorId: string) {
+    const [existing] = await this.#db
+      .select({ id: caseAssignments.id })
+      .from(caseAssignments)
+      .where(and(eq(caseAssignments.caseId, caseId), isNull(caseAssignments.endedAt)))
+      .limit(1);
+
+    if (existing) {
+      throw new AuthorizationError('this case already has a reviewing doctor');
+    }
+
+    return this.#withAccess(
+      context,
+      { action: 'case.claim', targetType: 'case', targetId: caseId, metadata: { doctorId } },
+      async (tx) => {
+        const [assignment] = await tx
+          .insert(caseAssignments)
+          .values({ caseId, doctorId, assignedBy: doctorId })
+          .returning();
+        await tx.update(cases).set({ assignedDoctorId: doctorId }).where(eq(cases.id, caseId));
+        return assignment ?? null;
+      },
+    );
+  }
+
+  /** Attaches each case's highest red-flag urgency, which is what orders a review queue. */
+  async #withUrgency<T extends { id: string }>(rows: T[]) {
+    const flags =
+      rows.length === 0
+        ? []
+        : await this.#db
+            .select({ caseId: redFlagTriggers.caseId, urgency: redFlagTriggers.urgency })
+            .from(redFlagTriggers)
+            .where(
+              inArray(
+                redFlagTriggers.caseId,
+                rows.map((row) => row.id),
+              ),
+            );
+
+    return rows.map((row) => {
+      const urgencies = flags.filter((flag) => flag.caseId === row.id).map((flag) => flag.urgency);
+      const highest = urgencies.includes('emergency')
+        ? 'emergency'
+        : urgencies.includes('urgent')
+          ? 'urgent'
+          : urgencies.includes('routine-but-flagged')
+            ? 'routine-but-flagged'
+            : null;
+      return { ...row, highestUrgency: highest, flagCount: urgencies.length };
+    });
+  }
+
   async listDoctorQueue(doctorId: string, actorRole: AccessContext['actor']['role']) {
     if (actorRole !== 'doctor') {
       throw new AuthorizationError('only a doctor may load a review queue');

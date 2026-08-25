@@ -13,9 +13,10 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 
-from . import embeddings, retrieval
+from . import embeddings, provider, retrieval
 from .extraction import extract_document
-from .model import ModelOutputError, ModelRefusalError, generate_assessment, model_id
+from .local_model import LocalModelError
+from .model import ModelOutputError, ModelRefusalError
 from .schemas import (
     AssessmentRequest,
     AssessmentResponse,
@@ -54,8 +55,8 @@ def require_service_token(
 def health() -> dict[str, object]:
     return {
         "status": "ok",
-        "model": model_id(),
         "semanticRetrieval": embeddings.semantic_retrieval_available(),
+        **provider.describe(),
     }
 
 
@@ -79,7 +80,7 @@ def assess(
             print(f"[retrieval] failed, continuing ungrounded: {error}")
 
     try:
-        assessment = generate_assessment(request, [chunk.text for chunk in chunks])
+        assessment = provider.generate_assessment(request, [chunk.text for chunk in chunks])
     except ModelRefusalError as error:
         raise HTTPException(
             status_code=422,
@@ -87,10 +88,18 @@ def assess(
         ) from error
     except ModelOutputError as error:
         raise HTTPException(status_code=502, detail={"reason": "no_tool_call"}) from error
+    except LocalModelError as error:
+        # The local server is unreachable or misconfigured. Surfaced rather than retried here:
+        # the core application's retry budget covers transient failures, and a stopped server is
+        # not one.
+        raise HTTPException(
+            status_code=502,
+            detail={"reason": "local_model_unavailable", "detail": str(error)},
+        ) from error
 
     return AssessmentResponse(
         assessment=assessment,
-        modelVersion=model_id(),
+        modelVersion=provider.model_id(),
         kbVersion=_kb_version(),
         retrievedChunkIds=[chunk.chunk_id for chunk in chunks],
         grounded=grounded,

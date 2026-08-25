@@ -1,6 +1,10 @@
 import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
-import { Notice, PageHeading } from '@/components/primitives';
+import { eq } from 'drizzle-orm';
+import { tables } from '@gi-compass/db';
+import { PageHeading } from '@/components/primitives';
+import { MfaEnrolment } from '@/components/mfa-enrolment';
+import { database } from '@/server/db';
 import { currentUser } from '@/lib/session';
 
 /**
@@ -16,12 +20,20 @@ export default async function MfaPage() {
   if (user === null) redirect('/login');
   if (!user.mfaPending) redirect('/');
 
+  const [factor] = await database()
+    .select({ confirmedAt: tables.totpFactors.confirmedAt })
+    .from(tables.totpFactors)
+    .where(eq(tables.totpFactors.userId, user.id))
+    .limit(1);
+
+  const alreadyEnrolled = factor?.confirmedAt != null;
+
   return (
     <div className="mx-auto max-w-reading">
-      <PageHeading>{t('mfaHeading')}</PageHeading>
-      <Notice tone="urgent" role="note">
-        {t('mfaBody')}
-      </Notice>
+      <PageHeading lead={alreadyEnrolled ? t('mfaSignInBody') : t('mfaBody')}>
+        {alreadyEnrolled ? t('mfaSignInHeading') : t('mfaHeading')}
+      </PageHeading>
+      <MfaEnrolment alreadyEnrolled={alreadyEnrolled} />
     </div>
   );
 }

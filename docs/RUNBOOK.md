@@ -135,21 +135,31 @@ http://localhost:8025.
 
 ## 6. First accounts
 
-The seed creates a `platform_admin` with an unusable password hash — the account exists to own the
-seeded content and **cannot be signed into**. Bootstrap a real one out of band:
+Roles are never self-selected — registration always yields a patient — so the first doctor is
+created from the command line:
 
-```sql
-UPDATE users SET email = 'you@your-practice.example', password_hash = '<argon2id hash>',
-                 status = 'active'
- WHERE email = 'bootstrap-admin@gi-compass.invalid';
+```bash
+npm run user -- create doctor doctor@your-practice.example
+npm run user -- create clinical_admin admin@your-practice.example
+npm run user -- list
 ```
 
-Then grant the clinical-admin and doctor roles from that account. Roles are never self-selected:
-registration always yields `patient`.
+`create` prints a generated password once. `grant <role> <email>` changes an existing account's
+role, and `reset-mfa <email>` clears a lost second factor so it can be enrolled again.
 
-Doctor, clinical-admin, and platform-admin accounts require a second factor. Until one is enrolled,
-such an account holds an enrolment-scoped session that reaches the MFA endpoints and nothing else —
-in particular, no patient clinical data.
+The seeded `platform_admin` exists to own the seeded content and carries an unusable password
+hash: it cannot be signed into, by design.
+
+Doctor, clinical-admin, and platform-admin accounts require a second factor. Signing in for the
+first time lands on enrolment — scan the QR with any authenticator app, or type the key in — and
+until that is done the session reaches the MFA endpoints and nothing else. In particular it cannot
+read any patient clinical data.
+
+### Cases with no doctor
+
+Assignment happens at submission. A case submitted while no doctor account existed has no owner,
+and since a doctor only sees cases assigned to them it would otherwise be invisible to everyone.
+Those appear at the top of the review queue as **Unassigned**, for any doctor to claim.
 
 ## 7. Retention
 

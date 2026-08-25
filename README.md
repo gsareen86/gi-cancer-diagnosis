@@ -58,6 +58,41 @@ inside `apps/web` also works and takes precedence, and real environment variable
 server validates its configuration at startup and refuses to boot if anything required is missing,
 rather than failing later on a request.
 
+### Seeing the doctor's side
+
+Roles are granted, never self-selected, so the first doctor is created from the command line:
+
+```bash
+npm run user -- create doctor doctor@example.com     # prints a generated password once
+npm run user -- list
+npm run user -- reset-mfa doctor@example.com         # if the authenticator is lost
+```
+
+Sign in and the app lands on second-factor enrolment — scan the QR with any authenticator app,
+or type the key. Until that is done the session reaches the MFA endpoints and nothing else. After
+it, `/doctor/queue` lists the cases awaiting review, emergency-flagged first, plus any
+**unassigned** case for the taking.
+
+### Running the model locally
+
+The AI service is Python (`services/ai`) and is the only component that talks to a model provider.
+It supports a locally hosted model, which means no clinical content leaves the machine:
+
+```bash
+llama-server.exe -m <model>.gguf --host 127.0.0.1 --port 8080 -c 16384 -ngl 99 --flash-attn on
+```
+
+```ini
+AI_PROVIDER=llamacpp
+LLAMA_SERVER_URL=http://127.0.0.1:8080
+LOCAL_MODEL_CONTEXT=16384
+```
+
+The shape of the response is guaranteed either way: against Claude by a forced tool call with a
+strict schema, against llama.cpp by constrained decoding, which compiles the same JSON Schema into
+a grammar so a non-conforming token cannot be sampled. Both are then validated server-side by the
+core application, which is the actual control.
+
 End-to-end browser walkthroughs live in [`e2e/`](e2e/README.md).
 
 ---
