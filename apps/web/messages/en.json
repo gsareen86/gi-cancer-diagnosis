@@ -269,7 +269,7 @@
     "assessmentGenerate": "Generate AI analysis",
     "assessmentRegenerate": "Run again",
     "assessmentRunning": "Analysing…",
-    "assessmentRunningHint": "Analysing this case. A locally hosted model can take a minute or two.",
+    "assessmentRunningHint": "Analysing this case. A locally hosted model can take several minutes. You can leave this page open.",
     "assessmentFailed": "The analysis could not be produced",
     "assessmentPreviouslyFailed": "No analysis yet — the last attempt failed ({reason}). Try again once the AI service is running.",
     "assessmentSummaryHeading": "Summary for you",

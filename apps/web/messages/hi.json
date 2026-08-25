@@ -269,7 +269,7 @@
     "assessmentGenerate": "AI विश्लेषण तैयार करें",
     "assessmentRegenerate": "फिर चलाएँ",
     "assessmentRunning": "विश्लेषण हो रहा है…",
-    "assessmentRunningHint": "इस केस का विश्लेषण हो रहा है। स्थानीय मॉडल में एक-दो मिनट लग सकते हैं।",
+    "assessmentRunningHint": "इस केस का विश्लेषण हो रहा है। स्थानीय मॉडल में कई मिनट लग सकते हैं। आप यह पेज खुला छोड़ सकते हैं।",
     "assessmentFailed": "विश्लेषण तैयार नहीं हो सका",
     "assessmentPreviouslyFailed": "अभी कोई विश्लेषण नहीं — पिछला प्रयास विफल रहा ({reason})। AI सेवा चलने पर फिर कोशिश करें।",
     "assessmentSummaryHeading": "आपके लिए सारांश",

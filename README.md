@@ -31,17 +31,42 @@ The audit trail is append-only at the **privilege** level: the application role 
 
 ## Running it
 
+Once, to set up:
+
 ```bash
 npm ci
 cp .env.example .env               # in the repository root — see the note below
-docker compose up -d               # PostgreSQL 16 + pgvector  (or ./scripts/dev-postgres.sh)
-npm run db:migrate && npm run db:seed
-npm run build -w @gi-compass/web
-./scripts/dev-server.sh            # http://localhost:3000
-
-npm test                           # 393 TypeScript tests
 cd services/ai && uv venv .venv && uv pip install --python .venv/bin/python -e ".[dev]"
-.venv/bin/python -m pytest         # 70 Python tests, no network
+```
+
+Then, every time:
+
+```bash
+npm run dev          # everything: postgres, mailpit, llama-server, the AI service, the web app
+npm run dev:status   # which of them is actually answering
+npm run dev:down     # stop all of it
+```
+
+Five processes have to be running before a case can reach a doctor with an AI analysis attached,
+and starting them by hand means five terminals and an order to remember — with the failure from a
+missing one surfacing much later as an unexplained error on a review screen. `npm run dev`
+migrates, seeds, rebuilds the web app only when a source file is newer than the build, and waits
+for each component to *answer* rather than sleeping and hoping. It prints what it started and
+where the logs are.
+
+If `LLAMA_SERVER_BIN` and `LLAMA_MODEL` are unset it starts everything else and says plainly that
+the model is not running. Nothing but the AI analysis button depends on it — emergency escalation
+included, which never touches the AI pipeline.
+
+`npm run dev:status` is the first thing to run when something is wrong. It distinguishes a
+component that is not running from one that is listening but not answering, and names the model
+the local endpoint actually reports rather than the one configuration claims.
+
+Tests need none of that running except PostgreSQL:
+
+```bash
+npm test                                       # TypeScript
+cd services/ai && .venv/bin/python -m pytest    # Python, no network
 ```
 
 Registration sends a verification email, so `SMTP_URL` must point at a mail server. `docker

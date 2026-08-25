@@ -94,8 +94,9 @@ console.log(`   offers the button                 : ${has(before, 'Generate AI a
 
 console.log('3. press Generate AI analysis');
 await page.click('button:has-text("Generate AI analysis")');
-// A locally hosted model is slow; the stub is not, but wait as though it were.
-await page.waitForSelector('text=Possibilities to consider', { timeout: 120000 });
+// A locally hosted 27B on an APU generates at around ten tokens a second, so a full assessment
+// takes minutes. The stub answers instantly; wait as though it were the real thing.
+await page.waitForSelector('text=Possibilities to consider', { timeout: 420000 });
 await page.waitForTimeout(1000);
 await shot('02-analysis');
 

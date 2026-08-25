@@ -23,7 +23,10 @@ free_port() {
     # Windows: find the listener by port and kill the process tree.
     local pids
     pids=$(netstat -ano 2>/dev/null | grep -E "[:.]$PORT[[:space:]]" | grep -i LISTENING \
-      | awk '{print $NF}' | sort -u)
+      | awk '{print $NF}' | sort -u) || true
+    # The '|| true' is load-bearing: with nothing on the port grep exits 1, and under
+    # 'set -e' that killed this script before it opened its own log - a silent failure
+    # that read as the server refusing to start, when the port was simply already free.
     for pid in $pids; do
       [ -n "$pid" ] && taskkill //F //T //PID "$pid" > /dev/null 2>&1 || true
     done

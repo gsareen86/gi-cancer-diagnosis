@@ -54,6 +54,24 @@ export interface AiTransport {
   generate(payload: AssessmentRequestPayload): Promise<AssessmentServiceResponse>;
 }
 
+const DEFAULT_AI_TIMEOUT_MS = 600_000;
+
+/**
+ * How long to wait for an assessment.
+ *
+ * Ten minutes, matching the AI service's own budget rather than undercutting it. A locally hosted
+ * 27B model on an APU generates at around ten tokens a second, so a full assessment takes minutes
+ * — a two-minute limit here aborted work the model was still doing correctly, reported it to the
+ * doctor as a timeout, and left the server generating into a connection nobody was reading.
+ *
+ * Long is the right shape for this call: a doctor pressed a button and is waiting for the answer,
+ * and an assessment that arrives late is worth far more than one that never arrives.
+ */
+function aiRequestTimeoutMs(): number {
+  const configured = Number(process.env.AI_REQUEST_TIMEOUT_MS);
+  return Number.isFinite(configured) && configured > 0 ? configured : DEFAULT_AI_TIMEOUT_MS;
+}
+
 /** HTTP client for `services/ai`. The model provider key lives there and never here. */
 export const httpTransport: AiTransport = {
   async generate(payload) {
@@ -69,7 +87,7 @@ export const httpTransport: AiTransport = {
           : { authorization: `Bearer ${env().AI_SERVICE_TOKEN}` }),
       },
       body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(120_000),
+      signal: AbortSignal.timeout(aiRequestTimeoutMs()),
     });
 
     if (!response.ok) {
