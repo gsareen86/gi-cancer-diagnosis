@@ -39,24 +39,39 @@ def configured_provider() -> Provider:
     )
 
 
-def model_id() -> str:
-    return local_model.model_id() if configured_provider() == "llamacpp" else model.model_id()
+def configured_model_id() -> str:
+    """What the deployment claims is loaded. Reported by the health endpoint, never stored."""
+    if configured_provider() == "llamacpp":
+        return local_model.configured_model_id()
+    return model.model_id()
 
 
-def generate_assessment(request: AssessmentRequest, grounding: list[str]) -> dict[str, Any]:
+def generate_assessment(
+    request: AssessmentRequest, grounding: list[str]
+) -> tuple[dict[str, Any], str]:
+    """Returns the assessment and the model that actually produced it.
+
+    Both halves matter. The second is what gets stored against the case and shown to the reviewing
+    doctor as a version pin, and it has to describe what answered rather than what was configured
+    to answer — those came apart once, and a stub on the expected port produced summaries that
+    carried a real model's name.
+    """
     if configured_provider() == "llamacpp":
         return local_model.generate_assessment(request, grounding)
     return model.generate_assessment(request, grounding)
 
 
-def describe() -> dict[str, str]:
+def describe() -> dict[str, object]:
     """What the health endpoint reports, so a misconfiguration is visible before a case arrives."""
     provider = configured_provider()
     if provider == "llamacpp":
+        # Reports what is configured *and* what is actually listening, kept as separate fields
+        # rather than merged. When they disagree the disagreement is the useful part.
         return {
             "provider": provider,
-            "model": local_model.model_id(),
+            "configuredModel": local_model.configured_model_id(),
             "endpoint": local_model.base_url(),
             "context": str(local_model.context_size()),
+            **local_model.probe_server(),
         }
-    return {"provider": provider, "model": model.model_id(), "endpoint": "anthropic-api"}
+    return {"provider": provider, "configuredModel": model.model_id(), "endpoint": "anthropic-api"}

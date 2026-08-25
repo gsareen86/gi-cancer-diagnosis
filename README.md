@@ -88,6 +88,18 @@ LLAMA_SERVER_URL=http://127.0.0.1:8080
 LOCAL_MODEL_CONTEXT=16384
 ```
 
+Check what is actually answering before trusting a summary:
+
+```bash
+curl -s http://127.0.0.1:8000/health
+```
+
+`configuredModel` is what this file claims. `reachable` and `servedModel` are what the endpoint
+says about itself, which is the part worth reading — they are reported separately precisely so a
+disagreement is visible. `LOCAL_MODEL_NAME` is only a fallback label for a server that declines to
+name itself; what gets stored against a case and shown to the doctor as a version pin is always
+what actually answered.
+
 The shape of the response is guaranteed either way: against Claude by a forced tool call with a
 strict schema, against llama.cpp by constrained decoding, which compiles the same JSON Schema into
 a grammar so a non-conforming token cannot be sampled. Both are then validated server-side by the

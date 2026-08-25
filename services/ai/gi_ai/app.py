@@ -80,7 +80,9 @@ def assess(
             print(f"[retrieval] failed, continuing ungrounded: {error}")
 
     try:
-        assessment = provider.generate_assessment(request, [chunk.text for chunk in chunks])
+        assessment, served_model = provider.generate_assessment(
+            request, [chunk.text for chunk in chunks]
+        )
     except ModelRefusalError as error:
         raise HTTPException(
             status_code=422,
@@ -99,7 +101,7 @@ def assess(
 
     return AssessmentResponse(
         assessment=assessment,
-        modelVersion=provider.model_id(),
+        modelVersion=served_model,
         kbVersion=_kb_version(),
         retrievedChunkIds=[chunk.chunk_id for chunk in chunks],
         grounded=grounded,

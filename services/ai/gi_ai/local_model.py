@@ -47,10 +47,47 @@ def base_url() -> str:
     return os.environ.get("LLAMA_SERVER_URL", DEFAULT_BASE_URL).rstrip("/")
 
 
-def model_id() -> str:
-    # llama-server ignores the model name and serves whatever was loaded, but recording it means
-    # a stored assessment still names what produced it.
+def configured_model_id() -> str:
+    """What the operator says is loaded. A label, not evidence.
+
+    llama-server ignores the model name in a request and serves whatever it was started with, so
+    this cannot confirm anything about what actually answered. Only useful as a fallback for a
+    server that declines to name itself.
+    """
     return os.environ.get("LOCAL_MODEL_NAME", "llamacpp/local")
+
+
+PROBE_TIMEOUT_SECONDS = 2.0
+"""Short. The health endpoint answers a human waiting at a terminal, not a case."""
+
+
+def probe_server(client: httpx.Client | None = None) -> dict[str, object]:
+    """Asks the configured endpoint what it is, for the health report.
+
+    Worth a network call on every health check, because the alternative is a health endpoint that
+    only ever confirms the configuration file back to whoever wrote it. What matters operationally
+    is whether anything is listening and whether it is the model the operator believes it is —
+    neither of which configuration can answer.
+    """
+    http = client or httpx.Client(timeout=PROBE_TIMEOUT_SECONDS)
+    try:
+        response = http.get(f"{base_url()}/v1/models")
+        if response.status_code != 200:
+            return {
+                "reachable": True,
+                "servedModel": None,
+                "note": f"answered {response.status_code} for /v1/models — not a llama-server",
+            }
+        entries = response.json().get("data") or []
+        served = entries[0].get("id") if entries and isinstance(entries[0], dict) else None
+        return {"reachable": True, "servedModel": served}
+    except httpx.HTTPError as error:
+        return {"reachable": False, "servedModel": None, "note": str(error)}
+    except (ValueError, AttributeError, IndexError) as error:
+        return {"reachable": True, "servedModel": None, "note": f"unreadable /v1/models: {error}"}
+    finally:
+        if client is None:
+            http.close()
 
 
 def max_tokens() -> int:
@@ -89,12 +126,17 @@ def generate_assessment(
     request: AssessmentRequest,
     grounding: list[str],
     client: httpx.Client | None = None,
-) -> dict[str, Any]:
-    """Calls the local server and returns the structured result verbatim.
+) -> tuple[dict[str, Any], str]:
+    """Calls the local server and returns the structured result verbatim, and what served it.
 
     Nothing is cleaned or repaired here, for the same reason as the hosted path: the core
     application validates against the authoritative schema, and a second, looser pass here would
     mask exactly the responses that validation exists to catch.
+
+    The model name comes out of the response, never out of configuration. Anything that speaks this
+    API can answer on this port, and a stored assessment that names a model on the operator's say-so
+    is worse than one that names nothing: a doctor reading the version pins has no way to tell that
+    the summary in front of them came from somewhere else entirely.
     """
     prompt = build_user_message(request, grounding)
 
@@ -103,7 +145,7 @@ def generate_assessment(
         print(f"[local-model] {warning}")
 
     payload = {
-        "model": model_id(),
+        "model": configured_model_id(),
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
@@ -166,4 +208,8 @@ def generate_assessment(
     if not isinstance(parsed, dict):
         raise LocalModelError("llama-server returned JSON that is not an object")
 
-    return parsed
+    served = body.get("model")
+    if not isinstance(served, str) or served.strip() == "":
+        served = configured_model_id()
+
+    return parsed, served

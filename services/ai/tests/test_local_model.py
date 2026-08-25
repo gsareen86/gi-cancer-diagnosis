@@ -28,10 +28,17 @@ def stub_client(
     return httpx.Client(transport=httpx.MockTransport(handler))
 
 
-def completion(content: object, status: int = 200) -> httpx.Response:
+def completion(
+    content: object, status: int = 200, model: str = "qwen3-27b-q4_k_m"
+) -> httpx.Response:
     body = content if isinstance(content, str) else json.dumps(content)
     return httpx.Response(
-        status, json={"choices": [{"message": {"role": "assistant", "content": body}}]}
+        status,
+        json={
+            # llama-server names what it actually loaded, regardless of what the request asked for.
+            "model": model,
+            "choices": [{"message": {"role": "assistant", "content": body}}],
+        },
     )
 
 
@@ -101,10 +108,40 @@ class TestResponseHandling:
         def handler(_: httpx.Request) -> httpx.Response:
             return completion(payload)
 
-        result = local_model.generate_assessment(make_request(), [], client=stub_client(handler))
+        result, _ = local_model.generate_assessment(
+            make_request(), [], client=stub_client(handler)
+        )
         # Not cleaned here: the caller validates against the authoritative schema, and quietly
         # dropping a field would hide what that validation exists to catch.
         assert result == payload
+
+    def test_names_the_model_the_server_actually_served(self, monkeypatch):
+        # The whole point. A stub answering on the configured port once produced summaries that
+        # carried the real model's name, because the name came from configuration rather than from
+        # whatever replied — so a doctor reading the version pins had no way to tell.
+        monkeypatch.setenv("LOCAL_MODEL_NAME", "qwen3-27b-q4_k_m")
+
+        def handler(_: httpx.Request) -> httpx.Response:
+            return completion({"case_id": "case-1"}, model="stub-llama-server/not-a-real-model")
+
+        _, served = local_model.generate_assessment(
+            make_request(), [], client=stub_client(handler)
+        )
+        assert served == "stub-llama-server/not-a-real-model"
+
+    def test_falls_back_to_the_configured_name_when_the_server_declines_to_say(self, monkeypatch):
+        monkeypatch.setenv("LOCAL_MODEL_NAME", "qwen3-27b-q4_k_m")
+
+        def handler(_: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                json={"choices": [{"message": {"role": "assistant", "content": "{}"}}]},
+            )
+
+        _, served = local_model.generate_assessment(
+            make_request(), [], client=stub_client(handler)
+        )
+        assert served == "qwen3-27b-q4_k_m"
 
     def test_reports_a_server_that_is_not_running_in_terms_an_operator_can_act_on(self):
         def handler(_: httpx.Request) -> httpx.Response:
@@ -182,3 +219,37 @@ class TestProviderSelection:
         assert described["provider"] == "llamacpp"
         assert described["endpoint"] == "http://127.0.0.1:8080"
         assert "context" in described
+
+
+class TestServerProbe:
+    """What the health endpoint reports about the far end.
+
+    Configuration can only ever confirm itself back to whoever wrote it. Asking the endpoint what
+    it is turns "the operator believes a 27B model is loaded" into something checkable, which is
+    the difference between noticing a stub on the wrong port in a second and not at all.
+    """
+
+    def test_names_the_model_the_endpoint_reports(self):
+        def handler(request: httpx.Request) -> httpx.Response:
+            assert request.url.path == "/v1/models"
+            return httpx.Response(200, json={"data": [{"id": "qwen3-27b-q4_k_m"}]})
+
+        result = local_model.probe_server(client=stub_client(handler))
+        assert result == {"reachable": True, "servedModel": "qwen3-27b-q4_k_m"}
+
+    def test_says_nothing_is_listening_rather_than_reporting_the_configured_name(self):
+        def handler(_: httpx.Request) -> httpx.Response:
+            raise httpx.ConnectError("connection refused")
+
+        result = local_model.probe_server(client=stub_client(handler))
+        assert result["reachable"] is False
+        assert result["servedModel"] is None
+
+    def test_flags_something_that_is_listening_but_is_not_a_llama_server(self):
+        def handler(_: httpx.Request) -> httpx.Response:
+            return httpx.Response(404, json={"error": "not found"})
+
+        result = local_model.probe_server(client=stub_client(handler))
+        assert result["reachable"] is True
+        assert result["servedModel"] is None
+        assert "not a llama-server" in result["note"]

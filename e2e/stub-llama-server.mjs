@@ -11,9 +11,20 @@ import { createServer } from 'node:http';
  *
  * Exists so this path can be verified without a multi-gigabyte download. It says nothing about
  * whether a real model's clinical reasoning is any good.
+ *
+ * Deliberately not on 8080. It used to default there, which is where a real llama-server lives, so
+ * leaving it running meant every case silently got the same canned summary — carrying the real
+ * model's name in its version pins, because the name came from configuration. Point the AI service
+ * at it explicitly:
+ *
+ *   node e2e/stub-llama-server.mjs
+ *   LLAMA_SERVER_URL=http://127.0.0.1:8099 ...start the AI service...
  */
 
-const PORT = Number(process.env.STUB_PORT ?? 8080);
+const PORT = Number(process.env.STUB_PORT ?? 8099);
+
+/** Names itself in every response, so an assessment it produced can never look like a real one. */
+const MODEL_ID = 'stub-llama-server/not-a-real-model';
 
 function firstEnum(schema, path) {
   const node = path.reduce((current, key) => current?.[key], schema);
@@ -75,6 +86,14 @@ function buildAssessment(schema, caseId, promptVersion) {
 }
 
 const server = createServer((request, response) => {
+  if (request.method === 'GET' && request.url === '/v1/models') {
+    // A real llama-server answers this, and the service's health probe asks it. Answering
+    // honestly is what makes a stub on the wrong port visible instead of invisible.
+    response.writeHead(200, { 'content-type': 'application/json' });
+    response.end(JSON.stringify({ object: 'list', data: [{ id: MODEL_ID, object: 'model' }] }));
+    return;
+  }
+
   if (request.method !== 'POST' || !request.url?.startsWith('/v1/chat/completions')) {
     response.writeHead(404, { 'content-type': 'application/json' });
     response.end(JSON.stringify({ error: 'not found' }));
@@ -114,6 +133,7 @@ const server = createServer((request, response) => {
     response.writeHead(200, { 'content-type': 'application/json' });
     response.end(
       JSON.stringify({
+        model: MODEL_ID,
         choices: [
           {
             message: {
@@ -129,4 +149,5 @@ const server = createServer((request, response) => {
 
 server.listen(PORT, '127.0.0.1', () => {
   console.log(`stub llama-server on http://127.0.0.1:${PORT} — not a model, a shape`);
+  console.log(`  serving as ${MODEL_ID}; point LLAMA_SERVER_URL here to use it`);
 });

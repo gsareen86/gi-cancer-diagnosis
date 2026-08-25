@@ -38,10 +38,13 @@ class RecordingClient:
         return self.response
 
 
-def tool_use_response(payload=ASSESSMENT, name=TOOL_NAME):
+def tool_use_response(payload=ASSESSMENT, name=TOOL_NAME, model="claude-opus-5-20260101"):
     return SimpleNamespace(
         stop_reason="tool_use",
         stop_details=None,
+        # The response names the snapshot that answered, which is what gets stored — an alias can
+        # resolve to a different one than the caller asked for.
+        model=model,
         content=[SimpleNamespace(type="tool_use", name=name, input=payload)],
     )
 
@@ -122,14 +125,22 @@ class TestRequestShape:
 class TestResponseHandling:
     def test_returns_the_tool_input_verbatim(self):
         client = RecordingClient(tool_use_response({"case_id": "case-1", "extra": "kept"}))
-        result = generate_assessment(make_request(), [], client=client)
+        result, _ = generate_assessment(make_request(), [], client=client)
         # Nothing is cleaned here: the caller validates against the authoritative schema, and
         # quietly dropping a field would hide exactly what that validation exists to catch.
         assert result == {"case_id": "case-1", "extra": "kept"}
 
     def test_parses_a_tool_input_that_arrives_as_a_string(self):
         client = RecordingClient(tool_use_response('{"case_id": "case-1"}'))
-        assert generate_assessment(make_request(), [], client=client) == {"case_id": "case-1"}
+        result, _ = generate_assessment(make_request(), [], client=client)
+        assert result == {"case_id": "case-1"}
+
+    def test_reports_the_snapshot_that_answered_not_the_alias_requested(self):
+        # What gets stored against the case and shown as a version pin. Reading it back off the
+        # response is the only way it describes what actually produced the assessment.
+        client = RecordingClient(tool_use_response(model="claude-opus-5-20260101"))
+        _, served = generate_assessment(make_request(), [], client=client)
+        assert served == "claude-opus-5-20260101"
 
     def test_raises_when_the_model_answers_without_calling_the_tool(self):
         response = SimpleNamespace(

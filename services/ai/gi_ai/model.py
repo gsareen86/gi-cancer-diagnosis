@@ -68,8 +68,12 @@ def generate_assessment(
     request: AssessmentRequest,
     grounding: list[str],
     client: anthropic.Anthropic | None = None,
-) -> dict[str, Any]:
-    """Calls the model and returns the tool input verbatim.
+) -> tuple[dict[str, Any], str]:
+    """Calls the model and returns the tool input verbatim, and which model answered.
+
+    The model name is read off the response rather than off configuration, so a stored assessment
+    names what actually produced it — an alias can resolve to a different snapshot than the one the
+    operator thinks is configured.
 
     Deliberately does not inspect or clean the result. The core application validates it against
     the authoritative schema; a second, looser validation here would only mask the cases that
@@ -110,8 +114,8 @@ def generate_assessment(
             # Tool inputs arrive already parsed by the SDK. Where a raw string is involved,
             # json.loads is the only safe reader — escaping varies between models.
             if isinstance(block.input, str):
-                return json.loads(block.input)
-            return dict(block.input)
+                return json.loads(block.input), response.model
+            return dict(block.input), response.model
 
     raise ModelOutputError(
         f"Model responded with stop_reason={response.stop_reason} and never called {TOOL_NAME}"

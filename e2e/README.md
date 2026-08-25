@@ -42,7 +42,8 @@ immutable, so the app caches it per version id and never expects one to change u
 ```bash
 node e2e/doctor-onboarding.mjs
 
-node e2e/stub-llama-server.mjs &                 # stands in for llama-server, port 8080
+node e2e/stub-llama-server.mjs &                 # stands in for llama-server, port 8099
+LLAMA_SERVER_URL=http://127.0.0.1:8099 <restart the AI service>
 node e2e/ai-analysis.mjs
 ```
 
@@ -75,6 +76,14 @@ disclaimer. Finishes by adopting the investigations into the doctor's own next s
 that path without a multi-gigabyte download. It answers from the JSON Schema it is sent rather than
 from a fixed fixture, so the taxonomy enum actually reaching the model is genuinely covered. It
 says nothing about whether a real model's clinical reasoning is any good.
+
+It listens on **8099, not 8080**, and reports itself as `stub-llama-server/not-a-real-model` from
+both `/v1/models` and every completion. Both of those are scar tissue. It used to default to 8080,
+where a real llama-server lives; one left running meant every case came back with the same canned
+summary in under a second, and the version pins on the doctor's screen named the real model —
+because the recorded name came from `LOCAL_MODEL_NAME` rather than from whatever answered. The
+service now records what the server says it is, so a stub cannot wear a model's name, and
+`/health` probes the endpoint instead of reciting the configuration back.
 
 ## Reading the screen
 

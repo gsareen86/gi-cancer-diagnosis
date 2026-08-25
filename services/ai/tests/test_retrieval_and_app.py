@@ -62,7 +62,9 @@ class TestServiceSurface:
         assert response.status_code == 200
         body = response.json()
         assert body["status"] == "ok"
-        assert body["model"].startswith("claude-")
+        # Named `configuredModel` rather than `model`, because for a local provider it is a claim
+        # about the deployment, not evidence about what is listening. The probe reports that.
+        assert body["configuredModel"].startswith("claude-")
         assert body["semanticRetrieval"] is False
 
     def test_assess_requires_the_service_token(self):
