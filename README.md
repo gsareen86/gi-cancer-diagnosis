@@ -44,6 +44,14 @@ cd services/ai && uv venv .venv && uv pip install --python .venv/bin/python -e "
 .venv/bin/python -m pytest         # 70 Python tests, no network
 ```
 
+Registration sends a verification email, so `SMTP_URL` must point at a mail server. `docker
+compose up` starts Mailpit for local use — its inbox is at http://localhost:8025. Without
+`SMTP_URL` the message is written to the server log instead, link included, and its delivery row
+records `logged_only` rather than `sent`.
+
+The test suite never touches your database: it derives a `*_test` sibling, creates and migrates
+it, and refuses to run its destructive helpers against anything else.
+
 `.env` goes in the **repository root**. The web app walks up from `apps/web` to find it, since
 Next.js only reads `.env` from its own directory and does not walk up in a monorepo. A `.env`
 inside `apps/web` also works and takes precedence, and real environment variables beat both. The

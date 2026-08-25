@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { NextRequest } from 'next/server';
 import { and, eq, sql } from 'drizzle-orm';
-import { tables } from '@gi-compass/db';
+import { assertTestDatabase, tables } from '@gi-compass/db';
 import { database } from '@/server/db';
 import { hashPassword } from '@/server/crypto';
 import { ACCESS_COOKIE, createSession, type SessionRole } from '@/server/auth/session';
@@ -75,6 +75,11 @@ export async function call(
 }
 
 export async function truncateAll(): Promise<void> {
+  // Last line of defence. The setup points the suite at a `*_test` database, but a stray
+  // TEST_DATABASE_URL or a reordered import could undo that, and this helper deletes every row
+  // in the schema. Refusing here costs nothing and has already been needed once.
+  assertTestDatabase(process.env.DATABASE_URL ?? '');
+
   const db = database();
   await db.execute(sql`
     TRUNCATE TABLE

@@ -159,24 +159,86 @@ export function renderNotification(
 }
 
 export interface EmailTransport {
+  /**
+   * Whether this transport actually hands mail to a server. The delivery record depends on it:
+   * writing "sent" when nothing left the process would make the notification table lie about
+   * whether a patient was told anything.
+   */
+  readonly delivers: boolean;
   send(input: { to: string; subject: string; body: string }): Promise<void>;
 }
 
 /**
- * Development transport. Logs the metadata and, for verification and reset, the link — because
- * without a mail server there is otherwise no way to complete those flows locally. It never logs
- * clinical content, because notifications never contain any.
+ * Sends through a real mail server, configured by `SMTP_URL`.
+ *
+ * Accepts anything nodemailer understands, so `smtp://localhost:1025` reaches a local Mailpit and
+ * a provider URL with credentials works unchanged in production.
+ */
+function smtpTransport(url: string): EmailTransport {
+  return {
+    delivers: true,
+    async send({ to, subject, body }) {
+      const { createTransport } = await import('nodemailer');
+      const mailer = createTransport(url);
+      await mailer.sendMail({ from: configuredSender(), to, subject, text: body });
+    },
+  };
+}
+
+/**
+ * Fallback when no mail server is configured.
+ *
+ * Prints the whole message, including the verification or reset link, because otherwise there is
+ * no way to complete those flows on a machine without SMTP — a developer registers an account and
+ * is simply stuck. Printing the body is safe: notifications never carry clinical content, and
+ * `assertNoClinicalVariables` refuses to render one that would.
  */
 const consoleTransport: EmailTransport = {
-  async send({ to, subject }) {
-    console.info(`[notification] to=${to} subject=${JSON.stringify(subject)}`);
+  delivers: false,
+  async send({ to, subject, body }) {
+    console.info(
+      [
+        '',
+        '  ┌─ No SMTP_URL configured, so this email was NOT sent ─────────────',
+        `  │ to      : ${to}`,
+        `  │ subject : ${subject}`,
+        '  │',
+        ...body.split('\n').map((line) => `  │ ${line}`),
+        '  └──────────────────────────────────────────────────────────────────',
+        '',
+      ].join('\n'),
+    );
   },
 };
 
-let transport: EmailTransport = consoleTransport;
+let transport: EmailTransport | null = null;
+
+/**
+ * Chooses a transport the first time one is needed, so `SMTP_URL` is read after the environment
+ * has been loaded rather than at module-evaluation time.
+ */
+function activeTransport(): EmailTransport {
+  if (transport !== null) return transport;
+
+  const url = process.env.SMTP_URL;
+  if (url !== undefined && url.trim() !== '') {
+    transport = smtpTransport(url.trim());
+  } else {
+    console.warn(
+      '[notification] SMTP_URL is not set — emails will be printed to this log, not delivered.',
+    );
+    transport = consoleTransport;
+  }
+  return transport;
+}
 
 export function setEmailTransport(next: EmailTransport): void {
   transport = next;
+}
+
+/** Test seam: forces the next call to re-read `SMTP_URL`. */
+export function resetEmailTransport(): void {
+  transport = null;
 }
 
 export function baseUrl(): string {
@@ -238,11 +300,22 @@ export async function queueNotification(request: NotificationRequest): Promise<v
       link: linkFor(request.type, request.token, request.reference),
       reference: request.reference ?? '',
     });
-    await transport.send({ to: user.email, subject: rendered.subject, body: rendered.body });
+    const active = activeTransport();
+    await active.send({ to: user.email, subject: rendered.subject, body: rendered.body });
     if (delivery) {
       await db
         .update(tables.notificationDeliveries)
-        .set({ outcome: 'sent', sentAt: new Date() })
+        .set(
+          active.delivers
+            ? { outcome: 'sent', sentAt: new Date() }
+            : // Nothing reached a mail server. Recording "sent" would make this table answer
+              // "was the patient told?" with a falsehood.
+              {
+                outcome: 'logged_only',
+                sentAt: new Date(),
+                failureReason: 'no_smtp_configured',
+              },
+        )
         .where(eq(tables.notificationDeliveries.id, delivery.id));
     }
   } catch (error) {

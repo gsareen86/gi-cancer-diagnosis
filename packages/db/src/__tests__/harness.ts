@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { sql } from 'drizzle-orm';
 import { createDatabase, createPool } from '../client';
 import * as schema from '../schema';
+import { assertTestDatabase } from '../test-database';
 import type { Database } from '../client';
 
 /**
@@ -34,6 +35,10 @@ export function openDatabase(): TestContext {
 
 /** Wipes clinical and identity data between tests, leaving the schema in place. */
 export async function truncateAll(db: Database): Promise<void> {
+  // See the note in the web harness: this deletes every row in the schema, so it verifies where
+  // it is pointed before doing so.
+  assertTestDatabase(TEST_DATABASE_URL);
+
   await db.execute(sql`
     TRUNCATE TABLE
       response_amendments, responses, red_flag_triggers, uploaded_documents,

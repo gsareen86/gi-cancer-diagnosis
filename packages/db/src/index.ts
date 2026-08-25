@@ -49,3 +49,16 @@ export * as tables from './public-schema';
 export { createDatabase, createPool } from './client';
 export type { Database, DatabaseConfig } from './client';
 export { runMigrations } from './migrate';
+
+/**
+ * Test-database safety. Exported because the suites in both `packages/db` and `apps/web` need it,
+ * and because a guard that stops the tests destroying a real database belongs with the data layer
+ * it protects.
+ */
+export {
+  assertTestDatabase,
+  databaseNameOf,
+  NotATestDatabaseError,
+  TEST_DATABASE_SUFFIX,
+  testDatabaseUrl,
+} from './test-database';

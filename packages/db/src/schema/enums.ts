@@ -92,4 +92,10 @@ export const deliveryOutcomeEnum = pgEnum('delivery_outcome', [
   'soft_bounced',
   'hard_bounced',
   'dropped',
+  /**
+   * Rendered and written to the server log because no mail server is configured — nothing was
+   * delivered. Distinct from `sent` on purpose: this table exists to answer "was this person
+   * actually told?", and a development default must not make it answer wrongly.
+   */
+  'logged_only',
 ]);

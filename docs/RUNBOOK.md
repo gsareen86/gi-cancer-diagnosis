@@ -121,6 +121,18 @@ curl -sI https://your-host/ | grep -i content-security-policy
 It should contain `'nonce-…'`. Without it the framework's inline bootstrap is blocked and nothing
 hydrates; with `'unsafe-inline'` instead, the directive is decorative.
 
+## 5a. Email
+
+Set `SMTP_URL` to a real mail server before anyone registers. Without it the application still
+works, but verification and password-reset messages are only written to the server log — so a
+patient can create an account and has no way to confirm it.
+
+Delivery is recorded honestly either way: a message that reached a mail server is `sent`, one that
+was only logged is `logged_only`. Query `notification_deliveries` to see which.
+
+Locally, `docker compose up` starts Mailpit — `SMTP_URL=smtp://127.0.0.1:1025`, inbox at
+http://localhost:8025.
+
 ## 6. First accounts
 
 The seed creates a `platform_admin` with an unusable password hash — the account exists to own the
