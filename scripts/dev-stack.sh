@@ -27,6 +27,16 @@ LLAMA_PORT=${GI_LLAMA_PORT:-8080}
 # running on the model's port is what made every case come back with the same canned summary.
 STACK_PORTS=("$WEB_PORT" "$AI_PORT" "$LLAMA_PORT" 8099)
 
+# Log paths are printed constantly, and `/tmp/gi-compass` means nothing to the PowerShell window
+# this was very likely launched from. cygpath is part of Git Bash, so it is there whenever this is.
+native_path() {
+  if command -v cygpath > /dev/null 2>&1; then
+    cygpath -w "$1" 2>/dev/null || printf '%s' "$1"
+  else
+    printf '%s' "$1"
+  fi
+}
+
 bold() { printf '\033[1m%s\033[0m\n' "$*"; }
 ok()   { printf '  \033[32m+\033[0m %s\n' "$*"; }
 warn() { printf '  \033[33m!\033[0m %s\n' "$*"; }
@@ -88,7 +98,7 @@ served_model() {
 start_containers() {
   bold 'PostgreSQL, object storage, Mailpit'
   if ! docker compose -f "$ROOT/docker-compose.yml" up -d > "$LOG_DIR/compose.log" 2>&1; then
-    bad "docker compose failed - see $LOG_DIR/compose.log"
+    bad "docker compose failed - see $(native_path "$LOG_DIR/compose.log")"
     return 1
   fi
   for _ in $(seq 1 40); do
@@ -109,13 +119,13 @@ migrate() {
   if npm --prefix "$ROOT" run db:migrate > "$LOG_DIR/migrate.log" 2>&1; then
     ok 'migrations applied'
   else
-    bad "migrations failed - see $LOG_DIR/migrate.log"
+    bad "migrations failed - see $(native_path "$LOG_DIR/migrate.log")"
     return 1
   fi
   if npm --prefix "$ROOT" run db:seed > "$LOG_DIR/seed.log" 2>&1; then
     ok 'seed content present'
   else
-    bad "seed failed - see $LOG_DIR/seed.log"
+    bad "seed failed - see $(native_path "$LOG_DIR/seed.log")"
     return 1
   fi
 }
@@ -157,7 +167,7 @@ start_llama() {
   if wait_for "http://127.0.0.1:$LLAMA_PORT/v1/models" 420; then
     ok "serving $(served_model)"
   else
-    bad "llama-server did not come up - see $LOG_DIR/llama.log"
+    bad "llama-server did not come up - see $(native_path "$LOG_DIR/llama.log")"
     return 1
   fi
 }
@@ -194,7 +204,7 @@ start_ai() {
         ;;
     esac
   else
-    bad "AI service did not come up - see $LOG_DIR/ai.log"
+    bad "AI service did not come up - see $(native_path "$LOG_DIR/ai.log")"
     return 1
   fi
 }
@@ -212,7 +222,7 @@ start_web() {
   if [ ! -f "$build_id" ] || [ -n "$newest" ] || [ "${GI_BUILD:-}" = "1" ]; then
     printf '  building (this takes a minute)...\n'
     if ! npm --prefix "$ROOT" run build -w @gi-compass/web > "$LOG_DIR/build.log" 2>&1; then
-      bad "build failed - see $LOG_DIR/build.log"
+      bad "build failed - see $(native_path "$LOG_DIR/build.log")"
       return 1
     fi
     ok 'built'
@@ -224,7 +234,7 @@ start_web() {
   if port_is_up "$WEB_PORT"; then
     ok "http://localhost:$WEB_PORT"
   else
-    bad "web did not come up - see $LOG_DIR/web.log"
+    bad "web did not come up - see $(native_path "$LOG_DIR/web.log")"
     return 1
   fi
 }
@@ -241,7 +251,7 @@ cmd_up() {
   echo "  patient   http://localhost:$WEB_PORT"
   echo "  doctor    http://localhost:$WEB_PORT/doctor/queue"
   echo "  mail      http://localhost:8025"
-  echo "  logs      $LOG_DIR"
+  echo "  logs      $(native_path "$LOG_DIR")"
 }
 
 cmd_down() {

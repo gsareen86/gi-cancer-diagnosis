@@ -22,9 +22,9 @@
     "test:repo": "vitest run --config vitest.repo.config.ts",
     "user": "tsx --env-file-if-exists=.env apps/web/scripts/manage-users.ts",
     "demo-case": "tsx --tsconfig apps/web/tsconfig.json --env-file-if-exists=.env apps/web/scripts/seed-review-case.ts",
-    "dev": "bash scripts/dev-stack.sh up",
-    "dev:down": "bash scripts/dev-stack.sh down",
-    "dev:status": "bash scripts/dev-stack.sh status"
+    "dev": "node scripts/dev-stack.mjs up",
+    "dev:down": "node scripts/dev-stack.mjs down",
+    "dev:status": "node scripts/dev-stack.mjs status"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

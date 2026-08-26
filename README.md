@@ -62,6 +62,11 @@ included, which never touches the AI pipeline.
 component that is not running from one that is listening but not answering, and names the model
 the local endpoint actually reports rather than the one configuration claims.
 
+All three work the same from PowerShell, cmd, and Git Bash. They go through
+`scripts/dev-stack.mjs`, which finds the bash that Git for Windows ships rather than trusting the
+one on PATH — on Windows that is `C:\Windows\System32\bash.exe`, the WSL launcher, which fails
+with `execvpe(/bin/bash) failed` and looks like a broken script rather than the wrong interpreter.
+
 Tests need none of that running except PostgreSQL:
 
 ```bash

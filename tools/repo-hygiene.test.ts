@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -102,6 +103,28 @@ describe('every source file is tracked by git', () => {
 
     for (const generated of ['node_modules/', 'apps/web/.next/', 'services/ai/.venv/']) {
       expect(checkIgnored(generated), `${generated} should stay ignored`).toBe(true);
+    }
+  });
+});
+
+describe('npm scripts run in whatever shell the developer has', () => {
+  const scripts = JSON.parse(readFileSync('package.json', 'utf8')).scripts as Record<string, string>;
+
+  it('never invokes bare `bash`, which on Windows is the WSL launcher', () => {
+    // `bash` on a Windows PATH is C:\Windows\System32\bash.exe. With no WSL distro installed it
+    // fails with `execvpe(/bin/bash) failed: No such file or directory`, which reads like a broken
+    // script rather than the wrong interpreter. scripts/dev-stack.mjs finds the bash Git ships.
+    const offenders = Object.entries(scripts)
+      .filter(([, command]) => /(^|\s|&&\s*)(bash|sh)\s/.test(command))
+      .map(([name, command]) => `${name}: ${command}`);
+
+    expect(offenders, 'run these through scripts/dev-stack.mjs instead').toEqual([]);
+  });
+
+  it('keeps the stack commands pointed at the launcher', () => {
+    for (const name of ['dev', 'dev:down', 'dev:status']) {
+      expect(scripts[name], `${name} is missing`).toBeDefined();
+      expect(scripts[name]).toContain('scripts/dev-stack.mjs');
     }
   });
 });
