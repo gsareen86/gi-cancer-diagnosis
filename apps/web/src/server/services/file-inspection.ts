@@ -9,6 +9,7 @@ export const ACCEPTED_TYPES = {
   'application/pdf': ['pdf'],
   'image/jpeg': ['jpg', 'jpeg'],
   'image/png': ['png'],
+  'application/dicom': ['dcm', 'dicom'],
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['docx'],
 } as const;
 
@@ -24,6 +25,8 @@ const startsWith = (buffer: Buffer, bytes: readonly number[]): boolean =>
 /** Magic-number sniffing. Deliberately small: only the four types we actually accept. */
 export function detectContentType(buffer: Buffer): AcceptedContentType | null {
   if (buffer.length < 8) return null;
+  // DICOM Part 10 files carry the DICM marker after the 128-byte preamble.
+  if (buffer.length >= 132 && buffer.subarray(128, 132).toString('ascii') === 'DICM') return 'application/dicom';
 
   // %PDF-
   if (startsWith(buffer, [0x25, 0x50, 0x44, 0x46, 0x2d])) return 'application/pdf';

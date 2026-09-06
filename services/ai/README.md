@@ -20,6 +20,20 @@ cp .env.example .env          # set ANTHROPIC_API_KEY and AI_SERVICE_TOKEN
 
 ## The model call
 
+### Local llama.cpp runtime
+
+The current deployment uses `AI_PROVIDER=llamacpp`. From the repository root,
+`./scripts/start-ai.ps1` starts the configured local binary and gateway without downloading models.
+Both launchers pass native `--sleep-idle-seconds`, defaulting to 300 seconds from
+`LOCAL_MODEL_IDLE_SECONDS` in this service's `.env`. Change the value with
+`./scripts/start-ai.ps1 -RestartModel` only when no inference is active. `-1` explicitly disables sleep.
+Weights and KV cache unload while the HTTP listener remains; inference automatically reloads them.
+The gateway probes `/props`, never a waking endpoint, and reports `modelState: sleeping` as healthy.
+Allow cold-load latency: the provider timeout is 900 seconds, web default 960 seconds.
+See `docs/clinical-workspace.md` and `e2e/model-idle.mjs` in the repository for verification.
+
+### Hosted adapter (not the current local deployment)
+
 | Control | Why |
 |---|---|
 | Forced `tool_choice` on one tool | Prose is not an available answer |

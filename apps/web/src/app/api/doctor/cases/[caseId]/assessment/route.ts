@@ -1,4 +1,5 @@
 import { clinical } from '@/server/db';
+import { assessmentFailureKey } from '@/lib/assessment-failure';
 import { requestAssessment } from '@/server/services/assessment-service';
 import { accessContext, route } from '@/server/api/route-handler';
 import { ok, problem } from '@/server/api/problem';
@@ -47,7 +48,7 @@ export const POST = route<{ caseId: string }>(
     }
 
     if (outcome.status === 'unavailable') {
-      return problem('unavailable', `doctor.assessment.${failureKey(outcome.reason)}`, {
+      return problem('unavailable', assessmentFailureKey(outcome.reason), {
         reason: outcome.reason,
         ...(outcome.rejections === undefined ? {} : { rejections: outcome.rejections }),
       });
@@ -56,19 +57,3 @@ export const POST = route<{ caseId: string }>(
     return ok({ status: 'generated', grounded: outcome.grounded });
   },
 );
-
-/**
- * Maps a failure to a catalogue key. Anything unrecognised falls back to a generic message rather
- * than putting a raw internal string in front of a clinician.
- */
-function failureKey(reason: string): string {
-  const known = [
-    'ai_service_not_configured',
-    'ai_service_unreachable',
-    'ai_service_timeout',
-    'ai_service_unauthorised',
-    'model_unavailable',
-    'schema_violations_exhausted',
-  ];
-  return known.includes(reason) ? reason : 'failed';
-}

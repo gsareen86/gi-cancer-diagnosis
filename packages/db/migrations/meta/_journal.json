@@ -22,6 +22,27 @@
       "when": 1787624165253,
       "tag": "0002_delivery_outcome_logged_only",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787710565253,
+      "tag": "0003_clinical_history_and_notification_reads",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788528000000,
+      "tag": "0004_lifecycle_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788614400000,
+      "tag": "0005_public_references",
+      "breakpoints": true
     }
   ]
 }

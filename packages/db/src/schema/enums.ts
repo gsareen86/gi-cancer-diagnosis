@@ -84,6 +84,8 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'case_released',
   'doctor_case_queued',
   'doctor_urgent_case',
+  'case_under_review',
+  'doctor_overdue_case',
 ]);
 
 export const deliveryOutcomeEnum = pgEnum('delivery_outcome', [

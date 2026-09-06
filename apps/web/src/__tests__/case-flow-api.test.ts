@@ -459,7 +459,7 @@ describe('what the patient may read', () => {
 
     expect(cases).toHaveLength(1);
     expect(Object.keys(cases[0]!).sort()).toEqual(
-      ['createdAt', 'entryPointId', 'id', 'releasedAt', 'status', 'submittedAt', 'templateVersionId', 'updatedAt'].sort(),
+      ['createdAt', 'entryPointId', 'id', 'publicNumber', 'releasedAt', 'status', 'submittedAt', 'templateVersionId', 'updatedAt'].sort(),
     );
   });
 });

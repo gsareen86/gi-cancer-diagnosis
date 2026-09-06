@@ -1,11 +1,10 @@
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { Badge, Card, Notice, PageHeading } from '@/components/primitives';
 import { activeTaxonomy, currentPublishedTemplate, currentRedFlagRules } from '@/server/services/content-service';
 import { database } from '@/server/db';
 import { tables } from '@gi-compass/db';
-import { currentUser } from '@/lib/session';
+import { requireWorkspace } from '@/lib/guard';
 
 /**
  * The clinical admin console.
@@ -15,10 +14,8 @@ import { currentUser } from '@/lib/session';
  */
 export default async function AdminPage() {
   const t = await getTranslations('admin');
-  const user = await currentUser();
-
-  if (user === null) redirect('/login');
-  if (user.role !== 'clinical_admin' && user.role !== 'platform_admin') redirect('/');
+  // Authentication, second factor and role are settled by `app/admin/layout.tsx`.
+  await requireWorkspace('admin');
 
   const { document } = await currentPublishedTemplate();
   const rules = await currentRedFlagRules();

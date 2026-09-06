@@ -2,10 +2,11 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { api, type ApiProblem } from '@/lib/api-client';
 import { Field, Notice } from '@/components/primitives';
+import { homePathFor as landingFor, safeNext, withNext } from '@/lib/navigation';
 
 interface PasswordProblem {
   code: string;
@@ -110,23 +111,36 @@ export function RegisterForm() {
       )}
 
       <button type="submit" className="gi-button-primary mt-6 w-full" disabled={pending}>
-        {t('register')}
+        {t('registerLabel')}
       </button>
 
       <p className="mt-5 text-sm text-ink-muted">
         {t('haveAccount')}{' '}
         <Link href="/login" className="font-medium text-accent underline underline-offset-4">
-          {t('login')}
+          {t('loginLabel')}
         </Link>
       </p>
     </form>
   );
 }
 
+/**
+ * Where a role actually works. Mirrors `homePathFor` in `lib/guard.ts`; kept as its own copy
+ * because that module reaches the database and this one runs in the browser.
+ */
+
+/**
+ * Only a same-origin path is honoured as a return destination. An absolute URL in `?next=` is an
+ * open redirect: a link that authenticates a real patient and lands them on a copy of this site
+ * asking for the password again.
+ */
+
 export function LoginForm() {
   const t = useTranslations('auth');
   const text = useProblemText();
   const router = useRouter();
+  const params = useSearchParams();
+  const next = safeNext(params.get('next'));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [pending, setPending] = useState(false);
@@ -149,13 +163,11 @@ export function LoginForm() {
     }
 
     if (result.data.mfaPending) {
-      router.push('/mfa');
-    } else if (result.data.role === 'doctor') {
-      router.push('/doctor/queue');
-    } else if (result.data.role === 'patient') {
-      router.push('/cases');
+      // The second factor comes first, and the workspace guard will send them on from there.
+      router.push(withNext('/mfa', next));
     } else {
-      router.push('/admin');
+      // Back to whatever they were reaching for before the guard intercepted them.
+      router.push(next ?? landingFor(result.data.role));
     }
     router.refresh();
   }
@@ -193,13 +205,13 @@ export function LoginForm() {
       )}
 
       <button type="submit" className="gi-button-primary mt-6 w-full" disabled={pending}>
-        {t('login')}
+        {t('loginLabel')}
       </button>
 
       <div className="mt-5 space-y-2 text-sm text-ink-muted">
         <p>
           <Link
-            href="/reset-password"
+            href="/forgot-password"
             className="font-medium text-accent underline underline-offset-4"
           >
             {t('forgotPassword')}
@@ -208,7 +220,7 @@ export function LoginForm() {
         <p>
           {t('noAccount')}{' '}
           <Link href="/register" className="font-medium text-accent underline underline-offset-4">
-            {t('register')}
+            {t('registerLabel')}
           </Link>
         </p>
       </div>

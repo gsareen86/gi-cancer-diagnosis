@@ -1,14 +1,20 @@
 import { chromium } from 'playwright';
-import { execSync } from 'node:child_process';
+import { mkdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import pg from 'pg';
+import { BASE } from './support/local-fixture.mjs';
 
-const BASE = 'http://localhost:3000';
-const SHOTS = process.env.SHOTS ?? '/var/tmp/gi-shots';
-execSync(`mkdir -p ${SHOTS}`);
+const target = new URL(process.env.DATABASE_URL ?? '');
+if (!['localhost', '127.0.0.1', '[::1]'].includes(target.hostname)) throw new Error('Walkthrough requires a local database');
+const db = new pg.Client({ connectionString: process.env.DATABASE_URL });
+await db.connect();
+const SHOTS = process.env.SHOTS ?? 'var/tmp/patient-screenshots';
+mkdirSync(SHOTS, { recursive: true });
 
 const email = `walkthrough-${Date.now()}@example.invalid`;
 const password = 'a-perfectly-fine-passphrase';
 
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const page = await browser.newPage({ viewport: { width: 420, height: 900 } });
 const log = [];
 page.on('console', (m) => m.type() === 'error' && log.push(`console: ${m.text()}`));
@@ -19,11 +25,9 @@ async function shot(name) {
   console.log(`  → ${name}.png`);
 }
 
-function sql(query) {
-  return execSync(
-    `psql -h 127.0.0.1 -p 55432 -U postgres -d gi_compass -tAc "${query.replace(/"/g, '\\"')}"`,
-    { encoding: 'utf8' },
-  ).trim();
+async function sql(query, values = []) {
+  const result = await db.query(query, values);
+  return result.rows.map((row) => Object.values(row).join('|')).join('\n');
 }
 
 console.log('1. home');
@@ -39,14 +43,11 @@ await page.waitForSelector('text=/Check your email/i', { timeout: 10000 });
 await shot('02-registered');
 
 console.log('3. verify email (token straight from the database, as the email link would)');
-const userId = sql(`SELECT id FROM users WHERE email='${email}'`);
+const userId = await sql('SELECT id FROM users WHERE email=$1', [email]);
 // The plaintext token only exists in the email; replace the stored hash with a known one.
 const knownToken = `walkthrough-token-${Date.now()}`;
-const hash = execSync(
-  `node -e "const c=require('crypto');process.stdout.write(c.createHash('sha256').update('${knownToken}').digest('hex'))"`,
-  { encoding: 'utf8' },
-);
-sql(`UPDATE one_time_tokens SET token_hash='${hash}' WHERE user_id='${userId}' AND purpose='email_verification'`);
+const hash = createHash('sha256').update(knownToken).digest('hex');
+await sql("UPDATE one_time_tokens SET token_hash=$1 WHERE user_id=$2 AND purpose='email_verification'", [hash, userId]);
 await page.goto(`${BASE}/verify-email?token=${knownToken}`);
 await page.waitForSelector('text=/confirmed/i', { timeout: 10000 });
 await shot('03-verified');
@@ -56,8 +57,7 @@ await page.goto(`${BASE}/login`);
 await page.fill('#email', email);
 await page.fill('#password', password);
 await page.click('button[type=submit]');
-await page.waitForURL('**/profile', { timeout: 10000 }).catch(() => {});
-await page.goto(`${BASE}/profile`);
+await page.waitForURL('**/patient/profile', { timeout: 10000 });
 await shot('04-profile');
 
 console.log('5. complete profile');
@@ -67,7 +67,7 @@ await page.selectOption('select[id$="-month"]', '5');
 await page.fill('input[id$="-year"]', '1974');
 await page.selectOption('#sex', 'female');
 await page.click('button[type=submit]');
-await page.waitForURL('**/consent', { timeout: 10000 });
+await page.waitForURL('**/patient/consent', { timeout: 10000 });
 await shot('05-consent');
 
 console.log('6. grant all three consents separately');
@@ -75,12 +75,12 @@ const boxes = await page.$$('input[type=checkbox]');
 for (const box of boxes) await box.check();
 await shot('06-consent-selected');
 await page.click('button:has-text("Save and continue")');
-await page.waitForURL('**/start', { timeout: 10000 });
+await page.waitForURL('**/patient/intake', { timeout: 10000 });
 await shot('07-symptom-areas');
 
 console.log('7. start the bleeding pathway');
 await page.click('button:has-text("Blood when I go to the toilet")');
-await page.waitForURL('**/interview', { timeout: 10000 });
+await page.waitForURL('**/patient/intake/*', { timeout: 10000 });
 await shot('08-first-question');
 
 /** Answers whatever question is on screen, driving toward the melaena emergency pathway. */
@@ -199,14 +199,15 @@ if (switcherShown) {
   process.exitCode = 1;
 }
 
-const answersKept = sql(`SELECT count(*) FROM responses WHERE case_id=(SELECT id FROM cases WHERE patient_id='${userId}')`);
+const answersKept = await sql('SELECT count(*) FROM responses WHERE case_id IN (SELECT id FROM cases WHERE patient_id=$1)', [userId]);
 console.log(`   answers still stored after language switch: ${answersKept}`);
 
-const flags = sql(`SELECT rule_id||' ['||urgency||']' FROM red_flag_triggers WHERE case_id=(SELECT id FROM cases WHERE patient_id='${userId}')`);
+const flags = await sql("SELECT rule_id||' ['||urgency||']' FROM red_flag_triggers WHERE case_id IN (SELECT id FROM cases WHERE patient_id=$1)", [userId]);
 console.log(`   red flags recorded: ${flags.split('\n').join(', ')}`);
 
-const auditHasAnswerValue = sql(`SELECT count(*) FROM audit_log_entries WHERE metadata::text ILIKE '%black_tarry%'`);
+const auditHasAnswerValue = await sql("SELECT count(*) FROM audit_log_entries WHERE metadata::text ILIKE '%black_tarry%' AND actor_id=$1", [userId]);
 console.log(`   audit rows containing an answer value: ${auditHasAnswerValue}`);
 
 console.log('\nbrowser errors:', log.length === 0 ? 'none' : log);
 await browser.close();
+await db.end();

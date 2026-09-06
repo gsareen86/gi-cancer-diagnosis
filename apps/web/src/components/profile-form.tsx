@@ -55,7 +55,7 @@ export function ProfileForm({
       setProblem(result.problem);
       return;
     }
-    router.push('/consent');
+    router.push('/patient/consent');
     router.refresh();
   }
 

@@ -2,9 +2,12 @@ import { createTextResolver } from '@gi-compass/core';
 import { clinical, database } from '@/server/db';
 import { tables } from '@gi-compass/db';
 import { eq } from 'drizzle-orm';
+import { decryptOptional } from '@/server/crypto';
+import { listDeliveriesForCase } from '@/server/services/notification-service';
 import { buildInterviewView } from '@/server/services/interview-service';
 import { loadTemplateVersion, currentRedFlagRules } from '@/server/services/content-service';
 import { ageInYears } from '@/server/services/age';
+import { caseReference, patientReference } from '@/lib/references';
 import { accessContext, route } from '@/server/api/route-handler';
 import { ok, problem } from '@/server/api/problem';
 
@@ -29,8 +32,10 @@ export const GET = route<{ caseId: string }>({ roles: ['doctor'] }, async ({ par
   const [patient] = await database()
     .select({
       dateOfBirth: tables.users.dateOfBirth,
+      publicNumber: tables.users.publicNumber,
       sex: tables.users.sex,
       locale: tables.users.locale,
+      fullNameEnc: tables.users.fullNameEnc,
     })
     .from(tables.users)
     .where(eq(tables.users.id, resolved.patientId))
@@ -56,6 +61,10 @@ export const GET = route<{ caseId: string }>({ roles: ['doctor'] }, async ({ par
   });
 
   const documents = await repo.listDocuments(context, params.caseId);
+  const history = await repo.getClinicalHistory(context, params.caseId);
+  // Non-clinical by construction — a type, a time and a delivery outcome — so it does not go
+  // through the clinical funnel. The case-level authorization above already applies.
+  const deliveries = await listDeliveriesForCase(params.caseId);
   const assessment = await repo.getLatestAssessment(context, params.caseId);
   const review = await repo.getReview(context, params.caseId);
   const rules = await currentRedFlagRules();
@@ -73,6 +82,7 @@ export const GET = route<{ caseId: string }>({ roles: ['doctor'] }, async ({ par
   return ok({
     case: {
       id: caseRecord.id,
+      reference: caseReference(caseRecord.publicNumber),
       status: caseRecord.status,
       entryPoint: resolveText(index.entryPointById.get(caseRecord.entryPointId)?.labelKey ?? ''),
       createdAt: caseRecord.createdAt,
@@ -80,12 +90,43 @@ export const GET = route<{ caseId: string }>({ roles: ['doctor'] }, async ({ par
       aiSkipReason: caseRecord.aiSkipReason,
     },
     patient: {
-      // Pseudonymous by default. The doctor needs the clinical variables, not the name, to read
-      // the history — the identity is available separately if they need to make contact.
+      /*
+       * The name reaches this response only because the caller is the *assigned* doctor: this
+       * route is scoped to `roles: ['doctor']` and the read above passed the
+       * `share_with_assigned_doctor` consent gate, which is what makes any of this case visible.
+       * A doctor browsing the claimable queue never gets here, and the queue endpoint sends no
+       * name at all — see `triage-service.ts`.
+       *
+       * Decryption happens here and nowhere downstream; `fullNameEnc` never leaves the server.
+       */
+      fullName: decryptOptional(patient?.fullNameEnc ?? null),
+      reference: patient ? patientReference(patient.publicNumber) : null,
       ageYears: ageInYears(patient?.dateOfBirth ?? null),
       sex: patient?.sex ?? null,
       locale: patient?.locale ?? 'en',
     },
+    /*
+     * Null when the patient never completed the history step, which the interface renders as
+     * "not recorded". An empty object would render as a patient who reported nothing, and those
+     * are different clinical facts.
+     */
+    history:
+      history === null
+        ? null
+        : {
+            heightCm: history.heightCm,
+            weightKg: history.weightKg,
+            conditions: history.conditions,
+            surgeries: history.surgeries,
+            medications: history.medications,
+            allergies: history.allergies,
+            familyHistory: history.familyHistory,
+            lifestyle: history.lifestyle,
+            additionalNotes: history.additionalNotes,
+            lastMenstrualPeriod: history.lastMenstrualPeriod,
+            completedAt: history.completedAt,
+          },
+    deliveries,
     answersByCluster: [...byCluster.entries()].map(([cluster, entries]) => ({
       cluster,
       answers: entries.map((entry) => ({

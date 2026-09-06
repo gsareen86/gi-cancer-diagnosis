@@ -36,7 +36,7 @@ export function StartCase({
       setProblem(result.problem);
       return;
     }
-    router.push(`/cases/${result.data.case.id}/interview`);
+    router.push(`/patient/intake/${result.data.case.id}`);
   }
 
   return (
@@ -65,7 +65,7 @@ export function StartCase({
             {tAll(problem.messageKey as never)}
           </Notice>
           {problem.code === 'conflict' && (
-            <a href="/cases" className="gi-button-secondary">
+            <a href="/patient/records" className="gi-button-secondary">
               {t('resume')}
             </a>
           )}

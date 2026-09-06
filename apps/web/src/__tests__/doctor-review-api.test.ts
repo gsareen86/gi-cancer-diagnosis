@@ -21,6 +21,7 @@ import { POST as releaseReview } from '@/app/api/doctor/cases/[caseId]/release/r
 import { GET as patientSummary } from '@/app/api/cases/[caseId]/summary/route';
 import { POST as createCase } from '@/app/api/cases/route';
 import { PUT as putAnswer } from '@/app/api/cases/[caseId]/answers/route';
+import { POST as acknowledgeSummary } from '@/app/api/cases/[caseId]/summary/acknowledge/route';
 
 beforeAll(ensureSeeded);
 beforeEach(truncateAll);
@@ -271,8 +272,8 @@ describe('overriding the assessment', () => {
   });
 });
 
-describe('finalization refuses work that is not the doctor’s own', () => {
-  it('refuses the AI summary passed through untouched', async () => {
+describe('physician finalization', () => {
+  it('allows a physician to approve an AI-assisted draft', async () => {
     const { doctor, caseId } = await submittedCase();
     const response = await call(saveReview, {
       method: 'PUT',
@@ -284,11 +285,11 @@ describe('finalization refuses work that is not the doctor’s own', () => {
       accessToken: doctor.accessToken,
     });
 
-    expect(response.status).toBe(400);
-    expect(response.body.messageKey).toBe('review.finalize.ai_summary_passthrough');
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('finalized');
   });
 
-  it('refuses the AI summary even with whitespace and case changed', async () => {
+  it('allows a physician to edit an AI-assisted draft', async () => {
     const { doctor, caseId } = await submittedCase();
     const response = await call(saveReview, {
       method: 'PUT',
@@ -299,8 +300,8 @@ describe('finalization refuses work that is not the doctor’s own', () => {
       params: { caseId },
       accessToken: doctor.accessToken,
     });
-    expect(response.status).toBe(400);
-    expect(response.body.messageKey).toBe('review.finalize.ai_summary_passthrough');
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('finalized');
   });
 
   it('refuses an empty impression', async () => {
@@ -319,7 +320,7 @@ describe('finalization refuses work that is not the doctor’s own', () => {
     ['a drug name', { recommendedNextSteps: ['Start omeprazole and review in four weeks'] }],
     ['a dose', { patientFacingSummary: 'Please take an acid tablet 40 mg each morning before food.' }],
     ['a regimen', { clinicalImpression: 'Upper GI bleeding. Commence triple therapy after endoscopy today.' }],
-  ])('refuses %s anywhere in the release', async (_name, overrides) => {
+  ])('allows physician-authored %s in the review', async (_name, overrides) => {
     const { doctor, caseId } = await submittedCase();
     const response = await call(saveReview, {
       method: 'PUT',
@@ -327,8 +328,8 @@ describe('finalization refuses work that is not the doctor’s own', () => {
       params: { caseId },
       accessToken: doctor.accessToken,
     });
-    expect(response.status).toBe(400);
-    expect(response.body.messageKey).toBe('review.finalize.contains_treatment');
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe('finalized');
   });
 
   it('accepts a genuinely doctor-authored finalization', async () => {
@@ -346,10 +347,53 @@ describe('finalization refuses work that is not the doctor’s own', () => {
 
 describe('release', () => {
   const confirmedContent = {
-    summary:
-      'Based on what you told us, you need to be seen urgently for a camera test of your stomach.',
-    nextSteps: ['Attend the endoscopy appointment we arrange', 'Return sooner if you feel faint'],
+    summary: validReview().patientFacingSummary,
+    nextSteps: validReview().recommendedNextSteps,
   };
+
+  it('rejects a stale confirmation and invalidates approval when the draft changes', async () => {
+    const { doctor, caseId } = await submittedCase();
+    const request = { params: { caseId }, accessToken: doctor.accessToken };
+    await call(saveReview, { ...request, method: 'PUT', body: validReview({ finalize: true }) });
+    const stale = await call(releaseReview, { ...request, method: 'POST', body: { confirm: true, confirmedContent: { ...confirmedContent, summary: 'This is different content that was not finalized.' } } });
+    expect(stale.status).toBe(409);
+    expect(stale.body.messageKey).toBe('review.release.content_changed');
+    await call(saveReview, { ...request, method: 'PUT', body: validReview() });
+    const unsigned = await call(releaseReview, { ...request, method: 'POST', body: { confirm: true, confirmedContent } });
+    expect(unsigned.body.messageKey).toBe('review.release.not_finalized');
+  });
+
+  it('requires confirmation of prescriptions, locks the release, and preserves it after acknowledgement', async () => {
+    const { patient, doctor, caseId } = await submittedCase();
+    const request = { params: { caseId }, accessToken: doctor.accessToken };
+    const prescriptionInstructions = 'Physician-authored test instructions; not medical advice.';
+    expect((await call(saveReview, { ...request, method: 'PUT', body: validReview({ prescriptionInstructions, finalize: true }) })).status).toBe(200);
+    expect((await call(releaseReview, { ...request, method: 'POST', body: { confirm: true, confirmedContent } })).status).toBe(409);
+    const release = await call(releaseReview, { ...request, method: 'POST', body: { confirm: true, confirmedContent: { ...confirmedContent, prescriptionInstructions } } });
+    expect(release.status).toBe(200);
+    expect((await call(saveReview, { ...request, method: 'PUT', body: validReview() })).status).toBe(409);
+    const before = await call(patientSummary, { params: { caseId }, accessToken: patient.accessToken });
+    expect(before.body.content).toMatchObject({ prescriptionInstructions });
+    expect(before.body.content).not.toHaveProperty('doctorNotes');
+    expect((await call(acknowledgeSummary, { method: 'POST', params: { caseId }, accessToken: doctor.accessToken })).status).toBe(403);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      expect((await call(acknowledgeSummary, { method: 'POST', params: { caseId }, accessToken: patient.accessToken })).status).toBe(200);
+    }
+    const after = await call(patientSummary, { params: { caseId }, accessToken: patient.accessToken });
+    expect(after.body.content).toEqual(before.body.content);
+    const record = await clinical().resolveCaseForSystem(caseId);
+    expect(record?.status).toBe('closed');
+  });
+
+  it('allows exactly one concurrent dispatch and prevents late AI completion from rewinding it', async () => {
+    const { patient, doctor, caseId } = await submittedCase();
+    const request = { params: { caseId }, accessToken: doctor.accessToken };
+    await call(saveReview, { ...request, method: 'PUT', body: validReview({ finalize: true }) });
+    const outcomes = await Promise.all([0, 1].map(() => call(releaseReview, { ...request, method: 'POST', body: { confirm: true, confirmedContent } })));
+    expect(outcomes.map((value) => value.status).sort()).toEqual([200, 409]);
+    await clinical().transitionCase(systemContext(patient.id, 'ai_assisted_analysis'), caseId, 'ai_processed', {}, ['ai_processing']);
+    expect((await clinical().resolveCaseForSystem(caseId))?.status).toBe('released');
+  });
 
   it('refuses before the review is finalized', async () => {
     const { doctor, caseId } = await submittedCase();
@@ -514,8 +558,8 @@ describe('the AI assessment never reaches the patient', () => {
       method: 'POST',
       body: {
         confirmedContent: {
-          summary: 'You need to be seen urgently for a camera test of your stomach.',
-          nextSteps: ['Attend the appointment we arrange'],
+          summary: validReview().patientFacingSummary,
+          nextSteps: validReview().recommendedNextSteps,
         },
         confirm: true,
       },

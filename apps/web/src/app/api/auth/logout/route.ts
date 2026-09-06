@@ -15,6 +15,7 @@ export const POST = route({ allowMfaPending: true }, async ({ session }) => {
 
   const response = ok({ status: 'signed_out' });
   response.cookies.delete(ACCESS_COOKIE);
-  response.cookies.delete(REFRESH_COOKIE);
+  // Deletion must match the path used when the refresh cookie was issued.
+  response.cookies.set(REFRESH_COOKIE, '', { path: '/api/auth/refresh', maxAge: 0, httpOnly: true, sameSite: 'lax' });
   return response;
 });

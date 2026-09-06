@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
 import { tables, systemContext, type AccessContext } from '@gi-compass/db';
 import { clinical, database } from '../src/server/db';
-import { hashPassword } from '../src/server/crypto';
+import { encryptOptional, hashPassword } from '../src/server/crypto';
 import { currentPublishedTemplate } from '../src/server/services/content-service';
 import { submitAnswer } from '../src/server/services/interview-service';
 import { ageInYears } from '../src/server/services/age';
@@ -31,6 +31,37 @@ const ANSWERS = [
 const CONSENTS = ['account_processing', 'ai_assisted_analysis', 'share_with_assigned_doctor'] as const;
 
 const DATE_OF_BIRTH = '1974-05-02';
+
+const FULL_NAME = 'Demo Patient';
+
+/**
+ * The medical background a real melaena presentation would carry.
+ *
+ * Chosen so the doctor's record panel demonstrates the thing that panel exists for: regular
+ * ibuprofen with no gastric protection, beside a prior ulcer, is the combination that changes how
+ * black tarry stool reads. A demo case with an empty history would show the panel working and
+ * teach nobody why it is there.
+ */
+const HISTORY = {
+  heightCm: 158,
+  weightKg: '61.50',
+  conditions: [
+    { code: 'peptic_ulcer', sinceYear: 2019 },
+    { code: 'hypertension', sinceYear: 2016 },
+    { code: 'anaemia', notes: 'Told at a camp last year; no treatment started.' },
+  ],
+  surgeries: [{ code: 'cholecystectomy', year: 2011 }],
+  medications: [
+    { name: 'Ibuprofen', kind: 'otc', frequency: 'Most days for knee pain' },
+    { name: 'Amlodipine', kind: 'prescription', frequency: 'Once daily' },
+  ],
+  allergies: [{ substance: 'Sulfa drugs', reaction: 'Rash' }],
+  familyHistory: [{ relation: 'parent', condition: 'gastric_cancer', ageAtDiagnosis: 62 }],
+  lifestyle: { smoking: 'former', alcohol: 'occasional', diet: 'vegetarian' },
+  additionalNotes: 'Feels tired going up stairs since about two months.',
+  lastMenstrualPeriod: null,
+  complete: true,
+} as const;
 
 async function main(): Promise<void> {
   const [doctorEmail] = process.argv.slice(2);
@@ -68,6 +99,9 @@ async function main(): Promise<void> {
       status: 'active',
       dateOfBirth: DATE_OF_BIRTH,
       sex: 'female',
+      // Encrypted at rest like any other name. The assigned doctor sees it decrypted at the
+      // point of response; the claimable queue never does.
+      fullNameEnc: encryptOptional(FULL_NAME),
     })
     .returning({ id: tables.users.id });
   if (!patient) throw new Error('could not create the demo patient');
@@ -105,6 +139,23 @@ async function main(): Promise<void> {
     patientId: created.patientId,
   };
 
+  // Written through the repository like everything else, so it passes the same consent gate and
+  // leaves the same audit entry a patient's own save would.
+  await repo.saveClinicalHistory(patientContext, {
+    caseId: created.id,
+    heightCm: HISTORY.heightCm,
+    weightKg: HISTORY.weightKg,
+    conditions: [...HISTORY.conditions],
+    surgeries: [...HISTORY.surgeries],
+    medications: [...HISTORY.medications],
+    allergies: [...HISTORY.allergies],
+    familyHistory: [...HISTORY.familyHistory],
+    lifestyle: HISTORY.lifestyle,
+    additionalNotes: HISTORY.additionalNotes,
+    lastMenstrualPeriod: HISTORY.lastMenstrualPeriod,
+    complete: HISTORY.complete,
+  });
+
   let flags = 0;
   for (const [questionId, optionId] of ANSWERS) {
     const result = await submitAnswer({
@@ -133,8 +184,9 @@ async function main(): Promise<void> {
   console.log(`  Patient: ${patientEmail} (throwaway)`);
   console.log(`  Waiting for: ${doctorEmail}`);
   console.log(`  Red flags raised: ${flags}`);
+  console.log('  Clinical history: recorded (NSAID use, prior ulcer, family gastric cancer)');
   console.log('');
-  console.log(`  http://localhost:3000/doctor/cases/${created.id}`);
+  console.log(`  http://localhost:3000/doctor/case/${created.id}`);
   console.log('');
 }
 

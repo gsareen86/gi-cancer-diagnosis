@@ -13,9 +13,20 @@ context: |
   - India Telemedicine Practice Guidelines 2020: AI may only support an RMP.
   - CDSCO Medical Device Rules 2017 / MDSW guidance: Phase 1 ships as an internal
     clinical tool for affiliated doctors, not a marketed public diagnostic product.
-  - DPDP Act 2023 + DPDP Rules 2025: health data is sensitive personal data.
-    Consent is a versioned, per-purpose, revocable first-class object — never a boolean.
-  - Data residency: patient data stays in an India cloud region.
+  - India privacy baseline as of 2026-09-04: IT Act 2000 section 43A and SPDI Rules
+    2011 classify health conditions and medical records/history as sensitive personal
+    data or information; the DPDP Act 2023 does not create that separate category.
+  - DPDP Act 2023 + final DPDP Rules 2025 commence in phases: institutional provisions
+    in November 2025, Consent Manager provisions one year after Gazette publication,
+    and most operational duties eighteen months after publication (May 2027).
+    Prepare now; do not describe all provisions as already effective. Consent is a
+    versioned, per-purpose, revocable first-class object — never a boolean.
+  - CERT-In directions under IT Act section 70B apply independently: assess reportable
+    incidents, reporting deadlines, ICT log retention/location, and time synchronisation.
+  - Data residency is project policy: patient-data processing, storage, backups and
+    logs stay in approved India regions. This is not a blanket DPDP localisation mandate.
+  - See docs/india-privacy.md for dated applicability, official sources and production
+    evidence gates. Architecture and tests alone are not a legal compliance claim.
 
   Tech stack:
   - Monorepo via npm workspaces.
@@ -23,9 +34,11 @@ context: |
     patient/doctor/admin UI and the core REST API via Route Handlers.
   - packages/core: framework-agnostic TypeScript domain logic (questionnaire engine,
     red-flag rules, consent, AI output schema) — unit-testable without a DB or network.
-  - packages/db: Prisma schema + client for PostgreSQL 16 (+ pgvector).
+  - packages/db: Drizzle ORM schema + SQL migrations for PostgreSQL 16 (+ pgvector).
   - services/ai: Python 3.11 FastAPI microservice for RAG, OCR/document parsing, and
-    the structured LLM call (Claude API with tool/structured output).
+    the structured LLM call. The current deployment uses local llama.cpp GGUF inference
+    (AI_PROVIDER=llamacpp) with schema-constrained JSON; a hosted-provider adapter is
+    available but is not the currently configured deployment.
   - Storage: S3-compatible object storage (India region), signed short-lived URLs.
 
   Conventions:
@@ -42,7 +55,9 @@ rules:
   proposal:
     - State the regulatory constraint that motivates a requirement whenever one applies.
     - Always include a "Non-goals" section that explicitly excludes autonomous diagnosis,
-      prescribing, and patient-facing raw AI output.
+      autonomous prescribing, and patient-facing raw AI output. Physician-authored manual
+      prescriptions and editable AI drafts are allowed only with RMP review and explicit
+      sign-off/release; the AI must not independently prescribe or dispatch advice.
   specs:
     - Every requirement that touches patient clinical data must have a scenario covering
       the audit-log and consent-check behaviour.

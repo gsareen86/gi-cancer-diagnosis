@@ -16,7 +16,8 @@ const nextConfig = {
   poweredByHeader: false,
   // The domain core and data layer are plain TypeScript workspaces, not prebuilt packages.
   transpilePackages: ['@gi-compass/core', '@gi-compass/db'],
-  serverExternalPackages: ['@node-rs/argon2', 'pg'],
+  serverExternalPackages: ['@node-rs/argon2', 'pg', 'pdfkit', '@fontsource/noto-sans', '@fontsource/noto-sans-devanagari'],
+  outputFileTracingIncludes: { '/api/cases/*/summary/pdf': ['../../node_modules/@fontsource/noto-sans/files/*400-normal.woff', '../../node_modules/@fontsource/noto-sans-devanagari/files/*400-normal.woff'] },
   eslint: { ignoreDuringBuilds: true },
   async headers() {
     return [

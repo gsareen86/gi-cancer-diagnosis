@@ -9,30 +9,36 @@ import { useTranslations } from 'next-intl';
  * coordinates, so it survives a different screen size and means the same thing to the doctor as
  * it did to the patient.
  *
- * Each region is a real button with a real accessible name, so the whole thing is answerable by
+ * Each region is a real button with a real visible label, so the whole thing is answerable by
  * keyboard and by screen reader — an image map with no text alternative would make this question
- * unanswerable for some patients rather than merely harder.
+ * unanswerable for some patients rather than merely harder. That is also why the labels come from
+ * the catalogue: they used to be English string literals in this file, which meant a Hindi
+ * speaker answering a Hindi questionnaire hit "Upper right" in the middle of it.
+ *
+ * The torso outline is decorative. If the SVG fails to render, every region is still a labelled,
+ * pressable button in a nine-square grid.
  */
 
 interface Region {
   id: string;
-  label: string;
+  /** Catalogue key under `question`. */
+  labelKey: string;
   /** Percentage box within the diagram: left, top, width, height. */
   box: [number, number, number, number];
 }
 
 const REGION_LAYOUT: Record<string, Region> = {
-  right_upper: { id: 'right_upper', label: 'Upper right', box: [8, 12, 28, 22] },
-  epigastrium: { id: 'epigastrium', label: 'Upper middle', box: [36, 12, 28, 22] },
-  left_upper: { id: 'left_upper', label: 'Upper left', box: [64, 12, 28, 22] },
-  right_flank: { id: 'right_flank', label: 'Middle right', box: [8, 34, 28, 22] },
-  periumbilical: { id: 'periumbilical', label: 'Around the navel', box: [36, 34, 28, 22] },
-  left_flank: { id: 'left_flank', label: 'Middle left', box: [64, 34, 28, 22] },
-  right_lower: { id: 'right_lower', label: 'Lower right', box: [8, 56, 28, 22] },
-  suprapubic: { id: 'suprapubic', label: 'Lower middle', box: [36, 56, 28, 22] },
-  left_lower: { id: 'left_lower', label: 'Lower left', box: [64, 56, 28, 22] },
-  whole_abdomen: { id: 'whole_abdomen', label: 'All over my tummy', box: [8, 80, 84, 8] },
-  back: { id: 'back', label: 'Through to my back', box: [8, 89, 84, 8] },
+  right_upper: { id: 'right_upper', labelKey: 'region_right_upper', box: [8, 12, 28, 22] },
+  epigastrium: { id: 'epigastrium', labelKey: 'region_epigastrium', box: [36, 12, 28, 22] },
+  left_upper: { id: 'left_upper', labelKey: 'region_left_upper', box: [64, 12, 28, 22] },
+  right_flank: { id: 'right_flank', labelKey: 'region_right_flank', box: [8, 34, 28, 22] },
+  periumbilical: { id: 'periumbilical', labelKey: 'region_periumbilical', box: [36, 34, 28, 22] },
+  left_flank: { id: 'left_flank', labelKey: 'region_left_flank', box: [64, 34, 28, 22] },
+  right_lower: { id: 'right_lower', labelKey: 'region_right_lower', box: [8, 56, 28, 22] },
+  suprapubic: { id: 'suprapubic', labelKey: 'region_suprapubic', box: [36, 56, 28, 22] },
+  left_lower: { id: 'left_lower', labelKey: 'region_left_lower', box: [64, 56, 28, 22] },
+  whole_abdomen: { id: 'whole_abdomen', labelKey: 'region_whole_abdomen', box: [8, 80, 84, 8] },
+  back: { id: 'back', labelKey: 'region_back', box: [8, 89, 84, 8] },
 };
 
 export function BodyMap({
@@ -60,6 +66,8 @@ export function BodyMap({
     .map((id) => REGION_LAYOUT[id])
     .filter((region): region is Region => region !== undefined);
 
+  const label = (region: Region) => t(region.labelKey as never);
+
   return (
     <fieldset disabled={disabled}>
       <legend className="mb-3 text-sm text-ink-muted">{t('selectAreas')}</legend>
@@ -80,6 +88,13 @@ export function BodyMap({
             stroke="currentColor"
             strokeWidth="1.5"
           />
+          {/* Faint quadrant guides, so the nine boxes read as an abdomen rather than a grid. */}
+          <g stroke="currentColor" strokeWidth="0.6" opacity="0.5">
+            <line x1="36" y1="14" x2="36" y2="98" />
+            <line x1="64" y1="14" x2="64" y2="98" />
+            <line x1="16" y1="42" x2="84" y2="42" />
+            <line x1="15" y1="70" x2="85" y2="70" />
+          </g>
         </svg>
 
         {regions.map((region) => {
@@ -97,15 +112,15 @@ export function BodyMap({
                 width: `${width}%`,
                 height: `${height}%`,
               }}
-              className={`absolute rounded-lg border-2 text-xs font-medium transition-colors ${
+              className={`absolute rounded-lg border-2 text-xs font-medium leading-tight transition-colors ${
                 isSelected
-                  ? 'border-accent bg-accent/25 text-accent'
-                  : 'border-transparent bg-transparent text-ink-faint hover:border-line-strong hover:bg-surface'
+                  ? 'border-accent bg-accent-faint text-accent'
+                  : 'border-transparent bg-transparent text-ink-muted hover:border-line-strong hover:bg-surface'
               }`}
             >
               {/* The label is visible, not only an accessible name: a patient should not have to
                   guess which invisible box is "upper right". */}
-              {region.label}
+              {label(region)}
             </button>
           );
         })}
@@ -114,7 +129,10 @@ export function BodyMap({
       {selected.length > 0 && (
         <p className="mt-3 text-sm text-ink-muted" role="status">
           {selected
-            .map((id) => REGION_LAYOUT[id]?.label ?? id)
+            .map((id) => {
+              const region = REGION_LAYOUT[id];
+              return region === undefined ? id : label(region);
+            })
             .join(', ')}
         </p>
       )}

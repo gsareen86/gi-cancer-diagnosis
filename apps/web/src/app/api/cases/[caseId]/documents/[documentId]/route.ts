@@ -1,5 +1,6 @@
 import { clinical } from '@/server/db';
-import { signDocumentAccess } from '@/server/services/storage';
+import { NextResponse } from 'next/server';
+import { objectStorage, signDocumentAccess, verifyDocumentSignature } from '@/server/services/storage';
 import { accessContext, route } from '@/server/api/route-handler';
 import { ok, problem } from '@/server/api/problem';
 
@@ -11,7 +12,7 @@ import { ok, problem } from '@/server/api/problem';
  */
 export const GET = route<{ caseId: string; documentId: string }>(
   { roles: ['patient', 'doctor'] },
-  async ({ params, session, metadata }) => {
+  async ({ request, params, session, metadata }) => {
     const subjectId =
       session.role === 'patient'
         ? session.userId
@@ -32,9 +33,24 @@ export const GET = route<{ caseId: string; documentId: string }>(
       15 * 60,
     );
 
+    if (request.nextUrl.searchParams.has('content')) {
+      if (!verifyDocumentSignature({ documentId: document.id, actorId: session.userId,
+        expiry: Number(request.nextUrl.searchParams.get('exp')), signature: request.nextUrl.searchParams.get('sig') ?? '' })) {
+        return problem('forbidden', 'error.forbidden');
+      }
+      const bytes = await objectStorage().get(document.storageKey);
+      return new NextResponse(new Uint8Array(bytes), { headers: {
+        'Content-Type': document.contentType,
+        'Content-Disposition': `${document.contentType === 'application/dicom' ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(document.originalFilename)}`,
+        'Cache-Control': 'private, no-store',
+        'X-Frame-Options': 'SAMEORIGIN',
+        'Content-Security-Policy': "default-src 'none'; frame-ancestors 'self'",
+      } });
+    }
     const signed = signDocumentAccess({ documentId: document.id, actorId: session.userId });
+    const signature = new URL(signed.url, 'http://local').search;
     return ok({
-      url: signed.url,
+      url: `/api/cases/${params.caseId}/documents/${document.id}${signature}&content=1`,
       expiresAt: signed.expiresAt,
       originalFilename: document.originalFilename,
       contentType: document.contentType,

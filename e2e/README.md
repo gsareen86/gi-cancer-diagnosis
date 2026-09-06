@@ -1,96 +1,134 @@
-# End-to-end walkthroughs
+# Clinical workflow verification
 
-Browser-driven runs against a real server and a real database. They exist to check the things a
-unit test cannot: that the emergency advisory actually interrupts a patient mid-interview, that the
-release gate actually stops in front of a doctor, and that nothing clinical leaks into the screen
-the patient reads.
+## Prerequisites
 
-```bash
-./scripts/dev-postgres.sh                    # PostgreSQL 16 with pgvector
-npm run db:migrate && npm run db:seed        # schema and clinical content
-npm run build -w @gi-compass/web
-./scripts/dev-server.sh                      # starts and waits until it answers
+Use a local-only database and application. Start the project's compose services, apply migrations,
+install npm dependencies, and start the application. Do not point these fixtures at production.
 
-node e2e/patient-walkthrough.mjs             # register → interview → emergency
-node e2e/doctor-review.mjs                   # queue → override → release → what the patient sees
-node e2e/verify-hindi.mjs                    # approve Hindi, then restart and re-run with --check
+The new walkthroughs default to `http://127.0.0.1:3100`. Override `BASE_URL` for your local server.
+In PowerShell:
+
+```powershell
+$env:BASE_URL = "http://127.0.0.1:3100"
+npm run e2e:api
 ```
 
-Screenshots land in `/var/tmp/gi-shots` (override with `SHOTS=`).
+The live API suite creates its own synthetic patient, doctor, completed MFA factor and case.
+It signs in normally and computes a real TOTP code; it never clears another person's MFA or
+marks sessions satisfied in SQL. Fixtures use `DATABASE_URL` from the root `.env`.
+Only localhost/loopback hosts are accepted for both application and fixture database.
 
-## What each one proves
+It verifies authentication, role gates, substantive review, exact confirmation, prescription
+release, locked charts, frozen PDF, acknowledgement, history prefill isolation, notification
+deduplication, real scanned storage/signed content and logout. Scanning/storage services must
+be healthy. These HTTP checks do not certify browser interaction or layout.
 
-**`patient-walkthrough.mjs`** — registration does not disclose whether an address already has an
-account; verification activates; the profile's date of birth gates the case; consent is granted per
-purpose; the interview branches; the emergency advisory fires on the completing answer, shows 112
-and 108, and names no condition; answers survive; the audit trail holds no answer values; and the
-language switcher offers only languages whose clinical text a clinician has approved.
+## Browser walkthroughs
 
-**`doctor-review.mjs`** — a doctor account lands on the second-factor gate; the queue shows the
-emergency case; the case view carries the answers with their branching context, the red flags, and
-the AI summary with its version pins and disclaimer; finalization refuses the AI summary passed
-through and refuses a medication or dose; release takes an explicit confirmation showing the exact
-patient-facing text; and the patient's own view contains the released summary and none of the AI
-output.
+Install a matching browser once:
 
-**`verify-hindi.mjs`** — approving a language is a two-part act, because the question bank and the
-red-flag rule set are versioned separately. It also needs a restart: a published version is
-immutable, so the app caches it per version id and never expects one to change underneath.
-
-## Doctor-side walkthroughs
-
-```bash
-node e2e/doctor-onboarding.mjs
-
-node e2e/stub-llama-server.mjs &                 # stands in for llama-server, port 8099
-LLAMA_SERVER_URL=http://127.0.0.1:8099 <restart the AI service>
-node e2e/ai-analysis.mjs
+```powershell
+npx playwright install chromium
+npm run e2e:doctor
+npm run e2e:patient
 ```
 
-Both create their own throwaway doctor, and `ai-analysis.mjs` seeds its own case for that doctor to
-open. They read the enrolment secret off the screen, so they need an account with no second factor —
-and getting that by clearing an existing one silently invalidates whatever is in that person's
-authenticator app, with no way back except enrolling again. `DOCTOR_EMAIL` and `DOCTOR_PASSWORD`
-still override, but the account you name must already be un-enrolled: the scripts will not clear a
-factor for you. `npm run user -- list` shows which accounts have one.
+Alternatively set `CHROMIUM_PATH` to an installed compatible Chromium executable.
+Set `SHOTS` to override screenshot output; defaults are ignored subdirectories of `var/tmp`.
 
-To put a case in your own doctor's queue without answering the interview by hand:
+- `doctor-review.mjs`: real password/TOTP deep-link login, desktop Navigator review,
+  tab/viewport draft preservation, keyboard section navigation, approval invalidation and exact
+  release confirmation.
+  Safe mode is the default and cancels at confirmation. Only set `CONFIRM_SYNTHETIC_RELEASE=1`
+  when the user has explicitly authorized the medical release action; that opt-in continues through
+  release locking, private-note isolation, patient PDF, mobile overflow, role redirect and logout.
+- `patient-walkthrough.mjs`: registration, verification, profile and consent, then the bleeding
+  pathway until the emergency interruption. Only its newly registered synthetic account receives
+  a known verification-token hash. It uses parameterized SQL through the configured local
+  database, not shell-interpolated psql. This is not yet a full all-pathways intake test.
+- `auth-workflows.mjs`: register, verify, login, forgot-password, reset and changed-password login
+  for one fresh local synthetic account, including a 390px layout check. Like the patient
+  walkthrough, it replaces only that fixture user's one-time-token hash with a known local token;
+  no real account or mailbox is read.
+- `keyboard-audit.mjs`: keyboard-only login/MFA plus every visible enabled control on the main
+  doctor and patient routes, with dedicated menu arrow-key and AI-drawer focus-trap/return checks.
+  It complements the body-map, document-viewer and review-keyboard assertions in the focused
+  walkthroughs; browser-native controls retain their standard keyboard behavior.
 
-```bash
-npm run demo-case -- doctor@example.com
+Run these sequentially: the doctor's fixture credentials file is shared with its code helper.
+Fixtures and synthetic clinical/audit records are intentionally retained for inspection.
+Credentials live only in ignored `var/tmp/clinical-fixture.json`; do not commit or share that file.
+
+## Real local AI and image checks
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-ai.ps1
+node e2e/ai-live.mjs
 ```
 
-It drives the app's own interview service and state machine rather than inserting rows, so the case
-it leaves behind went through validation, red-flag evaluation, and the transitions a real one does.
+The AI check requires the configured real llama.cpp model and gateway on their local ports. It
+creates a new synthetic fixture, performs real password/TOTP login and verifies stored, validated
+model output. It never finalizes or releases a summary. Allow several minutes for inference.
+It rejects an identified stub and does not silently select a cloud provider. An ungrounded result
+is reported as such; this smoke check does not establish clinical quality.
 
-**`doctor-onboarding.mjs`** — a privileged account lands on the second-factor gate and cannot pass
-it without a code; enrolment offers both a QR and a typed key; the queue is reachable afterwards;
-and the factor persists across a second sign-in. The TOTP code is computed the way a phone would.
+`node e2e/image-preview.mjs` uploads a one-pixel synthetic PNG to the **current fixture patient's
+existing in-progress case** using normal authentication and the live scanner. It neither creates
+nor submits a case. It prints the documents page for a separate browser rendering check; an HTTP
+success alone is not a preview pass. Do not run fixture-creating scripts while another walkthrough
+still depends on the shared credentials file.
 
-**`ai-analysis.mjs`** — the doctor's *Generate AI analysis* button. Shows the recorded reason when
-a previous run failed, then produces the structured panel: summary, ranked possibilities with the
-findings behind each, the model's own concerns, suggested investigations, version pins, and the
-disclaimer. Finishes by adopting the investigations into the doctor's own next steps.
+## Current verification
 
-**`stub-llama-server.mjs`** — speaks just enough of llama.cpp's OpenAI-compatible API to exercise
-that path without a multi-gigabyte download. It answers from the JSON Schema it is sent rather than
-from a fixed fixture, so the taxonomy enum actually reaching the model is genuinely covered. It
-says nothing about whether a real model's clinical reasoning is any good.
+The additional `review-refinement.mjs` walkthrough creates a fresh synthetic case and checks
+card headings, explicit AI preview/adoption, append preservation, duplicates, protected fields,
+sticky desktop Navigator behavior, exact accessible tab names, draft retention, long-form editor
+sizing, content-aligned actions, responsive tabs and mobile overflow. It does not save, finalize
+or release. Set `RUN_LIVE_AI=1` to additionally generate through the real provider from the drawer
+and verify that fresh AI output does not overwrite the physician draft. Screenshots are retained
+in ignored `var/tmp/review-refinement/`.
 
-It listens on **8099, not 8080**, and reports itself as `stub-llama-server/not-a-real-model` from
-both `/v1/models` and every completion. Both of those are scar tissue. It used to default to 8080,
-where a real llama-server lives; one left running meant every case came back with the same canned
-summary in under a second, and the version pins on the doctor's screen named the real model —
-because the recorded name came from `LOCAL_MODEL_NAME` rather than from whatever answered. The
-service now records what the server says it is, so a stub cannot wear a model's name, and
-`/health` probes the endpoint instead of reciting the configuration back.
+`node e2e/model-idle.mjs` checks sleeping, non-waking gateway health, two concurrent synthetic
+non-clinical completions, automatic reload and repeat sleep. It does not reconfigure processes.
+For an accelerated run, start the verified idle model with `-IdleSeconds 20`, set
+`TEST_MODEL_IDLE_SECONDS=20`, run the check, then restore `-IdleSeconds 300`. The test's generation
+must last longer than the test idle interval to verify in-flight protection. Never do this while
+someone is generating a real assessment.
+
+On 2026-09-05, 42 live HTTP checks remained recorded after the reference migration, alongside
+546 passing automated tests, all-workspace type checking, production build and strict OpenSpec
+validation. The separate AI-service suite passed 102/102 tests. The real local-model smoke check
+passed; the original reported case also generated successfully without release. The final
+Navigator walkthrough passed at 1800px, 900px and 390px.
+
+Manual signed-in browser coverage passed for deep-link/MFA login, logout/back, wrong-role redirect,
+desktop/tabbed/mobile layout, draft preservation and approval invalidation, emergency interruption,
+intake submission, body-map keys, account menu and document drawer focus behavior. PDF/image
+previews and keyboard image zoom worked. Official English/Hindi PDF layout was inspected separately.
+
+The final synthetic browser dispatch confirmation was blocked by the approval service and remains
+pending explicit user permission. No alternate release path was used after that rejection.
+The dedicated registration/reset flow, route-wide keyboard audit and both main walkthroughs pass.
+The doctor walkthrough used its default safe mode and cancelled at the exact release confirmation;
+the prior live API suite covers the atomic release path. No browser release was performed.
+
+## Additional existing tools
+
+`doctor-onboarding.mjs`, `ai-analysis.mjs`, and `verify-hindi.mjs` are older specialized
+walkthroughs and are not part of the verified refinement suite. Their fixture helpers and
+selectors still need reconciliation before use with the new workspace. In particular, old
+expectations that physician prescriptions or adopted AI drafts are refused no longer apply.
+
+`stub-llama-server.mjs` is an explicitly synthetic model stub on port 8099, not a diagnostic
+model or evidence of clinical model quality. Never substitute it for the real model without
+clearly labelling the environment.
+
+For a realistic record in an existing doctor's queue, the existing `npm run demo-case --
+doctor@example.com` command now also populates clinical history.
 
 ## Reading the screen
 
-Assertions go through `support/page-text.mjs`, which exists because the obvious thing is wrong.
-`textContent('body')` includes `<script>` contents, and Next inlines the entire message catalogue
-into the document — so a substring check against it matched the English translation of the key and
-passed on a blank screen. `visibleText()` uses `innerText`, which is computed from layout. Because
-that reflects CSS, `text-transform: uppercase` headings come back uppercased, so `has()` compares
-case-insensitively. `deliveredText()` returns everything the browser was sent and is for leak checks
-only — content that reached a patient's device leaked whether or not anything drew it.
+UI assertions should use rendered text, roles and labelled controls. Next.js includes the message
+catalogue in script payloads, so `textContent('body')` can report text that is not on screen.
+`support/page-text.mjs` provides visible-text helpers. Full delivered-content checks are useful
+separately for verifying that private information never reaches the patient's device.

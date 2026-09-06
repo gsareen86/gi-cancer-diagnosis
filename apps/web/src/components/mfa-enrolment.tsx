@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, type ApiProblem } from '@/lib/api-client';
 import { Card, Field, Notice, Spinner } from '@/components/primitives';
+import { homePathFor, safeNext } from '@/lib/navigation';
 
 interface Enrolment {
   otpauthUri: string;
@@ -21,7 +22,7 @@ interface Enrolment {
  * Both the QR code and the typed secret are offered — a phone camera fails often enough that
  * "scan this" alone is not a complete answer.
  */
-export function MfaEnrolment({ alreadyEnrolled }: { alreadyEnrolled: boolean }) {
+export function MfaEnrolment({ alreadyEnrolled, nextPath = null }: { alreadyEnrolled: boolean; nextPath?: string | null }) {
   const t = useTranslations('auth');
   const tAll = useTranslations();
   const router = useRouter();
@@ -70,7 +71,7 @@ export function MfaEnrolment({ alreadyEnrolled }: { alreadyEnrolled: boolean }) 
     }
 
     const role = result.data.role;
-    router.push(role === 'doctor' ? '/doctor/queue' : role === 'patient' ? '/cases' : '/admin');
+    router.replace(safeNext(nextPath) ?? homePathFor(role));
     router.refresh();
   }
 

@@ -26,29 +26,94 @@ export function Card({
   );
 }
 
-export function PageHeading({ children, lead }: { children: ReactNode; lead?: ReactNode }) {
+/**
+ * A titled surface with its own header row, for the workspace panels.
+ *
+ * Distinct from `Card` because the header stays put while `Panel`'s body scrolls — that is the
+ * whole point of the three-column review, where reading the transcript must not move the
+ * sign-off actions off screen.
+ */
+export function Panel({
+  title,
+  actions,
+  children,
+  className = '',
+  bodyClassName = 'gi-panel-body',
+  as: Element = 'section',
+}: {
+  title?: ReactNode;
+  actions?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  bodyClassName?: string;
+  as?: 'div' | 'section' | 'article';
+}) {
   return (
-    <header className="gi-prose mb-6">
-      <h1 className="text-2xl sm:text-3xl">{children}</h1>
-      {lead !== undefined && <p className="mt-3 text-ink-muted">{lead}</p>}
+    <Element className={`gi-panel ${className}`}>
+      {title !== undefined && (
+        <header className="gi-panel-header">
+          <h2 className="text-base font-semibold">{title}</h2>
+          {actions !== undefined && <div className="flex items-center gap-2">{actions}</div>}
+        </header>
+      )}
+      <div className={bodyClassName}>{children}</div>
+    </Element>
+  );
+}
+
+export function PageHeading({
+  children,
+  lead,
+  actions,
+}: {
+  children: ReactNode;
+  lead?: ReactNode;
+  actions?: ReactNode;
+}) {
+  return (
+    <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div className="gi-prose">
+        <h1 className="text-2xl sm:text-3xl">{children}</h1>
+        {lead !== undefined && <p className="mt-2 text-ink-muted">{lead}</p>}
+      </div>
+      {actions !== undefined && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
   );
 }
 
-export type Tone = 'neutral' | 'accent' | 'ok' | 'urgent' | 'emergency';
+export type Tone = 'neutral' | 'accent' | 'ok' | 'caution' | 'urgent' | 'emergency';
 
-const TONE_CLASSES: Record<Tone, string> = {
-  neutral: 'bg-surface-sunken text-ink-muted border-line',
-  accent: 'bg-accent-faint text-accent border-accent/30',
-  ok: 'bg-ok-faint text-ok border-ok/30',
-  urgent: 'bg-urgent-faint text-urgent border-urgent/30',
-  emergency: 'bg-emergency-faint text-emergency border-emergency/30',
+export const TONE_CLASSES: Record<Tone, string> = {
+  neutral: 'bg-surface-inset text-ink-muted border-line-strong',
+  accent: 'bg-accent-faint text-accent border-accent-line',
+  ok: 'bg-ok-faint text-ok border-ok-line',
+  caution: 'bg-caution-faint text-caution border-caution-line',
+  urgent: 'bg-urgent-faint text-urgent border-urgent-line',
+  emergency: 'bg-emergency-faint text-emergency border-emergency-line',
 };
 
-export function Badge({ tone = 'neutral', children }: { tone?: Tone; children: ReactNode }) {
+/** The solid edge used to mark a row or card by tone without tinting its whole surface. */
+export const TONE_EDGE: Record<Tone, string> = {
+  neutral: 'border-l-line-strong',
+  accent: 'border-l-accent-bright',
+  ok: 'border-l-ok-bright',
+  caution: 'border-l-caution-bright',
+  urgent: 'border-l-urgent-bright',
+  emergency: 'border-l-emergency-bright',
+};
+
+export function Badge({
+  tone = 'neutral',
+  children,
+  className = '',
+}: {
+  tone?: Tone;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-sm font-medium ${TONE_CLASSES[tone]}`}
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-sm font-medium ${TONE_CLASSES[tone]} ${className}`}
     >
       {children}
     </span>
@@ -60,17 +125,19 @@ export function Notice({
   title,
   children,
   role,
+  className = '',
 }: {
   tone?: Tone;
   title?: ReactNode;
   children: ReactNode;
   /** `alert` for anything the reader must be interrupted by; `status` for passive updates. */
   role?: 'alert' | 'status' | 'note';
+  className?: string;
 }) {
   return (
     <div
       role={role === 'note' ? undefined : role}
-      className={`rounded-xl border p-4 ${TONE_CLASSES[tone]}`}
+      className={`rounded-xl border p-4 ${TONE_CLASSES[tone]} ${className}`}
     >
       {title !== undefined && <p className="font-semibold">{title}</p>}
       <div className={title === undefined ? '' : 'mt-1'}>{children}</div>
@@ -85,6 +152,7 @@ export function Field({
   htmlFor,
   children,
   optional,
+  className = 'mb-5',
 }: {
   label: ReactNode;
   hint?: ReactNode;
@@ -92,12 +160,13 @@ export function Field({
   htmlFor: string;
   children: ReactNode;
   optional?: ReactNode;
+  className?: string;
 }) {
   const hintId = hint === undefined ? undefined : `${htmlFor}-hint`;
   const errorId = error === undefined ? undefined : `${htmlFor}-error`;
 
   return (
-    <div className="mb-5">
+    <div className={className}>
       <label className="gi-label" htmlFor={htmlFor}>
         {label}
         {optional !== undefined && (
@@ -157,7 +226,7 @@ export function Progress({
         aria-label={label}
       >
         <div
-          className="h-full rounded-full bg-accent transition-[width] duration-300"
+          className="h-full rounded-full bg-accent-bright transition-[width] duration-300"
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -185,4 +254,33 @@ export function Spinner({ label }: { label: string }) {
 
 export function VisuallyHidden({ children }: { children: ReactNode }) {
   return <span className="sr-only">{children}</span>;
+}
+
+/**
+ * A label-and-value pair, which is most of what a clinical record is.
+ *
+ * `value` being `null` renders the caller's "not recorded" text rather than an empty cell — the
+ * difference between "the patient said no" and "nobody asked" is clinical, and a blank space
+ * says neither.
+ */
+export function DataPoint({
+  label,
+  value,
+  absent,
+  className = '',
+}: {
+  label: ReactNode;
+  value: ReactNode;
+  absent?: ReactNode;
+  className?: string;
+}) {
+  const missing = value === null || value === undefined || value === '';
+  return (
+    <div className={className}>
+      <dt className="text-xs font-medium uppercase tracking-[0.04em] text-ink-faint">{label}</dt>
+      <dd className={missing ? 'mt-0.5 text-ink-faint' : 'mt-0.5 font-medium text-ink'}>
+        {missing ? absent : value}
+      </dd>
+    </div>
+  );
 }

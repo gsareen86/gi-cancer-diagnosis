@@ -3,8 +3,17 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import './globals.css';
-import { LanguageSwitcher } from '@/components/language-switcher';
-import { servableLocales } from '@/lib/servable-locales';
+import { ToastProvider } from '@/components/ui/toast';
+
+/**
+ * The root layout carries only what every page needs regardless of who is looking: the locale,
+ * the toast host, and the skip link.
+ *
+ * The chrome moved out. Before this change a single header and footer wrapped the sign-in page,
+ * the patient's questionnaire and the doctor's queue alike, which is why none of them had a way
+ * to sign out — there was nowhere role-specific to put it. Each workspace now brings its own
+ * shell, and `(auth)` brings its own.
+ */
 
 export const metadata: Metadata = {
   title: 'GI Compass',
@@ -18,7 +27,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   // Zoom is never disabled: a patient who needs to enlarge a reference image must be able to.
   maximumScale: 5,
-  themeColor: '#0f6d8c',
+  themeColor: '#0F172A',
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
@@ -30,46 +39,14 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang={locale}>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <a href="#main" className="gi-skip-link">
-            {t('skipToContent')}
-          </a>
-
-          <header className="border-b border-line bg-surface">
-            <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-              <a href="/" className="font-semibold tracking-tight text-ink">
-                {t('name')}
-              </a>
-              <LanguageSwitcher available={await servableLocales()} />
-            </div>
-          </header>
-
-          <main id="main" className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+          <ToastProvider dismissLabel={t('dismiss')}>
+            <a href="#main" className="gi-skip-link">
+              {t('skipToContent')}
+            </a>
             {children}
-          </main>
-
-          <footer className="mt-auto border-t border-line bg-surface">
-            <div className="mx-auto max-w-5xl px-4 py-6 text-sm text-ink-muted sm:px-6">
-              <StandingNotice />
-            </div>
-          </footer>
+          </ToastProvider>
         </NextIntlClientProvider>
       </body>
     </html>
-  );
-}
-
-/**
- * Shown on every page, not just the questionnaire.
- *
- * A patient who lands on their case status at 2am and reads "with the doctor" needs to know, in
- * that same moment, that waiting is not the right move if things are getting worse.
- */
-async function StandingNotice() {
-  const t = await getTranslations('standingNotice');
-  return (
-    <div className="gi-prose space-y-1">
-      <p>{t('notADiagnosis')}</p>
-      <p className="font-medium text-ink">{t('seekCare')}</p>
-    </div>
   );
 }

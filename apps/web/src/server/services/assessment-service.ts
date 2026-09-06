@@ -54,12 +54,13 @@ export interface AiTransport {
   generate(payload: AssessmentRequestPayload): Promise<AssessmentServiceResponse>;
 }
 
-const DEFAULT_AI_TIMEOUT_MS = 600_000;
+const DEFAULT_AI_TIMEOUT_MS = 960_000;
 
 /**
  * How long to wait for an assessment.
  *
- * Ten minutes, matching the AI service's own budget rather than undercutting it. A locally hosted
+ * Sixteen minutes, covering the AI service's fifteen-minute cold-load/generation budget plus
+ * transport and retrieval overhead. A locally hosted
  * 27B model on an APU generates at around ten tokens a second, so a full assessment takes minutes
  * — a two-minute limit here aborted work the model was still doing correctly, reported it to the
  * doctor as a timeout, and left the server generating into a connection nobody was reading.
@@ -145,13 +146,13 @@ export async function requestAssessment(
       const skipContext = systemContext(meta.patientId, 'account_processing');
       await repo.transitionCase(skipContext, caseId, 'ai_skipped', {
         aiSkipReason: 'Consent for AI-assisted analysis was withdrawn before processing began.',
-      });
+      }, ['submitted', 'ai_processing']);
     }
     return { status: 'skipped', reason: 'consent_withdrawn' };
   }
 
   const context = systemContext(meta.patientId, 'ai_assisted_analysis');
-  if (driveCaseStatus) await repo.transitionCase(context, caseId, 'ai_processing');
+  if (driveCaseStatus) await repo.transitionCase(context, caseId, 'ai_processing', {}, ['submitted']);
 
   const summary = await compileSummaryForCase(caseId, meta);
   const taxonomy = await loadTaxonomy();
@@ -197,7 +198,7 @@ export async function requestAssessment(
         payload: { ...validation.assessment, disclaimer: MANDATORY_DISCLAIMER },
       });
 
-      if (driveCaseStatus) await repo.transitionCase(context, caseId, 'ai_processed');
+      if (driveCaseStatus) await repo.transitionCase(context, caseId, 'ai_processed', {}, ['ai_processing']);
       return {
         status: 'generated',
         assessmentId: stored?.id ?? '',
@@ -259,7 +260,7 @@ async function recordUnavailable(
     payload: null,
     failureReason: reason,
   });
-  if (driveCaseStatus) await repo.transitionCase(context, caseId, 'ai_processed');
+  if (driveCaseStatus) await repo.transitionCase(context, caseId, 'ai_processed', {}, ['ai_processing']);
   return rejections === undefined
     ? { status: 'unavailable', reason }
     : { status: 'unavailable', reason, rejections };

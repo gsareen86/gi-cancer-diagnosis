@@ -1,10 +1,9 @@
 import { getTranslations } from 'next-intl/server';
-import { redirect } from 'next/navigation';
 import { createTextResolver } from '@gi-compass/core';
 import { PageHeading } from '@/components/primitives';
 import { TemplatePreview } from '@/components/admin/template-preview';
 import { currentPublishedTemplate, currentRedFlagRules } from '@/server/services/content-service';
-import { currentUser } from '@/lib/session';
+import { requireWorkspace } from '@/lib/guard';
 
 /**
  * Preview mode.
@@ -16,10 +15,8 @@ import { currentUser } from '@/lib/session';
  */
 export default async function PreviewPage() {
   const t = await getTranslations('admin');
-  const user = await currentUser();
-
-  if (user === null) redirect('/login');
-  if (user.role !== 'clinical_admin' && user.role !== 'platform_admin') redirect('/');
+  // Authentication, second factor and role are settled by `app/admin/layout.tsx`.
+  await requireWorkspace('admin');
 
   const { document } = await currentPublishedTemplate();
   const rules = await currentRedFlagRules();

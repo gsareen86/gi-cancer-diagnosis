@@ -56,6 +56,8 @@ LLAMA_BIN=${LLAMA_SERVER_BIN:-$(env_value "$ROOT/.env" LLAMA_SERVER_BIN)}
 LLAMA_MODEL=${LLAMA_MODEL:-$(env_value "$ROOT/.env" LLAMA_MODEL)}
 LLAMA_CONTEXT=${LLAMA_CONTEXT:-$(env_value "$ROOT/services/ai/.env" LOCAL_MODEL_CONTEXT)}
 LLAMA_CONTEXT=${LLAMA_CONTEXT:-8192}
+LLAMA_IDLE_SECONDS=${LOCAL_MODEL_IDLE_SECONDS:-$(env_value "$ROOT/services/ai/.env" LOCAL_MODEL_IDLE_SECONDS)}
+LLAMA_IDLE_SECONDS=${LLAMA_IDLE_SECONDS:-300}
 
 # --- process control --------------------------------------------------------------------------
 listener_pids() {
@@ -90,8 +92,8 @@ wait_for() {
 }
 
 served_model() {
-  curl -s --max-time 3 "http://127.0.0.1:$LLAMA_PORT/v1/models" 2>/dev/null \
-    | sed -n 's/.*"id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1
+  curl -s --max-time 3 "http://127.0.0.1:$LLAMA_PORT/props" 2>/dev/null \
+    | sed -n 's/.*"model_alias"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1
 }
 
 # --- components -------------------------------------------------------------------------------
@@ -142,7 +144,18 @@ start_llama() {
     return 1
   fi
 
-  free_port "$LLAMA_PORT"
+  if ! [[ "$LLAMA_IDLE_SECONDS" =~ ^(-1|[1-9][0-9]*)$ ]] || [ "$LLAMA_IDLE_SECONDS" -gt 86400 ]; then
+    bad 'LOCAL_MODEL_IDLE_SECONDS must be 1..86400, or -1 to explicitly disable sleep'
+    return 1
+  fi
+  if port_is_up "$LLAMA_PORT"; then
+    warn 'existing model listener preserved; restart the verified idle model to apply configuration changes'
+    return 0
+  fi
+  if ! "$LLAMA_BIN" --help 2>&1 | grep -- '--sleep-idle-seconds' > /dev/null; then
+    bad 'configured llama-server does not support native idle sleep; upgrade it explicitly'
+    return 1
+  fi
   # llama-server reports whatever -m was given as the model id, and that id is what gets
   # stored against a case and shown to the doctor as a version pin. Unaliased that is an
   # absolute Windows path. The alias is derived from the file, so it still describes what
@@ -158,13 +171,14 @@ start_llama() {
     "$LLAMA_BIN" -m "$LLAMA_MODEL" \
       --host 127.0.0.1 --port "$LLAMA_PORT" --alias "$alias" \
       -c "$LLAMA_CONTEXT" -ngl 99 --no-mmap --flash-attn on \
+      --sleep-idle-seconds "$LLAMA_IDLE_SECONDS" \
       -b 512 -ub 64 -t 4 -tb 12 -ctk q8_0 -ctv q8_0 \
       > "$LOG_DIR/llama.log" 2>&1 < /dev/null &
   )
 
   printf '  loading the model (a quantised 27B takes a while)...\n'
   # The one component worth waiting minutes for.
-  if wait_for "http://127.0.0.1:$LLAMA_PORT/v1/models" 420; then
+  if wait_for "http://127.0.0.1:$LLAMA_PORT/props" 420; then
     ok "serving $(served_model)"
   else
     bad "llama-server did not come up - see $(native_path "$LOG_DIR/llama.log")"
@@ -281,7 +295,7 @@ cmd_status() {
   rows=(
     "web|$WEB_PORT|http://localhost:$WEB_PORT/"
     "ai|$AI_PORT|http://127.0.0.1:$AI_PORT/health"
-    "llama|$LLAMA_PORT|http://127.0.0.1:$LLAMA_PORT/v1/models"
+    "llama|$LLAMA_PORT|http://127.0.0.1:$LLAMA_PORT/health"
     "mail|8025|http://localhost:8025/"
   )
   for row in "${rows[@]}"; do

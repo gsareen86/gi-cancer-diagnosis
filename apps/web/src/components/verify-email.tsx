@@ -33,7 +33,7 @@ export function VerifyEmail({ token }: { token: string | null }) {
           {t('verifySuccess')}
         </Notice>
         <Link href="/login" className="gi-button-primary mt-6">
-          {t('login')}
+          {t('loginLabel')}
         </Link>
       </div>
     );

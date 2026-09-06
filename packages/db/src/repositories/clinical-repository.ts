@@ -1,8 +1,9 @@
-import { and, asc, desc, eq, inArray, isNull, notInArray } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNull, isNotNull, notInArray, sql } from 'drizzle-orm';
 import type { AnswerValue, RecordedAnswer, TriggeredRedFlag } from '@gi-compass/core';
 import {
   aiAssessments,
   caseAssignments,
+  caseClinicalHistory,
   caseMessages,
   cases,
   doctorReviews,
@@ -14,7 +15,7 @@ import {
 import type { Database } from '../client';
 import { AuditWriteError, AuthorizationError, ConsentGateError, IllegalTransitionError } from '../errors';
 import { authorizeCaseAccess, loadCaseIdentity } from '../access/authorize';
-import { assertConsent } from '../access/consent';
+import { assertConsent, hasConsentFor } from '../access/consent';
 import { databaseAuditWriter, type AuditOutcome, type AuditWriter } from '../access/audit';
 import type { AccessContext, AccessDescriptor } from '../access/context';
 
@@ -50,7 +51,7 @@ export type CaseStatus =
 export const CASE_TRANSITIONS: Readonly<Record<CaseStatus, readonly CaseStatus[]>> = {
   in_progress: ['submitted', 'closed'],
   submitted: ['ai_processing', 'ai_skipped', 'in_review', 'closed'],
-  ai_processing: ['ai_processed', 'ai_skipped', 'closed'],
+  ai_processing: ['ai_processed', 'ai_skipped', 'in_review', 'closed'],
   ai_processed: ['in_review', 'closed'],
   ai_skipped: ['in_review', 'closed'],
   in_review: ['reviewed', 'closed'],
@@ -75,6 +76,14 @@ export class ClinicalRepository {
   constructor(db: Database, options: ClinicalRepositoryOptions = {}) {
     this.#db = db;
     this.#audit = options.auditWriter ?? databaseAuditWriter;
+  }
+
+  async #consentedQueueRows<T extends { patientId: string }>(rows: T[]): Promise<T[]> {
+    const permitted = new Set<string>();
+    for (const id of new Set(rows.map((row) => row.patientId))) {
+      if (await hasConsentFor(this.#db, id, 'share_with_assigned_doctor')) permitted.add(id);
+    }
+    return rows.filter((row) => permitted.has(row.patientId));
   }
 
   /**
@@ -260,17 +269,20 @@ export class ClinicalRepository {
     );
   }
 
-  async transitionCase(context: AccessContext, caseId: string, to: CaseStatus, patch: Record<string, unknown> = {}) {
+  async transitionCase(context: AccessContext, caseId: string, to: CaseStatus, patch: Record<string, unknown> = {}, onlyFrom?: readonly CaseStatus[]) {
     return this.#withAccess(
       context,
       { action: 'case.transition', targetType: 'case', targetId: caseId, metadata: { to } },
       async (tx) => {
         const [current] = await tx
-          .select({ status: cases.status })
+          .select()
           .from(cases)
           .where(eq(cases.id, caseId))
-          .limit(1);
+          .limit(1)
+          .for('update');
         if (!current) throw new AuthorizationError('case does not exist', { notFound: true });
+        // A background AI completion must never rewind a review or a released chart.
+        if (onlyFrom !== undefined && !onlyFrom.includes(current.status)) return current;
         if (!canTransition(current.status, to)) {
           throw new IllegalTransitionError(current.status, to);
         }
@@ -466,6 +478,7 @@ export class ClinicalRepository {
         tx
           .select({
             id: cases.id,
+            publicNumber: cases.publicNumber,
             status: cases.status,
             entryPointId: cases.entryPointId,
             templateVersionId: cases.templateVersionId,
@@ -508,8 +521,10 @@ export class ClinicalRepository {
     const rows = await this.#db
       .select({
         id: cases.id,
+        publicNumber: cases.publicNumber,
         status: cases.status,
         entryPointId: cases.entryPointId,
+        templateVersionId: cases.templateVersionId,
         patientId: cases.patientId,
         createdAt: cases.createdAt,
         submittedAt: cases.submittedAt,
@@ -531,7 +546,7 @@ export class ClinicalRepository {
       )
       .orderBy(asc(cases.submittedAt));
 
-    return this.#withUrgency(rows);
+    return this.#withUrgency(await this.#consentedQueueRows(rows));
   }
 
   /**
@@ -601,8 +616,10 @@ export class ClinicalRepository {
     const rows = await db
       .select({
         id: cases.id,
+        publicNumber: cases.publicNumber,
         status: cases.status,
         entryPointId: cases.entryPointId,
+        templateVersionId: cases.templateVersionId,
         patientId: cases.patientId,
         createdAt: cases.createdAt,
         submittedAt: cases.submittedAt,
@@ -616,7 +633,8 @@ export class ClinicalRepository {
       .where(eq(caseAssignments.doctorId, doctorId))
       .orderBy(desc(cases.submittedAt), desc(cases.createdAt));
 
-    const flags = rows.length === 0
+    const visibleRows = await this.#consentedQueueRows(rows);
+    const flags = visibleRows.length === 0
       ? []
       : await db
           .select({
@@ -625,7 +643,7 @@ export class ClinicalRepository {
             ruleId: redFlagTriggers.ruleId,
           })
           .from(redFlagTriggers)
-          .where(inArray(redFlagTriggers.caseId, rows.map((row) => row.id)));
+          .where(inArray(redFlagTriggers.caseId, visibleRows.map((row) => row.id)));
 
     await this.#audit.write(
       db,
@@ -634,7 +652,7 @@ export class ClinicalRepository {
       'allowed',
     );
 
-    return rows.map((row) => {
+    return visibleRows.map((row) => {
       const caseFlags = flags.filter((flag) => flag.caseId === row.id);
       const urgencies = caseFlags.map((flag) => flag.urgency);
       const highest = urgencies.includes('emergency')
@@ -840,13 +858,16 @@ export class ClinicalRepository {
       context,
       { action: 'review.open', targetType: 'case', targetId: caseId },
       async (tx) => {
+        const [record] = await tx.select({ status: cases.status }).from(cases).where(eq(cases.id, caseId)).for('update');
+        if (!record || ['in_progress', 'released', 'closed'].includes(record.status)) throw new IllegalTransitionError(record?.status ?? 'missing', 'in_review');
         const [existing] = await tx
           .select()
           .from(doctorReviews)
           .where(and(eq(doctorReviews.caseId, caseId), eq(doctorReviews.doctorId, doctorId)))
           .orderBy(desc(doctorReviews.createdAt))
           .limit(1);
-        if (existing && existing.status !== 'released') return existing;
+        if (existing?.status === 'released') throw new IllegalTransitionError('released', 'in_review');
+        if (existing) return existing;
 
         const [row] = await tx
           .insert(doctorReviews)
@@ -858,6 +879,7 @@ export class ClinicalRepository {
             startedAt: new Date(),
           })
           .returning();
+        await tx.update(cases).set({ status: 'in_review', updatedAt: new Date() }).where(eq(cases.id, caseId));
         return row ?? null;
       },
       { caseId },
@@ -871,6 +893,7 @@ export class ClinicalRepository {
       reviewId: string;
       finalSummary: unknown;
       doctorNotes: string | null;
+      finalize?: boolean;
       diffs: ReadonlyArray<{
         action: 'likelihood_changed' | 'item_added' | 'item_removed' | 'item_rejected' | 'next_steps_changed';
         conditionId?: string | null;
@@ -886,17 +909,21 @@ export class ClinicalRepository {
     return this.#withAccess(
       context,
       {
-        action: 'review.save',
+        action: input.finalize ? 'review.finalize' : 'review.save',
         targetType: 'review',
         targetId: input.reviewId,
         metadata: { caseId: input.caseId, diffCount: input.diffs.length },
       },
       async (tx) => {
+        const [record] = await tx.select({ status: cases.status }).from(cases).where(eq(cases.id, input.caseId)).for('update');
+        if (!record || ['in_progress', 'released', 'closed'].includes(record.status)) throw new IllegalTransitionError(record?.status ?? 'missing', 'in_review');
         const [row] = await tx
           .update(doctorReviews)
-          .set({ finalSummary: input.finalSummary, doctorNotes: input.doctorNotes, status: 'in_review' })
-          .where(eq(doctorReviews.id, input.reviewId))
+          .set({ finalSummary: input.finalSummary, doctorNotes: input.doctorNotes, status: input.finalize ? 'finalized' : 'in_review', finalizedAt: input.finalize ? new Date() : null })
+          .where(and(eq(doctorReviews.id, input.reviewId), eq(doctorReviews.caseId, input.caseId), notInArray(doctorReviews.status, ['released'])))
           .returning();
+        if (!row) throw new IllegalTransitionError('locked', 'in_review');
+        await tx.update(cases).set({ status: input.finalize ? 'reviewed' : 'in_review', updatedAt: new Date() }).where(eq(cases.id, input.caseId));
 
         // Overrides are recorded fresh each save so the diff set always reflects the current
         // draft rather than accumulating superseded entries.
@@ -927,11 +954,14 @@ export class ClinicalRepository {
       context,
       { action: 'review.finalize', targetType: 'review', targetId: reviewId, metadata: { caseId } },
       async (tx) => {
+        const [record] = await tx.select({ status: cases.status }).from(cases).where(eq(cases.id, caseId)).for('update');
+        if (record?.status !== 'in_review') throw new IllegalTransitionError(record?.status ?? 'missing', 'reviewed');
         const [row] = await tx
           .update(doctorReviews)
           .set({ status: 'finalized', finalizedAt: new Date() })
-          .where(eq(doctorReviews.id, reviewId))
+          .where(and(eq(doctorReviews.id, reviewId), eq(doctorReviews.caseId, caseId), eq(doctorReviews.status, 'in_review')))
           .returning();
+        if (!row) throw new IllegalTransitionError('locked', 'finalized');
         await tx.update(cases).set({ status: 'reviewed', updatedAt: new Date() }).where(eq(cases.id, caseId));
         return row ?? null;
       },
@@ -947,7 +977,7 @@ export class ClinicalRepository {
    */
   async releaseReview(
     context: AccessContext,
-    input: { caseId: string; reviewId: string; releasedContent: unknown; releasedBy: string },
+    input: { caseId: string; reviewId: string; releasedContent: unknown; releasedBy: string; expectedFinalSummary?: unknown },
   ) {
     return this.#withAccess(
       context,
@@ -959,6 +989,9 @@ export class ClinicalRepository {
       },
       async (tx) => {
         const now = new Date();
+        // Same case-first lock order as draft saves, so concurrent edits cannot deadlock a release.
+        const [record] = await tx.select({ status: cases.status }).from(cases).where(eq(cases.id, input.caseId)).for('update');
+        if (record?.status !== 'reviewed') throw new IllegalTransitionError(record?.status ?? 'missing', 'released');
         const [row] = await tx
           .update(doctorReviews)
           .set({
@@ -967,8 +1000,14 @@ export class ClinicalRepository {
             releasedAt: now,
             releasedBy: input.releasedBy,
           })
-          .where(eq(doctorReviews.id, input.reviewId))
+          .where(and(
+            eq(doctorReviews.id, input.reviewId),
+            eq(doctorReviews.caseId, input.caseId),
+            eq(doctorReviews.status, 'finalized'),
+            input.expectedFinalSummary === undefined ? undefined : sql`${doctorReviews.finalSummary} = ${JSON.stringify(input.expectedFinalSummary)}::jsonb`,
+          ))
           .returning();
+        if (!row) throw new IllegalTransitionError('changed_or_released', 'released');
         await tx
           .update(cases)
           .set({ status: 'released', releasedAt: now, updatedAt: now })
@@ -994,6 +1033,17 @@ export class ClinicalRepository {
       },
       { caseId },
     );
+  }
+
+  /** Operational progress only. Never returns an assessment, clinical text or model metadata. */
+  async patientProcessingState(context: AccessContext, caseId: string) {
+    return this.#withAccess(context, { action: 'case.progress.read', targetType: 'case', targetId: caseId }, async (tx) => {
+      const [record] = await tx.select({ status: cases.status, skip: cases.aiSkipReason }).from(cases).where(eq(cases.id, caseId));
+      const [analysis] = await tx.select({ outcome: aiAssessments.outcome }).from(aiAssessments)
+        .where(eq(aiAssessments.caseId, caseId)).orderBy(desc(aiAssessments.generatedAt)).limit(1);
+      return analysis ? (analysis.outcome === 'unavailable' ? 'unavailable' : 'complete') as 'unavailable' | 'complete'
+        : record?.skip || record?.status === 'ai_skipped' ? 'skipped' as const : 'pending' as const;
+    }, { caseId });
   }
 
   async listReviewDiffs(context: AccessContext, caseId: string, reviewId: string) {
@@ -1028,6 +1078,272 @@ export class ClinicalRepository {
       async (tx) =>
         tx.select().from(caseMessages).where(eq(caseMessages.caseId, caseId)).orderBy(asc(caseMessages.sentAt)),
       { caseId },
+    );
+  }
+
+  /* ---------------------------------------------------------------------------------------- */
+  /* Triage support                                                                            */
+  /* ---------------------------------------------------------------------------------------- */
+
+  /**
+   * One-line snapshots of the latest AI assessment, for the triage table.
+   *
+   * Lives here rather than in the interface layer because `ai_assessments` is a clinical table
+   * and is deliberately not exported from this package — a query in a route handler is exactly
+   * the hole that makes consent gating and audit logging optional.
+   *
+   * Not routed through `#withAccess`: that funnel authorizes one case for one subject, and a
+   * queue spans many patients. Scoped instead by the caller having just been handed those case
+   * ids by `listDoctorQueue` or `listClaimableCases`, both of which are doctor-only and audited,
+   * and it writes its own audit entry naming how many it read.
+   *
+   * Returns only the model's `clinician_summary`. Nothing else from the payload — no
+   * differential, no likelihoods — belongs in a list view.
+   */
+  async assessmentSnapshots(
+    doctorId: string,
+    actorRole: AccessContext['actor']['role'],
+    caseIds: readonly string[],
+  ): Promise<Map<string, string>> {
+    const signals = await this.assessmentTriageSignals(doctorId, actorRole, caseIds);
+    return new Map([...signals].map(([id, value]) => [id, value.summary]));
+  }
+
+  async assessmentTriageSignals(doctorId: string, actorRole: AccessContext['actor']['role'], caseIds: readonly string[]) {
+    if (actorRole !== 'doctor') throw new AuthorizationError('only a doctor may read assessment snapshots');
+    const result = new Map<string, { summary: string; conditions: string[] }>();
+    for (const caseId of new Set(caseIds)) {
+      const identity = await loadCaseIdentity(this.#db, caseId);
+      if (!identity) continue;
+      try {
+        const assessment = await this.getLatestAssessment({
+          actor: { id: doctorId, role: 'doctor' },
+          subjectId: identity.patientId,
+          purpose: 'share_with_assigned_doctor',
+        }, caseId);
+        const payload = assessment?.payload as { clinician_summary?: unknown; differential_assessment?: Array<{ condition?: unknown }> } | null;
+        if (typeof payload?.clinician_summary === 'string') result.set(caseId, {
+          summary: payload.clinician_summary,
+          conditions: Array.isArray(payload.differential_assessment) ? payload.differential_assessment.flatMap((item) => typeof item.condition === 'string' ? [item.condition] : []) : [],
+        });
+      } catch (error) {
+        // Claimable cases remain pseudonymous and do not expose potentially identifying prose.
+        if (!(error instanceof AuthorizationError || error instanceof ConsentGateError)) throw error;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Aggregates for the reviewing doctor's own analytics.
+   *
+   * Counts and timestamps over cases assigned to the caller, plus their own override diffs.
+   * Carries no patient identifier of any kind, which is what makes it safe to render on a screen
+   * a colleague might glance at — and why it returns shaped aggregates rather than rows the
+   * caller could join back to a person.
+   */
+  async doctorStatistics(doctorId: string, actorRole: AccessContext['actor']['role'], since: Date) {
+    if (actorRole !== 'doctor') {
+      throw new AuthorizationError('only a doctor may read their own review statistics');
+    }
+
+    const assigned = this.#db
+      .select({ caseId: caseAssignments.caseId })
+      .from(caseAssignments)
+      .where(and(eq(caseAssignments.doctorId, doctorId), isNull(caseAssignments.endedAt)));
+
+    const rows = await this.#db
+      .select({
+        id: cases.id,
+        status: cases.status,
+        submittedAt: cases.submittedAt,
+        releasedAt: cases.releasedAt,
+      })
+      .from(cases)
+      .where(inArray(cases.id, assigned));
+
+    const flags =
+      rows.length === 0
+        ? []
+        : await this.#db
+            .select({ caseId: redFlagTriggers.caseId, urgency: redFlagTriggers.urgency })
+            .from(redFlagTriggers)
+            .where(
+              inArray(
+                redFlagTriggers.caseId,
+                rows.map((row) => row.id),
+              ),
+            );
+
+    const overrides = await this.#db
+      .select({ action: reviewDiffs.action, count: sql<number>`count(*)::int` })
+      .from(reviewDiffs)
+      .innerJoin(doctorReviews, eq(doctorReviews.id, reviewDiffs.reviewId))
+      .where(and(eq(doctorReviews.doctorId, doctorId), gte(reviewDiffs.recordedAt, since)))
+      .groupBy(reviewDiffs.action);
+
+    await this.#audit.write(
+      this.#db,
+      {
+        actor: { id: doctorId, role: 'doctor' },
+        subjectId: doctorId,
+        purpose: 'share_with_assigned_doctor',
+      },
+      {
+        action: 'analytics.read',
+        targetType: 'doctor_statistics',
+        targetId: doctorId,
+        metadata: { cases: rows.length },
+      },
+      'allowed',
+    );
+
+    return { cases: rows, flags, overrides };
+  }
+
+  /* ---------------------------------------------------------------------------------------- */
+  /* Clinical history                                                                          */
+  /* ---------------------------------------------------------------------------------------- */
+
+  /**
+   * The clinical history behind the presenting complaint.
+   *
+   * Returns null when no row exists, which the interface renders as "not recorded" rather than
+   * as an empty history. The difference is clinical: a patient who reported no comorbidities and
+   * a patient who was never asked are not the same patient, and a blank section says neither.
+   */
+  async getClinicalHistory(context: AccessContext, caseId: string) {
+    return this.#withAccess(
+      context,
+      { action: 'clinical_history.read', targetType: 'case', targetId: caseId },
+      async (tx) => {
+        const [row] = await tx
+          .select()
+          .from(caseClinicalHistory)
+          .where(eq(caseClinicalHistory.caseId, caseId))
+          .limit(1);
+        return row ?? null;
+      },
+      { caseId },
+    );
+  }
+
+  /**
+   * Saves the patient's history for a case that is still open.
+   *
+   * Refuses once the case has left `in_progress`, by the same rule that freezes answers: the
+   * doctor's review must describe the record it was made against, so nothing behind a submitted
+   * case may move.
+   *
+   * The audit metadata counts entries and never quotes them — a medication name is clinical
+   * content and the audit log is not a second copy of the record.
+   */
+  async saveClinicalHistory(
+    context: AccessContext,
+    input: {
+      caseId: string;
+      heightCm: number | null;
+      weightKg: string | null;
+      conditions: unknown[];
+      surgeries: unknown[];
+      medications: unknown[];
+      allergies: unknown[];
+      familyHistory: unknown[];
+      lifestyle: unknown | null;
+      additionalNotes: unknown | null;
+      lastMenstrualPeriod: string | null;
+      complete: boolean;
+    },
+  ) {
+    return this.#withAccess(
+      context,
+      {
+        action: 'clinical_history.write',
+        targetType: 'case',
+        targetId: input.caseId,
+        metadata: {
+          conditions: input.conditions.length,
+          medications: input.medications.length,
+          surgeries: input.surgeries.length,
+          complete: input.complete,
+        },
+      },
+      async (tx) => {
+        const [current] = await tx
+          .select({ status: cases.status })
+          .from(cases)
+          .where(eq(cases.id, input.caseId))
+          .limit(1)
+          .for('update');
+        if (!current) throw new AuthorizationError('case not found', { notFound: true });
+        if (current.status !== 'in_progress') {
+          // Same rule that freezes answers: nothing behind a submitted case may move.
+          throw new IllegalTransitionError(current.status, 'in_progress');
+        }
+
+        const values = {
+          heightCm: input.heightCm,
+          weightKg: input.weightKg,
+          conditions: input.conditions,
+          surgeries: input.surgeries,
+          medications: input.medications,
+          allergies: input.allergies,
+          familyHistory: input.familyHistory,
+          lifestyle: input.lifestyle,
+          additionalNotes: input.additionalNotes,
+          lastMenstrualPeriod: input.lastMenstrualPeriod,
+          completedAt: input.complete ? new Date() : null,
+          updatedAt: new Date(),
+        };
+
+        const [row] = await tx
+          .insert(caseClinicalHistory)
+          .values({ caseId: input.caseId, ...values })
+          .onConflictDoUpdate({ target: caseClinicalHistory.caseId, set: values })
+          .returning();
+
+        await tx.update(cases).set({ updatedAt: new Date() }).where(eq(cases.id, input.caseId));
+        return row ?? null;
+      },
+      { caseId: input.caseId },
+    );
+  }
+
+  /**
+   * The patient's most recent completed history, for pre-filling a new case.
+   *
+   * Copied, never linked. Editing the new case's history must leave the old case's reviewer
+   * seeing exactly what they saw — see design D6.
+   */
+  async latestCompletedHistoryFor(context: AccessContext, excludeCaseId: string) {
+    return this.#withAccess(
+      context,
+      { action: 'clinical_history.read', targetType: 'patient', targetId: context.subjectId },
+      async (tx) => {
+        const [row] = await tx
+          .select({
+            heightCm: caseClinicalHistory.heightCm,
+            weightKg: caseClinicalHistory.weightKg,
+            conditions: caseClinicalHistory.conditions,
+            surgeries: caseClinicalHistory.surgeries,
+            medications: caseClinicalHistory.medications,
+            allergies: caseClinicalHistory.allergies,
+            familyHistory: caseClinicalHistory.familyHistory,
+            lifestyle: caseClinicalHistory.lifestyle,
+          })
+          .from(caseClinicalHistory)
+          .innerJoin(cases, eq(cases.id, caseClinicalHistory.caseId))
+          .where(
+            and(
+              eq(cases.patientId, context.subjectId),
+              notInArray(caseClinicalHistory.caseId, [excludeCaseId]),
+              isNotNull(caseClinicalHistory.completedAt),
+            ),
+          )
+          .orderBy(desc(caseClinicalHistory.completedAt))
+          .limit(1);
+        return row ?? null;
+      },
     );
   }
 

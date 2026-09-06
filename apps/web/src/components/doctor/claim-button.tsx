@@ -10,7 +10,7 @@ import { Notice } from '@/components/primitives';
  * Takes an unassigned case. A single deliberate action, because claiming makes this doctor the
  * one responsible for reviewing it.
  */
-export function ClaimButton({ caseId }: { caseId: string }) {
+export function ClaimButton({ caseId, compact = false }: { caseId: string; compact?: boolean }) {
   const t = useTranslations('doctor');
   const tAll = useTranslations();
   const router = useRouter();
@@ -30,14 +30,19 @@ export function ClaimButton({ caseId }: { caseId: string }) {
       router.refresh();
       return;
     }
-    router.push(`/doctor/cases/${caseId}`);
+    router.push(`/doctor/case/${caseId}`);
     router.refresh();
   }
 
   return (
     <div>
-      <button type="button" className="gi-button-primary" disabled={pending} onClick={() => void claim()}>
-        {t('claim')}
+      <button
+        type="button"
+        className={compact ? 'gi-button-sm gi-button-primary' : 'gi-button-primary'}
+        disabled={pending}
+        onClick={() => void claim()}
+      >
+        {t('claimLabel')}
       </button>
       {problem !== null && (
         <div className="mt-2">

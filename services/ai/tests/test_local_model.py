@@ -231,11 +231,35 @@ class TestServerProbe:
 
     def test_names_the_model_the_endpoint_reports(self):
         def handler(request: httpx.Request) -> httpx.Response:
-            assert request.url.path == "/v1/models"
-            return httpx.Response(200, json={"data": [{"id": "qwen3-27b-q4_k_m"}]})
+            assert request.url.path == "/props"
+            return httpx.Response(200, json={"model_alias": "qwen3-27b-q4_k_m", "is_sleeping": False})
 
         result = local_model.probe_server(client=stub_client(handler))
-        assert result == {"reachable": True, "servedModel": "qwen3-27b-q4_k_m"}
+        assert result == {"reachable": True, "servedModel": "qwen3-27b-q4_k_m", "modelState": "ready", "sleeping": False}
+
+    def test_sleep_is_healthy_and_polling_never_uses_a_waking_endpoint(self):
+        paths = []
+        def handler(request):
+            paths.append(request.url.path)
+            return httpx.Response(200, json={"model_alias": "real-model", "is_sleeping": True})
+        client = stub_client(handler)
+        for _ in range(3):
+            result = local_model.probe_server(client)
+            assert result["reachable"] is True
+            assert result["modelState"] == "sleeping"
+            assert result["servedModel"] == "real-model"
+        assert paths == ["/props"] * 3
+
+    def test_loading_is_distinct_from_unavailable(self):
+        result = local_model.probe_server(stub_client(lambda _: httpx.Response(503)))
+        assert result["modelState"] == "loading"
+        assert result["reachable"] is True
+
+    @pytest.mark.parametrize("body", [{}, {"model_alias": "configured-only"}, [], {"model_alias": "x", "is_sleeping": "false"}])
+    def test_malformed_status_does_not_claim_a_ready_model(self, body):
+        result = local_model.probe_server(stub_client(lambda _: httpx.Response(200, json=body)))
+        assert result["modelState"] == "unknown"
+        assert result["servedModel"] is None
 
     def test_says_nothing_is_listening_rather_than_reporting_the_configured_name(self):
         def handler(_: httpx.Request) -> httpx.Response:
@@ -252,4 +276,4 @@ class TestServerProbe:
         result = local_model.probe_server(client=stub_client(handler))
         assert result["reachable"] is True
         assert result["servedModel"] is None
-        assert "not a llama-server" in result["note"]
+        assert result["modelState"] == "unknown"

@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { tables } from '@gi-compass/db';
 import { database } from '../db';
 import { env } from '../env';
@@ -21,7 +21,10 @@ export type NotificationType =
   | 'case_submitted'
   | 'case_released'
   | 'doctor_case_queued'
-  | 'doctor_urgent_case';
+  | 'doctor_urgent_case'
+  | 'case_under_review'
+  | 'doctor_overdue_case';
+// Lifecycle alerts contain the same non-clinical envelope as other notifications.
 
 export interface NotificationRequest {
   userId: string;
@@ -31,6 +34,7 @@ export interface NotificationRequest {
   /** A non-clinical reference such as a case identifier. */
   reference?: string;
   locale?: string;
+  dedupeKey?: string;
 }
 
 /** Keys whose presence in a template variable would mean clinical content is being rendered. */
@@ -84,6 +88,14 @@ type TemplateRenderer = (variables: Record<string, string>) => RenderedEmail;
  * that this person is being investigated for something.
  */
 const TEMPLATES: Record<NotificationType, Record<string, TemplateRenderer>> = {
+  case_under_review: {
+    en: (v) => ({ subject: 'Your case is being reviewed', body: `A specialist has started reviewing your case. Sign in for updates:\n\n${v.link}` }),
+    hi: (v) => ({ subject: 'आपके मामले की समीक्षा जारी है', body: `एक विशेषज्ञ ने आपके मामले की समीक्षा शुरू कर दी है। अपडेट के लिए साइन इन करें:\n\n${v.link}` }),
+  },
+  doctor_overdue_case: {
+    en: (v) => ({ subject: 'Review deadline passed', body: `A case is awaiting your review beyond the service deadline. Open your workspace:\n\n${v.link}` }),
+    hi: (v) => ({ subject: 'समीक्षा की समय सीमा बीत गई', body: `एक मामला सेवा समय सीमा के बाद भी समीक्षा की प्रतीक्षा कर रहा है। अपना कार्यक्षेत्र खोलें:\n\n${v.link}` }),
+  },
   email_verification: {
     en: (v) => ({
       subject: 'Confirm your email address',
@@ -245,20 +257,181 @@ export function baseUrl(): string {
   return process.env.APP_BASE_URL ?? 'http://localhost:3000';
 }
 
-function linkFor(type: NotificationType, token: string | undefined, reference: string | undefined): string {
+export function linkFor(
+  type: NotificationType,
+  token: string | undefined,
+  reference: string | undefined,
+): string {
   switch (type) {
     case 'email_verification':
       return `${baseUrl()}/verify-email?token=${token ?? ''}`;
     case 'password_reset':
       return `${baseUrl()}/reset-password?token=${token ?? ''}`;
+    case 'case_submitted':
     case 'case_released':
-      return `${baseUrl()}/cases/${reference ?? ''}`;
+    case 'case_under_review':
+      return `${baseUrl()}/patient/case/${reference ?? ''}`;
     case 'doctor_case_queued':
     case 'doctor_urgent_case':
-      return `${baseUrl()}/doctor/cases/${reference ?? ''}`;
+    case 'doctor_overdue_case':
+      return `${baseUrl()}/doctor/case/${reference ?? ''}`;
     default:
       return baseUrl();
   }
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* The in-app feed                                                                               */
+/* -------------------------------------------------------------------------------------------- */
+
+/**
+ * The delivery table doubles as the notification feed.
+ *
+ * One record, two channels — which means the bell and the email can never disagree about what
+ * the system told someone, and the feed inherits the guarantee that made the table safe in the
+ * first place: it holds a type, a time, and a case reference, and there is no clinical field on
+ * it for anything else to leak through.
+ *
+ * The two token types are excluded. A verification or reset notification is entirely a link the
+ * recipient must follow from their mail, and the link is deliberately not stored here — so an
+ * entry for one in the feed could only ever be a dead end.
+ */
+const FEED_TYPES = [
+  'case_under_review',
+  'doctor_overdue_case',
+  'case_submitted',
+  'case_released',
+  'doctor_case_queued',
+  'doctor_urgent_case',
+] as const;
+
+export interface FeedEntry {
+  id: string;
+  type: NotificationType;
+  reference: string | null;
+  outcome: string;
+  queuedAt: string;
+  sentAt: string | null;
+  readAt: string | null;
+  failureReason: string | null;
+}
+
+export async function listNotifications(
+  userId: string,
+  limit = 30,
+): Promise<{ entries: FeedEntry[]; unread: number }> {
+  const db = database();
+
+  const rows = await db
+    .select({
+      id: tables.notificationDeliveries.id,
+      type: tables.notificationDeliveries.type,
+      reference: tables.notificationDeliveries.reference,
+      outcome: tables.notificationDeliveries.outcome,
+      queuedAt: tables.notificationDeliveries.queuedAt,
+      sentAt: tables.notificationDeliveries.sentAt,
+      readAt: tables.notificationDeliveries.readAt,
+      failureReason: tables.notificationDeliveries.failureReason,
+    })
+    .from(tables.notificationDeliveries)
+    .where(
+      and(
+        eq(tables.notificationDeliveries.userId, userId),
+        inArray(tables.notificationDeliveries.type, [...FEED_TYPES]),
+      ),
+    )
+    .orderBy(desc(tables.notificationDeliveries.queuedAt))
+    .limit(limit);
+
+  const [counted] = await db
+    .select({ unread: sql<number>`count(*)::int` })
+    .from(tables.notificationDeliveries)
+    .where(
+      and(
+        eq(tables.notificationDeliveries.userId, userId),
+        inArray(tables.notificationDeliveries.type, [...FEED_TYPES]),
+        isNull(tables.notificationDeliveries.readAt),
+      ),
+    );
+
+  return {
+    entries: rows.map((row) => ({
+      id: row.id,
+      type: row.type,
+      reference: row.reference,
+      outcome: row.outcome,
+      queuedAt: row.queuedAt.toISOString(),
+      sentAt: row.sentAt?.toISOString() ?? null,
+      readAt: row.readAt?.toISOString() ?? null,
+      failureReason: row.failureReason,
+    })),
+    unread: counted?.unread ?? 0,
+  };
+}
+
+/**
+ * Marks the caller's own notifications read.
+ *
+ * Scoped by `userId` in the predicate rather than checked beforehand, so a request naming
+ * someone else's identifiers updates nothing rather than updating them. The delivery outcome is
+ * untouched: whether a message reached a mail server is a fact about the past and does not
+ * change because someone later opened the bell.
+ */
+export async function markNotificationsRead(userId: string, ids?: readonly string[]): Promise<number> {
+  if (ids !== undefined && ids.length === 0) return 0;
+  const db = database();
+  const scope = and(
+    eq(tables.notificationDeliveries.userId, userId),
+    isNull(tables.notificationDeliveries.readAt),
+    ids === undefined || ids.length === 0
+      ? undefined
+      : inArray(tables.notificationDeliveries.id, [...ids]),
+  );
+
+  const updated = await db
+    .update(tables.notificationDeliveries)
+    .set({ readAt: new Date() })
+    .where(scope)
+    .returning({ id: tables.notificationDeliveries.id });
+
+  return updated.length;
+}
+
+/**
+ * The notifications sent in connection with one case, for the delivery audit on the case view.
+ *
+ * Not routed through the clinical repository: this table holds no clinical content by
+ * construction, and the case-level authorization has already happened in the calling route.
+ */
+export async function listDeliveriesForCase(caseId: string): Promise<Array<FeedEntry & { recipientEmail: string }>> {
+  const rows = await database()
+    .select({
+      recipientEmail: tables.users.email,
+      id: tables.notificationDeliveries.id,
+      type: tables.notificationDeliveries.type,
+      reference: tables.notificationDeliveries.reference,
+      outcome: tables.notificationDeliveries.outcome,
+      queuedAt: tables.notificationDeliveries.queuedAt,
+      sentAt: tables.notificationDeliveries.sentAt,
+      readAt: tables.notificationDeliveries.readAt,
+      failureReason: tables.notificationDeliveries.failureReason,
+    })
+    .from(tables.notificationDeliveries)
+    .innerJoin(tables.users, eq(tables.notificationDeliveries.userId, tables.users.id))
+    .where(eq(tables.notificationDeliveries.reference, caseId))
+    .orderBy(desc(tables.notificationDeliveries.queuedAt));
+
+  return rows.map((row) => ({
+    recipientEmail: row.recipientEmail,
+    id: row.id,
+    type: row.type,
+    reference: row.reference,
+    outcome: row.outcome,
+    queuedAt: row.queuedAt.toISOString(),
+    sentAt: row.sentAt?.toISOString() ?? null,
+    readAt: row.readAt?.toISOString() ?? null,
+    failureReason: row.failureReason,
+  }));
 }
 
 export async function queueNotification(request: NotificationRequest): Promise<void> {
@@ -280,9 +453,13 @@ export async function queueNotification(request: NotificationRequest): Promise<v
       // The reference is a case identifier at most. The token is never stored: the delivery
       // record must not be a second place a reset link can be read from.
       reference: request.reference ?? null,
+      dedupeKey: request.dedupeKey ?? null,
       outcome: 'queued',
     })
+    .onConflictDoNothing()
     .returning({ id: tables.notificationDeliveries.id });
+
+  if (!delivery) return;
 
   if (!user || user.status === 'erased') {
     // The account went away between queueing and sending. Drop it and record the drop.

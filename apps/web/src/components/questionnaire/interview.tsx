@@ -120,7 +120,7 @@ export function Interview({
       setProblem(result.problem);
       return;
     }
-    router.push(`/cases/${caseId}`);
+    router.push(`/patient/case/${caseId}`);
     router.refresh();
   }
 
@@ -164,7 +164,7 @@ export function Interview({
               onClick={submit}
               disabled={submitting}
             >
-              {submitting ? t('submitting') : t('submit')}
+              {submitting ? t('submitting') : t('submitLabel')}
             </button>
           )}
 
@@ -237,12 +237,17 @@ function TriggerNote({ view, questionId }: { view: InterviewView; questionId: st
 }
 
 function AnsweredList({ view }: { view: InterviewView }) {
+  const tQuestion = useTranslations('question');
+  const tDoctor = useTranslations('doctor');
   return (
     <dl className="mt-4 space-y-4">
       {view.answeredQuestions.map((entry) => (
         <div key={entry.question.id} className="border-b border-line pb-3 last:border-0">
           <dt className="text-sm text-ink-muted">{entry.question.prompt}</dt>
-          <dd className="mt-0.5 font-medium">{renderAnswer(entry.question, entry.value)}</dd>
+          <dd className="mt-0.5 font-medium">{renderAnswer(entry.question, entry.value, {
+            days: (count) => tDoctor('days', { count }),
+            region: (id) => tQuestion.has(`region_${id}`) ? tQuestion(`region_${id}`) : id,
+          })}</dd>
         </div>
       ))}
     </dl>
@@ -252,6 +257,7 @@ function AnsweredList({ view }: { view: InterviewView }) {
 function renderAnswer(
   question: InterviewView['answeredQuestions'][number]['question'],
   value: AnswerValue,
+  labels: { days: (count: number) => string; region: (id: string) => string },
 ): string {
   switch (value.kind) {
     case 'single_select':
@@ -265,13 +271,13 @@ function renderAnswer(
     case 'scale':
       return String(value.value);
     case 'duration':
-      return `${value.days}`;
+      return labels.days(value.days);
     case 'date':
       return value.value;
     case 'text':
       return value.value;
     case 'body_map':
-      return value.regionIds.join(', ');
+      return value.regionIds.map(labels.region).join(', ');
     case 'image':
       return String(value.documentIds.length);
   }

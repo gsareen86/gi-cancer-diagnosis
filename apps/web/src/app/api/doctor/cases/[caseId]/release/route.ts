@@ -5,14 +5,16 @@ import { accessContext, jsonBody, route } from '@/server/api/route-handler';
 import { ok, problem } from '@/server/api/problem';
 
 const body = z.object({
-  /**
-   * Echoed back from the confirmation step. The doctor confirms the exact text the patient will
-   * see, and that text is what gets frozen — not whatever the draft happens to say at the moment
-   * the request lands.
-   */
+  /** Echoed from confirmation, then compared against the finalized review. */
   confirmedContent: z.object({
     summary: z.string().min(20).max(6000),
-    nextSteps: z.array(z.string().min(1).max(500)).max(12),
+    nextSteps: z.array(z.string().min(1).max(4000)).max(12),
+    diagnosis: z.string().max(2000).optional(),
+    dietaryAdvice: z.string().max(4000).optional(),
+    precautions: z.string().max(4000).optional(),
+    referralUrgency: z.enum(['emergency', 'within_week', 'routine', 'none']).optional(),
+    followUpInterval: z.string().max(500).optional(),
+    prescriptionInstructions: z.string().max(4000).optional(),
   }),
   confirm: z.literal(true),
 });
@@ -39,17 +41,34 @@ export const POST = route<{ caseId: string }>({ roles: ['doctor'] }, async ({ re
     return problem('conflict', 'review.release.already_released');
   }
   if (review.status !== 'finalized') {
-    // Finalizing is where the doctor-authored-content and no-prescribing checks run. Releasing
+    // Finalizing is where the physician approves the content. Releasing
     // before that would route around both.
     return problem('conflict', 'review.release.not_finalized');
+  }
+
+  const final = review.finalSummary as Record<string, unknown> | null;
+  const confirmed = input.confirmedContent;
+  const fields = ['diagnosis', 'dietaryAdvice', 'precautions', 'referralUrgency', 'followUpInterval', 'prescriptionInstructions'] as const;
+  if (!final || confirmed.summary !== final.patientFacingSummary ||
+      JSON.stringify(confirmed.nextSteps) !== JSON.stringify(final.recommendedNextSteps) ||
+      fields.some((field) => (confirmed[field] ?? (field === 'referralUrgency' ? 'routine' : '')) !==
+        (final[field] ?? (field === 'referralUrgency' ? 'routine' : '')))) {
+    return problem('conflict', 'review.release.content_changed');
   }
 
   const released = await repo.releaseReview(context, {
     caseId: params.caseId,
     reviewId: review.id,
+    expectedFinalSummary: review.finalSummary,
     releasedContent: {
       summary: input.confirmedContent.summary,
       nextSteps: input.confirmedContent.nextSteps,
+      diagnosis: final.diagnosis ?? null,
+      dietaryAdvice: final.dietaryAdvice ?? null,
+      precautions: final.precautions ?? null,
+      referralUrgency: final.referralUrgency ?? null,
+      followUpInterval: final.followUpInterval ?? null,
+      prescriptionInstructions: final.prescriptionInstructions ?? null,
       releasedBy: session.userId,
       releasedAt: new Date().toISOString(),
       // Shown to the patient beside the summary: this is a clinical impression from a doctor

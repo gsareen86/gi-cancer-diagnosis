@@ -1,171 +1,99 @@
 import { chromium } from 'playwright';
-import { execSync } from 'node:child_process';
-import { writeFileSync, unlinkSync } from 'node:fs';
-import { randomUUID } from 'node:crypto';
-import { deliveredText, has, visibleText } from './support/page-text.mjs';
+import assert from 'node:assert/strict';
+import { mkdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { BASE, createFixture, fixtureCode } from './support/local-fixture.mjs';
 
-/**
- * The doctor's half of the loop: queue → case → override → finalize → release,
- * and then the patient reading exactly what was released.
- */
-
-const BASE = 'http://localhost:3000';
-const SHOTS = process.env.SHOTS ?? '/var/tmp/gi-doctor';
-execSync(`mkdir -p ${SHOTS}`);
-
-/**
- * Runs SQL through a temp file rather than the shell.
- *
- * The fixtures include JSON payloads, and quoting those through a shell command line mangles
- * every backslash. A file has no quoting problem to get wrong.
- */
-function sql(query) {
-  const path = `/tmp/gi-drive-${randomUUID()}.sql`;
-  writeFileSync(path, query);
-  try {
-    return execSync(`psql -h 127.0.0.1 -p 55432 -U postgres -d gi_compass -tA -v ON_ERROR_STOP=1 -f ${path}`, {
-      encoding: 'utf8',
-    }).trim();
-  } finally {
-    unlinkSync(path);
+/** Synthetic local records only; real password/TOTP login, never a session bypass. */
+const fixture = createFixture();
+const messages = JSON.parse(readFileSync('apps/web/messages/en.json', 'utf8'));
+const t = messages.doctor;
+const SHOTS = process.env.SHOTS ?? 'var/tmp/clinical-screenshots';
+const confirmSyntheticRelease = process.env.CONFIRM_SYNTHETIC_RELEASE === '1';
+mkdirSync(SHOTS, { recursive: true });
+const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
+const errors = [];
+async function signIn(email, path, isDoctor) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  const page = await context.newPage();
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto(BASE + '/login?next=' + encodeURIComponent(path));
+  await page.locator('#email').fill(email);
+  await page.locator('#password').fill(fixture.password);
+  await page.locator('button[type=submit]').click();
+  if (isDoctor) {
+    await page.waitForURL('**/mfa?**');
+    await page.locator('#code').fill(fixtureCode());
+    await page.locator('button[type=submit]').click();
   }
-}
-
-const password = 'a-perfectly-fine-passphrase';
-const hashOf = (value) =>
-  execSync(
-    `node -e "const c=require('crypto');process.stdout.write(c.createHash('sha256').update('${value}').digest('hex'))"`,
-    { encoding: 'utf8' },
-  );
-
-const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
-
-async function signedInPage(email, role) {
-  const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } });
-  page.on('pageerror', (e) => console.log(`  PAGEERROR(${role}):`, e.message.slice(0, 200)));
-  await page.goto(`${BASE}/login`);
-  await page.fill('#email', email);
-  await page.fill('#password', password);
-  await page.click('button[type=submit]');
-  await page.waitForTimeout(2500);
+  await page.waitForURL(BASE + path);
   return page;
 }
-
-// A patient with a submitted, AI-processed case, set up through the API the same way the app does.
-const patientEmail = `doctor-flow-patient-${Date.now()}@example.invalid`;
-const doctorEmail = `doctor-flow-doctor-${Date.now()}@example.invalid`;
-
-console.log('1. create a doctor and a patient');
-const argonHash = execSync(
-  `cd apps/web && node -e "const {hash}=require('@node-rs/argon2');hash('${password}',{memoryCost:19456,timeCost:2,parallelism:1}).then(h=>process.stdout.write(h))"`,
-  { encoding: 'utf8', shell: '/bin/bash' },
-);
-sql(`INSERT INTO users (email, password_hash, role, status, date_of_birth, sex) VALUES ('${doctorEmail}','${argonHash}','doctor','active','1970-01-01','female')`);
-sql(`INSERT INTO users (email, password_hash, role, status, date_of_birth, sex) VALUES ('${patientEmail}','${argonHash}','patient','active','1974-05-02','female')`);
-const doctorId = sql(`SELECT id FROM users WHERE email='${doctorEmail}'`);
-const patientId = sql(`SELECT id FROM users WHERE email='${patientEmail}'`);
-
-console.log('2. consent, case, answers, red flag, and an AI assessment');
-const policyId = sql(`SELECT id FROM consent_policy_versions LIMIT 1`);
-const policyVersion = sql(`SELECT version FROM consent_policy_versions LIMIT 1`);
-for (const purpose of ['account_processing', 'ai_assisted_analysis', 'share_with_assigned_doctor']) {
-  sql(`INSERT INTO consent_records (user_id, purpose, policy_version, policy_id) VALUES ('${patientId}','${purpose}','${policyVersion}','${policyId}')`);
+async function action(page, button, path) {
+  const response = page.waitForResponse((response) => response.url().endsWith(path) && response.request().method() !== 'GET');
+  await button.click();
+  assert.equal((await response).status(), 200);
 }
-const templateVersionId = sql(`SELECT id FROM template_versions WHERE status='published' LIMIT 1`);
-sql(`INSERT INTO cases (patient_id, template_version_id, entry_point_id, status, submitted_at, assigned_doctor_id) VALUES ('${patientId}','${templateVersionId}','ep_bleeding','in_review', now(), '${doctorId}')`);
-const caseId = sql(`SELECT id FROM cases WHERE patient_id='${patientId}'`);
-sql(`INSERT INTO case_assignments (case_id, doctor_id, assigned_by) VALUES ('${caseId}','${doctorId}','${doctorId}')`);
-
-for (const [q, o] of [['blood_in_stool','yes'],['blood_appearance','black_tarry'],['lightheaded','yes']]) {
-  sql(`INSERT INTO responses (case_id, question_id, value) VALUES ('${caseId}','${q}','${JSON.stringify({ kind: 'single_select', optionId: o })}')`);
+try {
+  const doctor = await signIn(fixture.doctor.email, '/doctor/case/' + fixture.caseId, true);
+  await doctor.locator('[data-case-navigator]').waitFor({ state: 'visible' });
+  await doctor.getByRole('tab', { name: t.panelReview, exact: true }).click();
+  await doctor.locator('#impression').waitFor({ state: 'visible' });
+  assert.equal(await doctor.locator('[data-case-navigator]').count(), 1);
+  await doctor.screenshot({ path: join(SHOTS, '01-navigator-review.png'), fullPage: true });
+  const draft = 'Synthetic physician-approved patient summary for testing; not medical advice.';
+  await doctor.locator('#patient-summary').fill(draft);
+  await doctor.locator('#notes').fill('PRIVATE-QA-NOTE');
+  await doctor.locator('#prescription-instructions').fill('Synthetic physician prescription field. Not for treatment.');
+  await doctor.setViewportSize({ width: 900, height: 900 });
+  await doctor.getByRole('tab', { name: t.panelReview, exact: true }).click();
+  assert.equal(await doctor.locator('#patient-summary').inputValue(), draft);
+  await doctor.getByRole('tab', { name: t.panelRecord, exact: true }).click();
+  await doctor.getByRole('tab', { name: t.panelRecord, exact: true }).press('End');
+  assert.equal(await doctor.getByRole('tab', { name: t.panelReview, exact: true }).getAttribute('aria-selected'), 'true');
+  assert.equal(await doctor.locator('#patient-summary').inputValue(), draft);
+  await doctor.screenshot({ path: join(SHOTS, '02-tabbed-review.png'), fullPage: true });
+  const reviewApi = '/api/doctor/cases/' + fixture.caseId + '/review';
+  await action(doctor, doctor.getByRole('button', { name: t.finalize, exact: true }), reviewApi);
+  const dispatch = doctor.getByRole('button', { name: t.signAndDispatch, exact: true });
+  await doctor.locator('#patient-summary').fill(draft + ' Updated.');
+  assert.equal(await dispatch.isDisabled(), true);
+  await action(doctor, doctor.getByRole('button', { name: t.finalize, exact: true }), reviewApi);
+  await dispatch.click();
+  await doctor.getByRole('dialog').waitFor({ state: 'visible' });
+  assert.ok((await doctor.getByRole('dialog').innerText()).includes(draft + ' Updated.'));
+  await doctor.screenshot({ path: join(SHOTS, '03-release-confirmation.png'), fullPage: true });
+  if (!confirmSyntheticRelease) {
+    await doctor.getByRole('button', { name: messages.app.cancel, exact: true }).click();
+    await doctor.getByRole('dialog').waitFor({ state: 'hidden' });
+    assert.equal(await doctor.locator('#patient-summary').isDisabled(), false);
+    assert.deepEqual(errors, []);
+    console.log('Safe doctor walkthrough passed through exact release confirmation; dispatch was cancelled. Screenshots:', SHOTS);
+  } else {
+    // Opt-in only: this is still a medical release action, even though the fixture is synthetic.
+    await action(doctor, doctor.getByRole('button', { name: t.releaseConfirm, exact: true }), '/api/doctor/cases/' + fixture.caseId + '/release');
+    await doctor.getByRole('dialog').waitFor({ state: 'hidden' });
+    assert.equal(await doctor.locator('#patient-summary').isDisabled(), true);
+    const patient = await signIn(fixture.patient.email, '/patient/case/' + fixture.caseId, false);
+    assert.ok((await patient.locator('main').innerText()).includes(draft + ' Updated.'));
+    assert.ok(!(await patient.content()).includes('PRIVATE-QA-NOTE'));
+    assert.ok(!(await patient.content()).includes('synthetic-qa'));
+    const download = patient.waitForEvent('download');
+    await patient.locator('a[href="/api/cases/' + fixture.caseId + '/summary/pdf"]').click();
+    assert.match((await download).suggestedFilename(), /\.pdf$/);
+    await patient.setViewportSize({ width: 390, height: 844 });
+    assert.ok(await patient.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    await patient.screenshot({ path: join(SHOTS, '04-patient-summary-mobile.png'), fullPage: true });
+    await patient.goto(BASE + '/doctor/dashboard');
+    await patient.waitForURL('**/patient/dashboard?denied=1');
+    await patient.getByRole('button', { name: messages.shell.openAccountMenu, exact: true }).click();
+    await patient.getByRole('menuitem', { name: messages.shell.signOut, exact: true }).click();
+    await patient.waitForURL('**/login');
+    await patient.goto(BASE + '/patient/records');
+    await patient.waitForURL('**/login?next=**');
+    assert.deepEqual(errors, []);
+    console.log('Opt-in doctor/patient release walkthrough passed. Screenshots:', SHOTS);
+  }
+} finally {
+  await browser.close();
 }
-const ruleSetId = sql(`SELECT id FROM red_flag_rule_sets WHERE status='published' LIMIT 1`);
-sql(`INSERT INTO red_flag_triggers (case_id, rule_set_id, rule_id, urgency, basis_key, contributing_question_ids) VALUES ('${caseId}','${ruleSetId}','rf_upper_gi_bleed_with_hypovolaemia','emergency','redflag.upper_gi_bleed_with_hypovolaemia', ARRAY['blood_appearance','lightheaded'])`);
-
-const disclaimer = 'This is an AI-generated decision-support summary based on patient-reported information and is not a medical diagnosis. It has not yet been reviewed by a physician. All clinical decisions must be made by the treating doctor after direct evaluation.';
-const aiSummary = 'Adult reporting melaena with lightheadedness. Pattern warrants urgent upper GI evaluation.';
-const payload = JSON.stringify({
-  case_id: caseId, model_version: 'test-model-1', prompt_version: 'assessment-v1', kb_version: 'kb-seed-1',
-  generated_at: new Date().toISOString(),
-  differential_assessment: [{
-    condition: 'Peptic ulcer disease', likelihood: 'moderate',
-    supporting_findings: ['Reported black tarry stool with lightheadedness'],
-    contradicting_or_atypical_findings: ['No reported weight loss'],
-    suggested_confirmatory_steps: ['Upper GI endoscopy'],
-  }],
-  red_flags: [], recommended_next_steps: ['Urgent in-person assessment'],
-  clinician_summary: aiSummary, disclaimer,
-}).replace(/'/g, "''");
-sql(`INSERT INTO ai_assessments (case_id, outcome, model_version, prompt_version, kb_version, retrieved_chunk_ids, payload) VALUES ('${caseId}','generated','test-model-1','assessment-v1','kb-seed-1', ARRAY['chunk-a'], '${payload}')`);
-
-console.log('3. doctor signs in and opens the queue');
-const doctor = await signedInPage(doctorEmail, 'doctor');
-// A doctor account carries an MFA-pending session, which reaches enrolment and nothing else.
-console.log(`   landed on: ${doctor.url().replace(BASE, '')}`);
-await doctor.screenshot({ path: `${SHOTS}/01-doctor-mfa-gate.png`, fullPage: true });
-
-// Satisfy the second factor the way enrolment would, so the rest of the flow is reachable.
-sql(`UPDATE sessions SET mfa_pending = false WHERE user_id='${doctorId}'`);
-await doctor.goto(`${BASE}/doctor/queue`);
-await doctor.waitForTimeout(1500);
-await doctor.screenshot({ path: `${SHOTS}/02-queue.png`, fullPage: true });
-const queueText = await visibleText(doctor);
-console.log(`   queue shows an emergency case: ${has(queueText, 'Emergency')}`);
-
-console.log('4. open the case');
-await doctor.goto(`${BASE}/doctor/cases/${caseId}`);
-await doctor.waitForTimeout(2000);
-await doctor.screenshot({ path: `${SHOTS}/03-case-review.png`, fullPage: true });
-const caseText = await visibleText(doctor);
-console.log(`   answers shown: ${has(caseText, 'blood look like') || has(caseText, 'Black')}`);
-console.log(`   AI assessment shown: ${has(caseText, 'Peptic ulcer disease')}`);
-console.log(`   version pins shown: ${has(caseText, 'test-model-1')}`);
-console.log(`   disclaimer shown: ${has(caseText, 'not a medical diagnosis')}`);
-
-console.log('5. try to finalize with the AI summary passed through');
-await doctor.fill('#impression', aiSummary);
-await doctor.fill('#patient-summary', 'You need an urgent camera test of your stomach, please attend.');
-await doctor.click('button:has-text("Finalize")');
-await doctor.waitForTimeout(1500);
-const passthroughRefused = has(await visibleText(doctor), 'your own words');
-console.log(`   pass-through refused: ${passthroughRefused}`);
-await doctor.screenshot({ path: `${SHOTS}/04-passthrough-refused.png`, fullPage: true });
-
-console.log('6. try to finalize with a medication in the next steps');
-await doctor.fill('#impression', 'My impression is upper GI bleeding needing urgent endoscopic assessment, pending in-person review.');
-await doctor.fill('#next-steps', 'Start omeprazole 40 mg daily');
-await doctor.click('button:has-text("Finalize")');
-await doctor.waitForTimeout(1500);
-const treatmentRefused = has(await visibleText(doctor), 'Remove the medication');
-console.log(`   prescribing refused: ${treatmentRefused}`);
-await doctor.screenshot({ path: `${SHOTS}/05-prescribing-refused.png`, fullPage: true });
-
-console.log('7. finalize properly, then release with confirmation');
-await doctor.fill('#next-steps', 'Upper GI endoscopy within one week\nFull blood count and iron studies');
-await doctor.click('button:has-text("Finalize")');
-await doctor.waitForTimeout(1500);
-await doctor.click('button:has-text("Release to patient")');
-await doctor.waitForSelector('[role=dialog]', { timeout: 10000 });
-await doctor.screenshot({ path: `${SHOTS}/06-release-confirm.png`, fullPage: true });
-
-const beforeRelease = sql(`SELECT status FROM cases WHERE id='${caseId}'`);
-console.log(`   case status while the dialog is open: ${beforeRelease}`);
-
-await doctor.click('button:has-text("Yes, release it")');
-await doctor.waitForTimeout(2000);
-await doctor.screenshot({ path: `${SHOTS}/07-released.png`, fullPage: true });
-console.log(`   case status after confirming: ${sql(`SELECT status FROM cases WHERE id='${caseId}'`)}`);
-
-console.log('8. patient reads what was released');
-const patient = await signedInPage(patientEmail, 'patient');
-await patient.goto(`${BASE}/cases/${caseId}`);
-await patient.waitForTimeout(1500);
-await patient.screenshot({ path: `${SHOTS}/08-patient-result.png`, fullPage: true });
-const patientText = await visibleText(patient);
-const delivered = await deliveredText(patient);
-console.log(`   released summary visible: ${has(patientText, 'camera test')}`);
-console.log(`   AI summary leaked: ${delivered.includes(aiSummary)}`);
-console.log(`   model version leaked: ${delivered.includes('test-model-1')}`);
-console.log(`   standing notice shown: ${has(patientText, 'not a final diagnosis')}`);
-
-await browser.close();

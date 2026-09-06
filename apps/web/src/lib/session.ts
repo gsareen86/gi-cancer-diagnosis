@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { cache } from 'react';
 import { eq } from 'drizzle-orm';
 import { tables } from '@gi-compass/db';
 import { database } from '@/server/db';
@@ -28,7 +29,7 @@ export interface CurrentUser {
   mfaPending: boolean;
 }
 
-export async function currentUser(): Promise<CurrentUser | null> {
+export const currentUser = cache(async (): Promise<CurrentUser | null> => {
   const store = await cookies();
   const token = store.get(ACCESS_COOKIE)?.value;
   if (token === undefined) return null;
@@ -57,7 +58,7 @@ export async function currentUser(): Promise<CurrentUser | null> {
     hasEmergencyContact: row.emergencyContactPhoneEnc !== null,
     mfaPending: session.mfaPending,
   };
-}
+});
 
 export function profileComplete(user: CurrentUser): boolean {
   return user.dateOfBirth !== null && user.fullName !== null;

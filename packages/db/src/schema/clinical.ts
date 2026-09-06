@@ -110,6 +110,7 @@ export const cases = pgTable(
   'cases',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    publicNumber: integer('public_number').generatedAlwaysAsIdentity({ startWith: 100001 }).notNull(),
     patientId: uuid('patient_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
@@ -129,6 +130,7 @@ export const cases = pgTable(
   },
   (table) => [
     index('cases_patient_status_idx').on(table.patientId, table.status),
+    uniqueIndex('cases_public_number_key').on(table.publicNumber),
     index('cases_doctor_status_idx').on(table.assignedDoctorId, table.status),
     index('cases_status_submitted_idx').on(table.status, table.submittedAt),
   ],

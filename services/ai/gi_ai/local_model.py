@@ -34,7 +34,7 @@ Deliberately modest: a local deployment may be running an 8192-token context, an
 to fit alongside whatever is generated. `context_budget_warning` reports when it will not.
 """
 
-REQUEST_TIMEOUT_SECONDS = 600.0
+REQUEST_TIMEOUT_SECONDS = 900.0
 """Generous. A 27B model on an APU produces tokens far slower than a hosted endpoint, and a
 timeout here becomes an assessment the reviewing doctor never sees."""
 
@@ -64,27 +64,32 @@ PROBE_TIMEOUT_SECONDS = 2.0
 def probe_server(client: httpx.Client | None = None) -> dict[str, object]:
     """Asks the configured endpoint what it is, for the health report.
 
-    Worth a network call on every health check, because the alternative is a health endpoint that
-    only ever confirms the configuration file back to whoever wrote it. What matters operationally
-    is whether anything is listening and whether it is the model the operator believes it is —
-    neither of which configuration can answer.
+    /props is explicitly exempt from the llama.cpp idle timer. Never probe /v1/models or a
+    completion endpoint here: on some versions those wake the model and defeat idle unloading.
+    A sleeping listener is healthy; model identity comes from the server, not the .env label.
     """
     http = client or httpx.Client(timeout=PROBE_TIMEOUT_SECONDS)
     try:
-        response = http.get(f"{base_url()}/v1/models")
+        response = http.get(f"{base_url()}/props")
         if response.status_code != 200:
             return {
                 "reachable": True,
                 "servedModel": None,
-                "note": f"answered {response.status_code} for /v1/models — not a llama-server",
+                "modelState": "loading" if response.status_code == 503 else "unknown",
+                "note": f"answered {response.status_code} for /props — runtime not ready",
             }
-        entries = response.json().get("data") or []
-        served = entries[0].get("id") if entries and isinstance(entries[0], dict) else None
-        return {"reachable": True, "servedModel": served}
+        properties = response.json()
+        served = properties.get("model_alias")
+        sleeping = properties.get("is_sleeping")
+        if not isinstance(served, str) or not served.strip() or not isinstance(sleeping, bool):
+            return {"reachable": True, "servedModel": None, "modelState": "unknown",
+                    "note": "not a llama-server with idle-sleep status support"}
+        return {"reachable": True, "servedModel": served,
+                "modelState": "sleeping" if sleeping else "ready", "sleeping": sleeping}
     except httpx.HTTPError as error:
-        return {"reachable": False, "servedModel": None, "note": str(error)}
+        return {"reachable": False, "servedModel": None, "modelState": "unavailable", "note": str(error)}
     except (ValueError, AttributeError, IndexError) as error:
-        return {"reachable": True, "servedModel": None, "note": f"unreadable /v1/models: {error}"}
+        return {"reachable": True, "servedModel": None, "modelState": "unknown", "note": f"unreadable /props: {error}"}
     finally:
         if client is None:
             http.close()

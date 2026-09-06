@@ -19,7 +19,7 @@ export const GET = route<{ caseId: string }>({ roles: ['patient'] }, async ({ pa
   const caseRecord = await repo.getCase(context, params.caseId);
   if (!caseRecord) return problem('not_found', 'error.not_found');
 
-  if (caseRecord.status !== 'released') {
+  if (!['released', 'closed'].includes(caseRecord.status)) {
     return ok({
       caseId: caseRecord.id,
       status: caseRecord.status,

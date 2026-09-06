@@ -269,3 +269,7 @@ pgdata/
 packages/*/dist/
 apps/*/.next/
 apps/*/out/
+
+# Dev scratch and IDE configs
+.gi-*.mjs
+.agents/

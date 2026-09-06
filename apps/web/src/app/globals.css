@@ -3,10 +3,15 @@
 @tailwind utilities;
 
 /*
- * Typography and spacing are set for reading on a phone, at arm's length, possibly while
- * anxious. Base size is deliberately larger than a marketing site's, line length is capped, and
- * touch targets meet the 44px minimum everywhere — a mis-tap on a symptom question produces a
- * wrong answer, not just an annoyance.
+ * Two audiences, one token set.
+ *
+ * The patient reads on a phone, at arm's length, possibly while anxious: base size is larger than
+ * a marketing site's, line length is capped, and every touch target meets 44px, because a mis-tap
+ * on a symptom question produces a wrong clinical answer rather than an annoyance.
+ *
+ * The clinician reads twenty cases between clinics on a wide screen with a mouse. That wants the
+ * opposite. Rather than every component taking a `dense` prop, the clinician shells set
+ * `data-density="compact"` and the rules at the bottom of this file respond.
  */
 
 @layer base {
@@ -36,9 +41,13 @@
     @apply bg-surface-sunken text-ink antialiased;
     font-size: 17px;
     line-height: 1.6;
+    min-height: 100vh;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     @apply text-ink font-semibold tracking-tight;
     line-height: 1.25;
     text-wrap: balance;
@@ -46,19 +55,72 @@
 
   /* A visible focus ring everywhere. Never removed — keyboard users need to see where they are. */
   :focus-visible {
-    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-surface;
+    @apply outline-none ring-2 ring-accent-bright ring-offset-2 ring-offset-surface;
   }
 
   /* Inputs inherit the body size: 16px+ stops iOS zooming on focus mid-interview. */
-  input, select, textarea, button {
+  input,
+  select,
+  textarea,
+  button {
     font: inherit;
+  }
+
+  /* Tabular figures so counts and timestamps line up in a dense table. */
+  table,
+  .gi-numeric {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::selection {
+    @apply bg-accent-faint text-accent-hover;
+  }
+
+  /* A slim scrollbar inside the workspace panels, which each scroll independently. */
+  .gi-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.line.strong') transparent;
+  }
+  .gi-scroll::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .gi-scroll::-webkit-scrollbar-thumb {
+    @apply rounded-full border-[3px] border-solid border-transparent bg-line-strong bg-clip-content;
+  }
+  .gi-scroll::-webkit-scrollbar-track {
+    background: transparent;
   }
 }
 
 @layer components {
+  /* ---------------------------------------------------------------------------------------- */
+  /* Surfaces                                                                                  */
+  /* ---------------------------------------------------------------------------------------- */
+
   .gi-card {
-    @apply rounded-xl border border-line bg-surface p-5 sm:p-6;
+    @apply rounded-xl border border-line bg-surface p-5 shadow-card sm:p-6;
   }
+
+  .gi-panel {
+    @apply rounded-xl border border-line bg-surface shadow-card;
+  }
+
+  .gi-panel-header {
+    @apply flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5;
+  }
+
+  .gi-panel-body {
+    @apply px-5 py-4;
+  }
+
+  .gi-section-title {
+    @apply text-xs font-semibold uppercase tracking-[0.08em] text-ink-faint;
+  }
+
+  /* ---------------------------------------------------------------------------------------- */
+  /* Forms                                                                                     */
+  /* ---------------------------------------------------------------------------------------- */
 
   .gi-label {
     @apply block text-sm font-medium text-ink-muted mb-1.5;
@@ -66,51 +128,132 @@
 
   .gi-input {
     @apply w-full rounded-lg border border-line-strong bg-surface px-3.5 py-3
-           text-ink placeholder:text-ink-faint
-           focus:border-accent focus:ring-2 focus:ring-accent/25 focus:outline-none;
+           text-ink placeholder:text-ink-faint transition-colors
+           focus:border-accent focus:ring-2 focus:ring-accent/25 focus:outline-none
+           disabled:cursor-not-allowed disabled:bg-surface-inset disabled:text-ink-muted;
     min-height: 48px;
+  }
+
+  .gi-select {
+    @apply gi-input appearance-none bg-no-repeat pr-10;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748B'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-size: 1.15rem;
   }
 
   .gi-hint {
     @apply mt-1.5 text-sm text-ink-muted;
   }
 
+  [data-workspace="patient"] header button,
+  [data-workspace="patient"] [role="menuitem"],
+  [data-workspace="patient"] .gi-button-sm {
+    min-height: 44px;
+  }
+
+  [data-workspace='patient'] button,
+  [data-workspace='patient'] summary,
+  [data-workspace='patient'] [role='menuitem'] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  [data-workspace='patient'] nav a,
+  [data-workspace='patient'] header a {
+    @apply inline-flex items-center;
+    min-height: 44px;
+  }
+
   .gi-error {
     @apply mt-1.5 text-sm text-emergency;
   }
 
+  /* ---------------------------------------------------------------------------------------- */
+  /* Buttons                                                                                   */
+  /* ---------------------------------------------------------------------------------------- */
+
   .gi-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3
-           font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 font-medium
+           transition-[background-color,border-color,color,box-shadow] duration-150
+           disabled:opacity-50 disabled:cursor-not-allowed;
     min-height: 48px;
   }
 
   .gi-button-primary {
-    @apply gi-button bg-accent text-white hover:bg-accent-hover;
+    @apply gi-button bg-accent text-white shadow-card hover:bg-accent-hover;
   }
 
   .gi-button-secondary {
-    @apply gi-button border border-line-strong bg-surface text-ink hover:bg-surface-sunken;
+    @apply gi-button border border-line-strong bg-surface text-ink hover:bg-surface-inset
+           hover:border-line-strong;
+  }
+
+  .gi-button-ghost {
+    @apply gi-button text-ink-muted hover:bg-surface-inset hover:text-ink;
   }
 
   .gi-button-danger {
-    @apply gi-button bg-emergency text-white hover:brightness-90;
+    @apply gi-button bg-emergency text-white hover:bg-emergency-hover;
   }
 
+  /* A small button for dense chrome — table row actions, filter chips, panel headers. */
+  .gi-button-sm {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm
+           font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    min-height: 34px;
+  }
+
+  .gi-review-action {
+    @apply inline-flex min-h-10 min-w-[8.5rem] items-center justify-between gap-3 whitespace-nowrap rounded-lg
+           border border-surface-deep bg-surface-deep px-3.5 py-2 text-sm font-semibold text-white
+           shadow-card transition-colors hover:border-accent hover:bg-accent;
+  }
+
+  /* ---------------------------------------------------------------------------------------- */
+  /* Choice controls                                                                           */
+  /* ---------------------------------------------------------------------------------------- */
+
   /*
-   * Choice controls are large tap targets rather than native radios: a patient answering on a
-   * phone needs the whole row to be pressable, and the selected state has to be obvious without
-   * relying on colour alone.
+   * Large tap targets rather than native radios: a patient answering on a phone needs the whole
+   * row to be pressable, and the selected state has to be obvious without relying on colour.
    */
   .gi-choice {
     @apply flex w-full items-start gap-3 rounded-xl border-2 border-line bg-surface
-           p-4 text-left transition-colors hover:border-line-strong hover:bg-surface-sunken;
+           p-4 text-left transition-colors hover:border-line-strong hover:bg-surface-inset;
     min-height: 56px;
   }
 
   .gi-choice-selected {
     @apply border-accent bg-accent-faint hover:border-accent hover:bg-accent-faint;
   }
+
+  /* ---------------------------------------------------------------------------------------- */
+  /* Tables                                                                                    */
+  /* ---------------------------------------------------------------------------------------- */
+
+  .gi-table {
+    @apply w-full border-collapse text-left;
+  }
+
+  .gi-table thead th {
+    @apply border-b border-line bg-surface-sunken px-3 py-2.5 text-xs font-semibold uppercase
+           tracking-[0.06em] text-ink-faint whitespace-nowrap;
+  }
+
+  .gi-table tbody td {
+    @apply border-b border-line px-3 py-3 align-top;
+  }
+
+  .gi-table tbody tr {
+    @apply transition-colors hover:bg-accent-faint/40;
+  }
+
+  .gi-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  /* ---------------------------------------------------------------------------------------- */
+  /* Layout helpers                                                                            */
+  /* ---------------------------------------------------------------------------------------- */
 
   .gi-prose {
     @apply max-w-reading;
@@ -119,5 +262,102 @@
   .gi-skip-link {
     @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50
            focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-white;
+  }
+
+  /* The shimmer used by every skeleton, so a loading list looks like the list it becomes. */
+  .gi-skeleton {
+    @apply relative overflow-hidden rounded bg-surface-inset;
+  }
+
+  .gi-skeleton::after {
+    @apply absolute inset-0 -translate-x-full animate-gi-shimmer;
+    content: '';
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      theme('colors.line.DEFAULT / 60%'),
+      transparent
+    );
+  }
+}
+
+@layer utilities {
+  /* ---------------------------------------------------------------------------------------- */
+  /* Compact density — the clinician workspaces only                                           */
+  /* ---------------------------------------------------------------------------------------- */
+
+  /*
+   * Set by the doctor and admin shells. The patient tree never carries this attribute, so its
+   * 44px minimum targets and 17px reading size are untouched whatever the viewport.
+   *
+   * 38px is the compact floor rather than 44px because the input device here is a mouse and the
+   * cost of a mis-click is a re-click, not a wrong clinical answer.
+   */
+  [data-density='compact'] {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  [data-density='compact'] .gi-card {
+    @apply p-4 sm:p-5;
+  }
+
+  [data-density='compact'] .gi-input,
+  [data-density='compact'] .gi-select {
+    @apply px-3 py-2 text-sm;
+    min-height: 38px;
+  }
+
+  [data-density='compact'] .gi-button,
+  [data-density='compact'] .gi-button-primary,
+  [data-density='compact'] .gi-button-secondary,
+  [data-density='compact'] .gi-button-ghost,
+  [data-density='compact'] .gi-button-danger {
+    @apply px-4 py-2 text-sm;
+    min-height: 38px;
+  }
+
+  [data-density='compact'] .gi-label {
+    @apply mb-1 text-xs;
+  }
+
+  [data-density='compact'] .gi-hint {
+    @apply mt-1 text-xs;
+  }
+
+  [data-workspace='doctor'] .max-w-shell { max-width: 108rem; }
+  .gi-review-workspace .gi-section-title {
+    @apply text-sm font-semibold normal-case tracking-normal text-ink;
+  }
+  [data-density='compact'] .gi-review-workspace .gi-label {
+    @apply text-sm font-medium;
+  }
+  [data-density='compact'] .gi-review-workspace textarea.gi-input {
+    @apply leading-relaxed;
+    min-height: 7rem;
+  }
+  [data-density='compact'] .gi-review-workspace textarea.gi-input.gi-editor-lg {
+    min-height: 11rem;
+    resize: vertical;
+  }
+  [data-density='compact'] .gi-review-workspace textarea.gi-input.gi-editor-xl {
+    min-height: 15rem;
+    resize: vertical;
+  }
+
+  /* Everything a print stylesheet has to remove for an official patient summary to be filed. */
+  @media print {
+    .gi-no-print {
+      display: none !important;
+    }
+    body {
+      @apply bg-surface;
+      font-size: 12pt;
+    }
+    .gi-card,
+    .gi-panel {
+      @apply border border-line shadow-none;
+      break-inside: avoid;
+    }
   }
 }

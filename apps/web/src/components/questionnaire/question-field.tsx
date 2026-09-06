@@ -7,6 +7,7 @@ import { ReferenceImages } from './reference-images';
 import { BodyMap } from './body-map';
 import { DurationField } from './duration-field';
 import { DateField } from './date-field';
+import { StoolIllustration } from './stool-illustration';
 
 /**
  * Renders one question of any type.
@@ -51,6 +52,7 @@ export function QuestionField({
                     onChange={() => onChange({ kind: 'single_select', optionId: option.id })}
                   />
                   <span className="flex-1">
+                    {question.id === 'stool_form' && <StoolIllustration optionId={option.id} />}
                     <span className="block">{option.label}</span>
                     {option.referenceImageIds.length > 0 && (
                       <ReferenceImages ids={option.referenceImageIds} compact />

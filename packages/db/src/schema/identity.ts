@@ -2,6 +2,7 @@ import {
   boolean,
   date,
   index,
+  integer,
   pgTable,
   text,
   timestamp,
@@ -22,6 +23,7 @@ export const users = pgTable(
   'users',
   {
     id: uuid('id').primaryKey().defaultRandom(),
+    publicNumber: integer('public_number').generatedAlwaysAsIdentity({ startWith: 100001 }).notNull(),
     email: text('email').notNull(),
     passwordHash: text('password_hash').notNull(),
     role: roleEnum('role').notNull().default('patient'),
@@ -42,6 +44,7 @@ export const users = pgTable(
   },
   (table) => [
     uniqueIndex('users_email_key').on(table.email),
+    uniqueIndex('users_public_number_key').on(table.publicNumber),
     index('users_role_status_idx').on(table.role, table.status),
   ],
 );
