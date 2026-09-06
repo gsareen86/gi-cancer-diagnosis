@@ -7,6 +7,7 @@ import {
   AuthorizationError,
   ConsentGateError,
   IllegalTransitionError,
+  DraftConflictError,
   tables,
 } from '@gi-compass/db';
 import type { ConsentPurpose } from '@gi-compass/core';
@@ -93,6 +94,7 @@ async function readSession(request: NextRequest): Promise<Session | null> {
 }
 
 function translateError(error: unknown): NextResponse<ProblemBody> {
+  if (error instanceof DraftConflictError) return problem('conflict', 'error.draft_conflict');
   if (error instanceof AuthorizationError) {
     return error.notFound
       ? problem('not_found', 'error.not_found')

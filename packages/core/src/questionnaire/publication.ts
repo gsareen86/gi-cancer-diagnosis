@@ -51,6 +51,10 @@ export function validateForPublication(
   const questionIds = new Set(version.questions.map((q) => q.id));
   const groupIds = new Set(version.groups.map((g) => g.id));
 
+  for (const questionId of version.safety?.questionIds ?? []) {
+    if (!questionIds.has(questionId)) problems.push({ code: 'unknown_seed_question', questionId, message: `Safety assessment opens with unknown question "${questionId}"` });
+  }
+
   for (const entryPoint of version.entryPoints) {
     if (!groupIds.has(entryPoint.entryGroupId)) {
       problems.push({
@@ -88,7 +92,7 @@ export function validateForPublication(
     }
   }
 
-  for (const rule of version.rules) {
+  for (const rule of [...(version.safety?.rules ?? []), ...version.rules]) {
     if (conditionDepth(rule.when) > MAX_CONDITION_DEPTH) {
       problems.push({
         code: 'condition_too_deep',
@@ -181,7 +185,7 @@ export function validateForPublication(
 
 /**
  * The dependency graph runs from each question a rule *reads* to each question it *reveals*.
- * A cycle means a question can only appear once it has already been answered.
+ * Shared upstream questions are supported; cyclic dependencies are refused for publication.
  */
 function detectCycles(version: TemplateVersion): PublicationProblem[] {
   const index = indexTemplate(version);
@@ -192,7 +196,7 @@ function detectCycles(version: TemplateVersion): PublicationProblem[] {
     else edges.set(from, new Set([to]));
   };
 
-  for (const rule of version.rules) {
+  for (const rule of [...(version.safety?.rules ?? []), ...version.rules]) {
     const sources = referencedQuestionIds(rule.when);
     const targets = [
       ...rule.revealQuestionIds,
@@ -239,11 +243,11 @@ function detectCycles(version: TemplateVersion): PublicationProblem[] {
 /** A question no entry group contains and no rule reveals can never be asked. */
 function detectUnreachable(version: TemplateVersion): PublicationProblem[] {
   const index = indexTemplate(version);
-  const reachable = new Set<string>();
+  const reachable = new Set<string>(version.safety?.questionIds ?? []);
   for (const entryPoint of version.entryPoints) {
     for (const questionId of entryPoint.seedQuestionIds) reachable.add(questionId);
   }
-  for (const rule of version.rules) {
+  for (const rule of [...(version.safety?.rules ?? []), ...version.rules]) {
     for (const questionId of rule.revealQuestionIds) reachable.add(questionId);
     for (const groupId of rule.revealGroupIds) {
       for (const question of index.questionsByGroup.get(groupId) ?? []) reachable.add(question.id);

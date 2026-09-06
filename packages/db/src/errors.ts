@@ -48,3 +48,11 @@ export class IllegalTransitionError extends Error {
     this.name = 'IllegalTransitionError';
   }
 }
+
+/** No clinical content in the error: the caller must reload through authorized reads. */
+export class DraftConflictError extends Error {
+  constructor() {
+    super('The draft has changed since this editor was loaded');
+    this.name = 'DraftConflictError';
+  }
+}

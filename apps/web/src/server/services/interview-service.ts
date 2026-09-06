@@ -142,6 +142,7 @@ export async function buildInterviewView(input: BuildViewInput): Promise<Intervi
     entryPointId: input.caseRecord.entryPointId,
     locale: input.locale,
     progress: interview.progress,
+    safety: interview.safety,
     complete: interview.complete,
     nextQuestion: nextQuestionEntry
       ? renderQuestion(nextQuestionEntry.question, clusterOf(nextQuestionEntry.question), resolve)

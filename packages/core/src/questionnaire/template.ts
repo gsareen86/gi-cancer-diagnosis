@@ -111,6 +111,11 @@ export const templateVersionSchema = z.object({
   groups: z.array(questionGroupSchema).min(1),
   questions: z.array(questionSchema),
   rules: z.array(branchingRuleSchema).default([]),
+  /** Shared, version-pinned safety questions and follow-ups, independent of symptom entry. */
+  safety: z.object({
+    questionIds: z.array(z.string().min(1)),
+    rules: z.array(branchingRuleSchema).default([]),
+  }).optional(),
   /** Languages whose clinical text a clinician has approved for this version. */
   approvedLocales: z.array(z.string().min(2)).default(['en']),
 });

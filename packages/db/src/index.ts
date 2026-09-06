@@ -38,6 +38,7 @@ export {
   AuthorizationError,
   ConsentGateError,
   IllegalTransitionError,
+  DraftConflictError,
 } from './errors';
 
 /**

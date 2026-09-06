@@ -3,6 +3,7 @@ import { activeAnswerMap } from '../questionnaire/answers';
 import type { Question, TemplateIndex } from '../questionnaire/template';
 import type { SymptomCluster } from '../taxonomy';
 import type { TriggeredRedFlag } from '../safety/red-flags';
+import { compileHistoryFacts } from './history-facts';
 
 /**
  * Compiles a case into the structured clinical summary the AI pipeline is grounded on and the
@@ -19,6 +20,7 @@ import type { TriggeredRedFlag } from '../safety/red-flags';
 export type FactPresence = 'present' | 'absent' | 'value' | 'indeterminate';
 
 export interface ClinicalFact {
+  source?: { type: 'patient_answer' | 'history' | 'caregiver_answer'; recordId: string; recordedAt?: string };
   questionId: string;
   cluster: SymptomCluster;
   /** The English question text, resolved through the caller's catalogue. */
@@ -51,6 +53,7 @@ export interface ClinicalSummaryInput {
   revealedBy: ReadonlyMap<string, string | null>;
   redFlags: readonly TriggeredRedFlag[];
   documents: readonly DocumentExtractInput[];
+  history?: unknown;
   subject: { ageYears: number | null; sex: string | null };
   /** Resolves an i18n catalogue key to English text. Core never holds display strings itself. */
   resolve: (key: string) => string;
@@ -85,12 +88,13 @@ function renderAnswer(
       return { text: resolve(option.labelKey), presence };
     }
     case 'multi_select': {
-      if (value.optionIds.length === 0) return { text: 'none selected', presence: 'absent' };
+      if (value.optionIds.length === 0) return { text: 'not established', presence: 'indeterminate' };
       const labels = value.optionIds.map((id) => {
         const option = question.options.find((candidate) => candidate.id === id);
         return option ? resolve(option.labelKey) : id;
       });
-      return { text: labels.join('; '), presence: 'present' };
+      const selected = value.optionIds.map(id => question.options.find(option => option.id === id));
+      return { text: labels.join('; '), presence: selected.every(option => option?.polarity === 'denies') ? 'absent' : selected.some(option => option?.polarity === 'affirms') ? 'present' : 'indeterminate' };
     }
     case 'scale': {
       const scale = question.scale;
@@ -104,16 +108,16 @@ function renderAnswer(
     case 'duration':
       return { text: renderDuration(value.days), presence: 'value' };
     case 'text':
-      return { text: value.value.trim() || 'no detail given', presence: 'value' };
+      return { text: value.value.trim() || 'no detail given', presence: value.value.trim() ? 'value' : 'indeterminate' };
     case 'body_map':
       return {
         text: value.regionIds.join('; '),
-        presence: value.regionIds.length > 0 ? 'present' : 'absent',
+        presence: value.regionIds.length > 0 ? 'present' : 'indeterminate',
       };
     case 'image':
       return {
         text: `${value.documentIds.length} image(s) attached`,
-        presence: value.documentIds.length > 0 ? 'present' : 'absent',
+        presence: value.documentIds.length > 0 ? 'present' : 'indeterminate',
       };
   }
 }
@@ -148,6 +152,7 @@ export function compileClinicalSummary(input: ClinicalSummaryInput): ClinicalSum
     const trigger = triggerId ? index.questionById.get(triggerId) : undefined;
 
     const fact: ClinicalFact = {
+      source: { type: 'patient_answer', recordId: questionId },
       questionId,
       cluster: group?.cluster ?? 'history',
       question: resolve(question.promptKey),
@@ -157,6 +162,7 @@ export function compileClinicalSummary(input: ClinicalSummaryInput): ClinicalSum
     if (trigger) fact.askedBecause = resolve(trigger.promptKey);
     facts.push(fact);
   }
+  facts.push(...compileHistoryFacts(input.history, input.caseId));
 
   const factsByCluster: Record<string, ClinicalFact[]> = {};
   for (const fact of facts) {

@@ -59,11 +59,8 @@ export interface EmergencyAdvisory {
   requiresInterruption: boolean;
 }
 
-/** India's emergency numbers, shown verbatim in the advisory. */
-export const EMERGENCY_NUMBERS = [
-  { labelKey: 'emergency.number.general', number: '112' },
-  { labelKey: 'emergency.number.ambulance', number: '108' },
-] as const;
+/** Kept as an empty compatibility field. The product provides advice, never emergency dispatch. */
+export const EMERGENCY_NUMBERS: readonly { labelKey: string; number: string }[] = [];
 
 export interface InterviewView {
   caseId: string;
@@ -84,6 +81,7 @@ export interface InterviewView {
   redFlags: RenderedRedFlag[];
   emergency: EmergencyAdvisory | null;
   newlyTriggeredRuleIds?: string[];
+  safety?: { questionIds: string[]; pendingQuestionIds: string[]; unknownQuestionIds: string[]; complete: boolean };
 }
 
 export type { AnswerValue };

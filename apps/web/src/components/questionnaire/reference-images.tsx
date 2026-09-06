@@ -24,8 +24,7 @@ export function ReferenceImages({ ids, compact = false }: { ids: string[]; compa
   // image icon beside a clinical question.
   const [failed, setFailed] = useState<string[]>([]);
 
-  const usable = ids.filter((id) => !failed.includes(id));
-  if (usable.length === 0) return null;
+  if (ids.length === 0) return null;
 
   if (compact && !expanded) {
     return (
@@ -46,9 +45,9 @@ export function ReferenceImages({ ids, compact = false }: { ids: string[]; compa
 
   return (
     <ul className={`mt-3 grid gap-3 ${compact ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'}`}>
-      {usable.map((id) => (
+      {ids.map((id) => (
         <li key={id} className="overflow-hidden rounded-lg border border-line bg-surface-sunken">
-          <img
+          {failed.includes(id) ? <p role="status" className="p-4 text-sm text-ink-muted">{t('imageUnavailable')}</p> : <img
             src={`/api/reference-images/${encodeURIComponent(id)}`}
             alt={t('imageAlt')}
             loading="lazy"
@@ -56,7 +55,7 @@ export function ReferenceImages({ ids, compact = false }: { ids: string[]; compa
             sizes="(max-width: 640px) 45vw, 30vw"
             className="aspect-[4/3] w-full object-cover"
             onError={() => setFailed((current) => [...current, id])}
-          />
+          />}
         </li>
       ))}
     </ul>

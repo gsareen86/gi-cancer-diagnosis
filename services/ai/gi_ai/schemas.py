@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 
 class ClinicalFact(BaseModel):
+    source: dict[str, Any] | None = None
     questionId: str
     cluster: str
     question: str

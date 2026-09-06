@@ -48,6 +48,8 @@ export interface Interview {
   /** The answers the rules were actually evaluated against. */
   effectiveAnswers: ReadonlyMap<string, AnswerValue>;
   complete: boolean;
+  /** Unknown is different from an explicitly negative safety assessment. */
+  safety: { questionIds: string[]; pendingQuestionIds: string[]; unknownQuestionIds: string[]; complete: boolean };
 }
 
 const MAX_FIXPOINT_ITERATIONS = 1000;
@@ -73,7 +75,8 @@ export function computeInterview(input: InterviewInput): Interview {
     return true;
   };
 
-  for (const questionId of entryPoint.seedQuestionIds) {
+  const safetyIds = new Set(index.version.safety?.questionIds ?? []);
+  for (const questionId of [...safetyIds, ...entryPoint.seedQuestionIds]) {
     const question = index.questionById.get(questionId);
     if (question) addQuestion(question, null, 0);
   }
@@ -97,7 +100,7 @@ export function computeInterview(input: InterviewInput): Interview {
     }
     const context: EvaluationContext = { answers: effectiveAnswers, subject };
 
-    for (const rule of index.version.rules) {
+    for (const rule of [...(index.version.safety?.rules ?? []), ...index.version.rules]) {
       if (!isSatisfied(rule.when, context)) continue;
 
       // The trigger is the deepest *answered and active* question the rule reads. Anchoring
@@ -121,6 +124,7 @@ export function computeInterview(input: InterviewInput): Interview {
         revealed.push(...(index.questionsByGroup.get(groupId) ?? []));
       }
       for (const question of revealed) {
+        if (index.version.safety?.rules.includes(rule)) safetyIds.add(question.id);
         if (addQuestion(question, revealedBy, depth)) changed = true;
       }
     }
@@ -128,7 +132,8 @@ export function computeInterview(input: InterviewInput): Interview {
     if (changed) effectiveAnswers = restrictAnswers();
   }
 
-  const ordered = orderDepthFirst(active, index);
+  const natural = orderDepthFirst(active, index);
+  const ordered = [...natural.filter(entry => safetyIds.has(entry.question.id)), ...natural.filter(entry => !safetyIds.has(entry.question.id))];
   const answeredCount = ordered.filter((entry) => entry.answered).length;
   const nextQuestion = ordered.find((entry) => !entry.answered);
 
@@ -149,7 +154,21 @@ export function computeInterview(input: InterviewInput): Interview {
     retractedQuestionIds: retracted,
     effectiveAnswers,
     complete: nextQuestion === undefined,
+    safety: {
+      questionIds: [...safetyIds],
+      pendingQuestionIds: [...safetyIds].filter(id => !effectiveAnswers.has(id)),
+      unknownQuestionIds: [...safetyIds].filter(id => isIndeterminateSafetyAnswer(index.questionById.get(id), effectiveAnswers.get(id))),
+      complete: [...safetyIds].every(id => effectiveAnswers.has(id) && !isIndeterminateSafetyAnswer(index.questionById.get(id), effectiveAnswers.get(id))),
+    },
   };
+}
+
+function isIndeterminateSafetyAnswer(question: Question | undefined, value: AnswerValue | undefined): boolean {
+  if (!value || !question) return false;
+  if (value.kind === 'single_select') return question.options.find(option => option.id === value.optionId)?.polarity === 'indeterminate';
+  if (value.kind === 'body_map') return value.regionIds.length === 0;
+  if (value.kind === 'multi_select') return value.optionIds.length === 0 || value.optionIds.some(id => question.options.find(option => option.id === id)?.polarity === 'indeterminate');
+  return false;
 }
 
 function orderDepthFirst(

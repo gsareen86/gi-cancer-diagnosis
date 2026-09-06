@@ -22,5 +22,6 @@ export * from './consent/policy';
 
 export * from './assessment/schema';
 export * from './assessment/clinical-summary';
+export * from './assessment/history-facts';
 
 export * from './taxonomy';

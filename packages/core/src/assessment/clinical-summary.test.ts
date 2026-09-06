@@ -20,7 +20,7 @@ const answer = (questionId: string, value: AnswerValue): RecordedAnswer => ({
 });
 const select = (optionId: string): AnswerValue => ({ kind: 'single_select', optionId });
 
-function compile(answers: RecordedAnswer[], ageYears: number | null = 52) {
+function compile(answers: RecordedAnswer[], ageYears: number | null = 52, history?: unknown) {
   const subject = ageYears === null ? {} : { ageYears };
   const interview = computeInterview({ index, entryPointId: 'ep_bleeding', answers, subject });
   const redFlags = evaluateRedFlags({
@@ -29,6 +29,7 @@ function compile(answers: RecordedAnswer[], ageYears: number | null = 52) {
     subject,
   });
   const input: ClinicalSummaryInput = {
+    ...{ history },
     caseId: 'case_1',
     index,
     orderedQuestionIds: interview.activeQuestionIds,
@@ -52,6 +53,26 @@ const melaenaPath = [
   answer('q_blood_duration', { kind: 'duration', days: 21 }),
   answer('q_weight_loss', select('no')),
 ];
+
+describe('structured history reaches the clinical brief', () => {
+  it('includes medicines, prior surgery and family history with source attribution', () => {
+    const summary = compile(melaenaPath, 52, {
+      medications: [{ name: 'ibuprofen', kind: 'otc', frequency: 'daily' }],
+      surgeries: [{ label: 'Cholecystectomy', year: 2018 }],
+      familyHistory: [{ relation: 'father', condition: 'Gastric cancer', ageAtDiagnosis: 62 }],
+    });
+    expect(summary.narrative).toContain('ibuprofen');
+    expect(summary.narrative).toContain('Cholecystectomy');
+    expect(summary.narrative).toContain('Gastric cancer');
+    expect(summary.facts.find(f => f.questionId === 'history.medications')?.presence).toBe('present');
+  });
+
+  it('does not turn empty history arrays into negative findings', () => {
+    const summary = compile([], 52, { medications: [], allergies: [], completedAt: '2026-09-06T00:00:00Z' });
+    expect(summary.facts.find(f => f.questionId === 'history.allergies')?.presence).toBe('indeterminate');
+    expect(summary.deniedFindings).not.toContain('Allergies');
+  });
+});
 
 describe('determinism', () => {
   it('compiles the same case identically every time', () => {
@@ -112,6 +133,7 @@ describe('grouping by symptom cluster', () => {
     const summary = compile(melaenaPath);
     expect(Object.keys(summary.factsByCluster).sort()).toEqual([
       'bleeding',
+      'history',
       'systemic',
       'weight_appetite',
     ]);

@@ -1,14 +1,14 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { EmergencyAdvisory } from './types';
 
 /**
  * The emergency escalation.
  *
  * Deliberately not a dismissible toast or a modal that closes on a backdrop tap. It takes the
- * whole screen, the phone numbers are the largest tap targets on it, and carrying on takes a
+ * whole screen, immediate in-person assistance is the main action, and carrying on takes a
  * separate, explicitly-labelled action — a patient who taps past this by accident has lost the
  * one message that mattered.
  *
@@ -18,17 +18,12 @@ import type { EmergencyAdvisory } from './types';
 export function EmergencyAdvisoryScreen({
   advisory,
   onAcknowledge,
-  hasEmergencyContact,
-  onNotifyContact,
 }: {
   advisory: EmergencyAdvisory;
   onAcknowledge: () => void;
-  hasEmergencyContact: boolean;
-  onNotifyContact?: () => void;
 }) {
   const t = useTranslations('emergency');
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const [notified, setNotified] = useState(false);
 
   useEffect(() => {
     // Move focus to the heading so a screen-reader user lands on the advisory rather than
@@ -65,39 +60,8 @@ export function EmergencyAdvisoryScreen({
             ))}
           </div>
 
-          <div className="mt-7 space-y-3">
-            {advisory.contacts.map((contact) => (
-              <a
-                key={contact.number}
-                href={`tel:${contact.number}`}
-                className="flex w-full items-center justify-center gap-3 rounded-xl bg-emergency px-6 py-5 text-xl font-semibold text-white hover:brightness-90"
-              >
-                <span aria-hidden="true">📞</span>
-                {t('callNow')} · {t(`number.${contact.labelKey.split('.').pop()}` as never)}
-              </a>
-            ))}
-          </div>
-
-          {hasEmergencyContact && onNotifyContact !== undefined && (
-            <div className="mt-4">
-              {notified ? (
-                <p className="text-ok" role="status">
-                  {t('contactNotified')}
-                </p>
-              ) : (
-                <button
-                  type="button"
-                  className="gi-button-secondary w-full"
-                  onClick={() => {
-                    onNotifyContact();
-                    setNotified(true);
-                  }}
-                >
-                  {t('notifyContact')}
-                </button>
-              )}
-            </div>
-          )}
+          <p className="mt-7 rounded-xl border border-emergency bg-emergency-faint p-5 text-lg font-semibold text-emergency">{t('seekImmediateCare')}</p>
+          <p className="mt-3 text-ink-muted">{t('doNotWait')}</p>
 
           <hr className="my-7 border-line" />
 
@@ -120,14 +84,7 @@ export function EmergencyBanner() {
       className="mb-6 rounded-xl border-2 border-emergency bg-emergency-faint p-4 text-emergency"
     >
       <p className="font-semibold">{t('persistentBanner')}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <a href="tel:112" className="gi-button bg-emergency text-white hover:brightness-90">
-          {t('number.general')}
-        </a>
-        <a href="tel:108" className="gi-button bg-emergency text-white hover:brightness-90">
-          {t('number.ambulance')}
-        </a>
-      </div>
+      <p className="mt-2 text-sm">{t('doNotWait')}</p>
     </div>
   );
 }
