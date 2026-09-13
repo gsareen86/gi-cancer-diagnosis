@@ -66,6 +66,7 @@ export function DocumentDrawer({
   return (
     <Drawer
       open
+      width="max-w-[92rem]"
       onClose={onClose}
       title={document.originalFilename}
       closeLabel={t('closeDocument')}
@@ -131,7 +132,8 @@ export function DocumentDrawer({
         </div>
       }
     >
-      <div className="gi-scroll bg-surface-inset p-4">
+      <div className="grid min-h-0 xl:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
+      <div className="gi-scroll min-w-0 bg-surface-inset p-4">
         {source === null ? <p className="p-6 text-sm text-ink-muted" role="status">{failed ? t('previewUnavailable') : tCommon('loading')}</p> : isImage ? (
           <div className="overflow-auto">
             {/* eslint-disable-next-line @next/next/no-img-element -- served through the audited
@@ -178,6 +180,7 @@ export function DocumentDrawer({
             </pre>
           </section>
         )}
+      </div>
       </div>
     </Drawer>
   );

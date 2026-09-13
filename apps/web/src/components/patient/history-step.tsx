@@ -20,6 +20,7 @@ import {
   bodyMassIndex,
   type AllergyEntry,
   type ClinicalHistoryView,
+  type ClinicalHistoryInput,
   type ConditionEntry,
   type FamilyHistoryEntry,
   type Lifestyle,
@@ -46,6 +47,8 @@ import {
  */
 
 interface Draft {
+  trajectory: NonNullable<ClinicalHistoryInput['trajectory']>;
+  assertions: ClinicalHistoryInput['assertions'];
   heightCm: string;
   weightKg: string;
   conditions: ConditionEntry[];
@@ -58,6 +61,8 @@ interface Draft {
 }
 
 const EMPTY: Draft = {
+  trajectory: { onset: '', course: 'unknown', impact: '', remedies: '', response: '', previousConsultations: '' },
+  assertions: {},
   heightCm: '',
   weightKg: '',
   conditions: [],
@@ -65,13 +70,15 @@ const EMPTY: Draft = {
   medications: [],
   allergies: [],
   familyHistory: [],
-  lifestyle: { smoking: 'never', alcohol: 'never' },
+  lifestyle: { smoking: 'unknown', alcohol: 'unknown' },
   additionalNotes: '',
 };
 
 function fromView(view: Partial<ClinicalHistoryView> | null): Draft {
   if (view === null) return EMPTY;
   return {
+    trajectory: view.trajectory ?? EMPTY.trajectory,
+    assertions: view.assertions ?? {},
     heightCm: view.heightCm == null ? '' : String(view.heightCm),
     // The column is `numeric`, so it arrives as "70.00"; trailing zeros in an input the patient
     // is about to edit look like a system that already knows better than them.
@@ -81,7 +88,7 @@ function fromView(view: Partial<ClinicalHistoryView> | null): Draft {
     medications: view.medications ?? [],
     allergies: view.allergies ?? [],
     familyHistory: view.familyHistory ?? [],
-    lifestyle: view.lifestyle ?? { smoking: 'never', alcohol: 'never' },
+    lifestyle: view.lifestyle ?? { smoking: 'unknown', alcohol: 'unknown' },
     additionalNotes: view.additionalNotes ?? '',
   };
 }
@@ -134,6 +141,8 @@ export function HistoryStep({
       const weight = draft.weightKg.trim() === '' ? null : Number.parseFloat(draft.weightKg);
 
       const result = await api.put(`/api/cases/${caseId}/history`, {
+        trajectory: draft.trajectory,
+        assertions: Object.fromEntries((['conditions', 'surgeries', 'medications', 'allergies', 'familyHistory'] as const).map(key => [key, draft[key].length ? 'provided' : draft.assertions[key] ?? 'unknown'])),
         heightCm: height === null || Number.isNaN(height) ? null : height,
         weightKg: weight === null || Number.isNaN(weight) ? null : weight,
         conditions: draft.conditions,
@@ -178,6 +187,24 @@ export function HistoryStep({
     <div className="gi-card">
       <h2 className="text-xl">{t('heading')}</h2>
       <p className="mt-2 text-ink-muted">{t('intro')}</p>
+
+      <section className="mt-6 rounded-xl border border-line bg-surface-inset p-4">
+        <h3 className="gi-section-title">{t('trajectoryHeading')}</h3>
+        <p className="gi-hint">{t('trajectoryHint')}</p>
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          {(['onset', 'impact', 'remedies', 'response', 'previousConsultations'] as const).map(key => (
+            <Field key={key} label={t(`trajectory_${key}`)} htmlFor={`trajectory-${key}`} className="mb-0">
+              <textarea id={`trajectory-${key}`} className="gi-input min-h-24" maxLength={key === 'onset' ? 300 : 1000} value={draft.trajectory[key]}
+                onChange={event => setDraft({ ...draft, trajectory: { ...draft.trajectory, [key]: event.target.value } })} />
+            </Field>
+          ))}
+          <Field label={t('trajectory_course')} htmlFor="trajectory-course" className="mb-0">
+            <select id="trajectory-course" className="gi-select" value={draft.trajectory.course} onChange={event => setDraft({ ...draft, trajectory: { ...draft.trajectory, course: event.target.value as Draft['trajectory']['course'] } })}>
+              {(['unknown', 'improving', 'unchanged', 'worsening', 'comes_and_goes'] as const).map(value => <option key={value} value={value}>{t(`course_${value}`)}</option>)}
+            </select>
+          </Field>
+        </div>
+      </section>
 
       {prefilled && (
         <div className="mt-4">
@@ -609,6 +636,19 @@ export function HistoryStep({
         </div>
       </section>
 
+      <section className="mt-6">
+        <h3 className="gi-section-title">{t('confirmMissingHeading')}</h3>
+        <p className="gi-hint">{t('confirmMissingHint')}</p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          {(['conditions', 'surgeries', 'medications', 'allergies', 'familyHistory'] as const).filter(key => draft[key].length === 0).map(key => (
+            <Field key={key} label={t(`assertion_${key}`)} htmlFor={`assertion-${key}`} className="mb-0">
+              <select id={`assertion-${key}`} className="gi-select" value={draft.assertions[key] ?? 'unknown'} onChange={event => setDraft({ ...draft, assertions: { ...draft.assertions, [key]: event.target.value as 'unknown' | 'none' } })}>
+                <option value="unknown">{t('notEstablished')}</option><option value="none">{t('explicitNone')}</option>
+              </select>
+            </Field>
+          ))}
+        </div>
+      </section>
       {/* --------------------------------------------------------------------- Notes --- */}
       <div className="mt-6">
         <Field label={t('notesHeading')} htmlFor="history-notes" hint={t('notesHint')} className="mb-0">
@@ -691,7 +731,8 @@ function CodedList<Code extends string, T extends Coded & { code: Code }>({
   makeEntry: (code: Code) => T;
   icon?: React.ReactNode;
 }) {
-  const [choice, setChoice] = useState<Code>(codes[0] as Code);
+  const t = useTranslations('history');
+  const [choice, setChoice] = useState<Code | ''>('');
   const id = heading.replace(/\W+/g, '-').toLowerCase();
 
   return (
@@ -750,6 +791,7 @@ function CodedList<Code extends string, T extends Coded & { code: Code }>({
           value={choice}
           onChange={(event) => setChoice(event.target.value as Code)}
         >
+          <option value="">{t('chooseEntry')}</option>
           {codes.map((code) => (
             <option key={code} value={code}>
               {codeLabel(code)}
@@ -759,7 +801,8 @@ function CodedList<Code extends string, T extends Coded & { code: Code }>({
         <button
           type="button"
           className="gi-button-secondary shrink-0"
-          onClick={() => onChange([...entries, makeEntry(choice)])}
+          disabled={choice === ''}
+          onClick={() => { if (choice !== '') { onChange([...entries, makeEntry(choice)]); setChoice(''); } }}
         >
           {addLabel}
         </button>

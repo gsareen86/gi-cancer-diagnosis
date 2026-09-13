@@ -18,6 +18,8 @@ import { cases } from './clinical';
  * apply exactly as they do to responses. Nothing reads this table directly.
  */
 export const caseClinicalHistory = pgTable('case_clinical_history', {
+  trajectory: jsonb('trajectory'),
+  assertions: jsonb('assertions').notNull().default({}),
   caseId: uuid('case_id')
     .primaryKey()
     .references(() => cases.id, { onDelete: 'cascade' }),

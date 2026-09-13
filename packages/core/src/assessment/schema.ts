@@ -54,7 +54,7 @@ export const aiAssessmentBaseSchema = z
     prompt_version: z.string().min(1),
     kb_version: z.string().min(1),
     generated_at: z.string().datetime({ offset: true }),
-    differential_assessment: z.array(differentialItemSchema).min(1).max(8),
+    differential_assessment: z.array(differentialItemSchema).max(5),
     red_flags: z.array(redFlagItemSchema).max(12),
     recommended_next_steps: z.array(finding).max(10),
     clinician_summary: z.string().min(20).max(4000),
@@ -88,10 +88,11 @@ export const PROHIBITED_MEDICATION_TERMS: readonly string[] = [
 
 /** Dose and regimen patterns, which catch medications the name list does not. */
 export const PROHIBITED_DOSE_PATTERNS: readonly RegExp[] = [
-  /\b\d+(\.\d+)?\s?(mg|mcg|µg|g|ml|iu|units?)\b/i,
-  /\b(bd|tds|qds|od|hs|prn|q\d+h)\b/i,
+  /\b\d+(\.\d+)?\s?(mg|mcg|µg|g|ml|iu|units?)\b(?!\s*\/\s*(?:dl|l)\b)/i,
+  /\b(bd|tds|qds|prn|q\d+h)\b/i,
+  /\b(?:dose|tablet|capsule|suppression|medicine|medication)\b.{0,40}\b(?:od|hs)\b/i,
   /\b(once|twice|thrice|three times|four times)\s+(a|per)\s+day\b/i,
-  /\b(start|begin|commence|prescribe|prescribing|initiate)\s+(on\s+)?(a\s+)?(course\s+of\s+)?\w+/i,
+  /\b(prescribe|prescribing)\b/i,
   /\btriple therapy\b/i,
   /\beradication (therapy|regimen)\b/i,
 ];

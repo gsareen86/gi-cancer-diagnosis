@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, type ApiProblem } from '@/lib/api-client';
-import { Card, Notice, Progress, Spinner } from '@/components/primitives';
+import { Card, Notice, Spinner } from '@/components/primitives';
 import { Stepper, type StepDefinition } from '@/components/ui/navigation';
 import { useToast } from '@/components/ui/toast';
 import { EmergencyAdvisoryScreen, EmergencyBanner } from '@/components/questionnaire/emergency-advisory';
@@ -13,14 +13,7 @@ import { ReferenceImages } from '@/components/questionnaire/reference-images';
 import type { AnswerValue, InterviewView } from '@/components/questionnaire/types';
 import { DocumentUploader, type UploadedDocumentView } from '@/components/document-uploader';
 import { HistoryStep } from './history-step';
-import {
-  STAGE_LABEL_KEY,
-  STAGE_ORDER,
-  completedStages,
-  stageForCluster,
-  stageIndex,
-  type StageId,
-} from '@/lib/intake-stages';
+import { STAGE_LABEL_KEY } from '@/lib/intake-stages';
 
 /**
  * The intake.
@@ -50,7 +43,6 @@ type Phase = 'questions' | 'record' | 'reports' | 'review';
 export function IntakeWizard({
   caseId,
   initialView,
-  hasEmergencyContact,
   documents,
 }: {
   caseId: string;
@@ -75,34 +67,20 @@ export function IntakeWizard({
   const [advisoryAcknowledged, setAdvisoryAcknowledged] = useState(
     view.emergency !== null && !view.emergency.requiresInterruption,
   );
-  const [branchOpened, setBranchOpened] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [uploadBusy, setUploadBusy] = useState(false);
   const [phase, setPhase] = useState<Phase>(initialView.nextQuestion === null ? 'record' : 'questions');
-  const [furthest, setFurthest] = useState<StageId>('symptoms');
 
   const promptRef = useRef<HTMLHeadingElement>(null);
-  const previousTotal = useRef(view.progress.total);
   const previousQuestionId = useRef(view.nextQuestion?.id ?? null);
 
   const question = view.nextQuestion;
 
-  const currentStage: StageId =
-    phase === 'questions'
-      ? question === null
-        ? 'background'
-        : stageForCluster(question.cluster)
-      : phase === 'record'
-        ? 'record'
-        : phase === 'reports'
-          ? 'reports'
-          : 'review';
-
-  useEffect(() => {
-    setFurthest((current) =>
-      stageIndex(currentStage) > stageIndex(current) ? currentStage : current,
-    );
-  }, [currentStage]);
+  const currentStage = phase === 'questions' ? 'symptoms' : phase;
+  const stages = ['symptoms', 'record', 'reports', 'review'] as const;
+  const completed = view.nextQuestion === null && view.answeredQuestions.length > 0 ? ['symptoms'] : [];
+  if (phase === 'reports' || phase === 'review') completed.push('record');
+  if (phase === 'review') completed.push('reports');
 
   useEffect(() => {
     const current = view.nextQuestion?.id ?? null;
@@ -134,8 +112,6 @@ export function IntakeWizard({
       }
 
       const next = result.data;
-      setBranchOpened(next.progress.total > previousTotal.current);
-      previousTotal.current = next.progress.total;
       setView(next);
       setDraft(null);
 
@@ -179,51 +155,37 @@ export function IntakeWizard({
       <EmergencyAdvisoryScreen
         advisory={view.emergency}
         onAcknowledge={acknowledge}
-        hasEmergencyContact={hasEmergencyContact}
       />
     );
   }
 
-  const steps: StepDefinition[] = STAGE_ORDER.map((stage) => ({
+  const steps: StepDefinition[] = stages.map((stage) => ({
     id: stage,
     label: tIntake(STAGE_LABEL_KEY[stage] as never),
   }));
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto w-full max-w-6xl">
       {view.emergency !== null && advisoryAcknowledged && <EmergencyBanner />}
 
       <div className="mb-6">
         <Stepper
           steps={steps}
-          currentId={stageIndex(furthest) > stageIndex(currentStage) && phase === 'questions' ? furthest : currentStage}
-          completedIds={completedStages(furthest, currentStage)}
+          currentId={currentStage}
+          completedIds={completed}
           label={tIntake('railLabel')}
           stepStatusLabel={(position, total, name) =>
             tIntake('stepStatus', { position, total, name })
           }
         />
 
-        {phase === 'questions' && (
-          <div className="mt-4">
-            <Progress
-              answered={view.progress.answered}
-              total={view.progress.total}
-              label={t('progress', {
-                answered: view.progress.answered,
-                total: view.progress.total,
-              })}
-              branchOpenedLabel={t('branchOpened')}
-              branchOpened={branchOpened}
-            />
-          </div>
-        )}
+        {phase === 'questions' && <p role="status" className="mt-4 text-sm text-ink-muted">{tIntake('adaptiveProgress', { answered: view.progress.answered })}</p>}
       </div>
 
       {phase === 'questions' && question !== null && (
         // The question id is exposed so end-to-end tests and support can address a specific
         // question without matching on prompt text, which changes with wording and language.
-        <Card className="scroll-mt-4" data-question-id={question.id}>
+        <Card className="mx-auto max-w-4xl scroll-mt-4 lg:p-8" data-question-id={question.id}>
           <TriggerNote view={view} questionId={question.id} />
 
           <h2 ref={promptRef} tabIndex={-1} className="text-xl outline-none">

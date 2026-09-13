@@ -143,6 +143,16 @@ const validReview = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe('the review queue', () => {
+  it('refuses a stale tab instead of overwriting a newer physician draft', async () => {
+    const { doctor, caseId } = await submittedCase();
+    const first = await call(saveReview, { method: 'PUT', params: { caseId }, accessToken: doctor.accessToken, body: validReview({ expectedRevision: 0 }) });
+    expect(first.status).toBe(200);
+    const stale = await call(saveReview, { method: 'PUT', params: { caseId }, accessToken: doctor.accessToken, body: validReview({ expectedRevision: 0, doctorNotes: 'Stale tab must not overwrite' }) });
+    expect(stale.status).toBe(409);
+    expect(first.body.draftRevision).toBe(1);
+    const current = await call(doctorCase, { params: { caseId }, accessToken: doctor.accessToken });
+    expect((current.body.review as { doctorNotes: string }).doctorNotes).toBe('Discussed by phone. Patient aware of urgency.');
+  });
   it('shows assigned cases with their highest urgency, emergencies first', async () => {
     const { doctor } = await submittedCase();
     const response = await call(doctorQueue as never, { accessToken: doctor.accessToken });
@@ -358,7 +368,7 @@ describe('release', () => {
     const stale = await call(releaseReview, { ...request, method: 'POST', body: { confirm: true, confirmedContent: { ...confirmedContent, summary: 'This is different content that was not finalized.' } } });
     expect(stale.status).toBe(409);
     expect(stale.body.messageKey).toBe('review.release.content_changed');
-    await call(saveReview, { ...request, method: 'PUT', body: validReview() });
+    expect((await call(saveReview, { ...request, method: 'PUT', body: validReview({ expectedRevision: 1 }) })).status).toBe(200);
     const unsigned = await call(releaseReview, { ...request, method: 'POST', body: { confirm: true, confirmedContent } });
     expect(unsigned.body.messageKey).toBe('review.release.not_finalized');
   });

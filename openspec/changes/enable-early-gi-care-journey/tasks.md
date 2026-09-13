@@ -8,16 +8,16 @@ Use existing repository commands after confirming the runtime baseline. Preserve
 
 ## 0. Baseline and scope — Phase 0 — Engineering / product / clinical owner
 
-- [ ] 0.1 Record the current commit, dirty-file inventory and application/runtime topology without printing secrets; capture current required test/typecheck/build outcomes separately from older reports.
+- [x] 0.1 Record the current commit, dirty-file inventory and application/runtime topology without printing secrets; capture current required test/typecheck/build outcomes separately from older reports.
 - [ ] 0.2 Reconcile pending OpenSpec changes and the supersession table; establish correct canonical/delta semantics and run official strict OpenSpec validation when the CLI is available.
 - [ ] 0.3 Create the initial fictional clinical scenario pack with expected questions, advice, explicit unknowns and rationale; mark each expectation pending or approved by the clinical owner.
-- [ ] 0.4 Document adult scope, advice-only emergency behavior, no-report journey and service-acceptance assumptions; verify no planning requirement promises calls, SOS or staffed coverage.
+- [x] 0.4 Document adult scope, advice-only emergency behavior, no-report journey and service-acceptance assumptions; verify no planning requirement promises calls, SOS or staffed coverage.
 - [ ] 0.5 Produce reviewable patient and doctor wireframes using fictional cases and existing Navigator patterns; record corrections from available asynchronous review.
 - [ ] 0.6 Resolve or retain explicit EGC decision defaults for providers, queue compatibility, clinical ownership, content rights and deployment mode; re-estimate phase effort from the baseline.
 
 ## 1. Safety assessment — Phase 1 — Core engineering / clinical owner
 
-- [ ] 1.1 Add a regression that reproduces the nonbloody vomiting, inability-to-retain-fluids and reduced-urine failure with the proposed five and nine universal seeds; demonstrate failure before repair.
+- [x] 1.1 Add a regression that reproduces the nonbloody vomiting, inability-to-retain-fluids and reduced-urine failure with the proposed five and nine universal seeds; demonstrate failure before repair.
 - [ ] 1.2 Define versioned safety questions, canonical fact IDs, follow-up obligations and incomplete states; verify that symptom presentation cannot hide obligated follow-ups.
 - [ ] 1.3 Implement the approved scheduler in core and add actual-answer sequence tests across all five entry points, including relevant negative and uncertain answers.
 - [ ] 1.4 Review broader urgent patterns including dysphagia option coverage and jaundice combinations; encode only clinically approved expectations and retain unapproved fixtures outside published content.

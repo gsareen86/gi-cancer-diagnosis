@@ -290,6 +290,7 @@ export const doctorReviews = pgTable(
     /** The only artefact permitted to state a clinical conclusion. Doctor-authored. */
     finalSummary: jsonb('final_summary'),
     doctorNotes: text('doctor_notes'),
+    draftRevision: integer('draft_revision').notNull().default(0),
     /** Exactly what the patient sees. Frozen at release. */
     releasedContent: jsonb('released_content'),
     startedAt: timestamp('started_at', { withTimezone: true }),

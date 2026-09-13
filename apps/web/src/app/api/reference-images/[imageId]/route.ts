@@ -16,7 +16,7 @@ import { problem } from '@/server/api/problem';
  * TODO(confirm): Decision D — in production these come from a CDN with responsive sizes, which
  * is a hosting decision. This route is the origin behind it.
  */
-export const GET = publicRoute<{ imageId: string }>(async ({ params }) => {
+export const GET = publicRoute<{ imageId: string }>(async ({ params, request }) => {
   const [image] = await database()
     .select()
     .from(tables.referenceImages)
@@ -29,5 +29,6 @@ export const GET = publicRoute<{ imageId: string }>(async ({ params }) => {
 
   // Storage delivery is a deployment concern; the redirect keeps the binary out of the app
   // server's request path and lets a CDN answer it.
-  return NextResponse.redirect(new URL(`/reference/${image.storageKey}`, 'http://localhost'), 302);
+  const path = image.storageKey.split('/').map(encodeURIComponent).join('/');
+  return NextResponse.redirect(new URL(`/reference/${path}`, request.url), 302);
 });

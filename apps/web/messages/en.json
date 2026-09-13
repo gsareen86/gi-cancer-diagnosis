@@ -259,7 +259,8 @@
     "selectOne": "Choose one",
     "unit": "{unit}",
     "whatThisMeans": "What this means",
-    "whyAsked": "Asked because you said: {trigger}"
+    "whyAsked": "Asked because you said: {trigger}",
+    "imageUnavailable": "Reference image is not available. Use the written description, or select “not sure” if offered. Hospital-reviewed images will be added when available."
   },
   "emergency": {
     "heading": "Please get medical help now",
@@ -272,7 +273,9 @@
     "contactNotified": "Your emergency contact has been told.",
     "acknowledge": "I understand — let me carry on answering",
     "acknowledgeHint": "Your answers are saved either way. Carrying on does not replace getting seen.",
-    "persistentBanner": "Your answers suggest you need urgent in-person care. Please do not wait for this review."
+    "persistentBanner": "Your answers suggest you need immediate medical attention.",
+    "seekImmediateCare": "Seek immediate medical assistance. Visit a doctor or hospital emergency department now.",
+    "doNotWait": "Do not wait for an app review or finish this questionnaire before seeking help. This application does not provide an emergency response service."
   },
   "documents": {
     "accepted": "PDF, JPG, PNG, DOCX or DICOM. Up to {maxMb} MB each.",
@@ -656,7 +659,25 @@
       "model_unavailable": "The AI service is running but its model is not answering. Check that the model server is up.",
       "schema_violations_exhausted": "The model could not produce a valid analysis after several attempts. Nothing was saved.",
       "failed": "The analysis could not be produced. Nothing was saved."
-    }
+    },
+    "startReview": "Start review",
+    "briefTitle": "Clinical brief",
+    "briefHint": "Reported facts for review. Available without AI.",
+    "briefReports": "{count} reports uploaded",
+    "briefAttention": "Reported patterns needing attention",
+    "briefSymptoms": "Symptoms and their course",
+    "briefHistory": "Relevant history",
+    "briefNotRecorded": "Not recorded",
+    "briefUnknown": "Information not established",
+    "briefNoReports": "No reports uploaded. The symptom history can still support an in-person assessment.",
+    "briefSourceHint": "See the original answers and history below. Uploaded reports remain in the Reports section.",
+    "autosaving": "Saving draft…",
+    "autosavePending": "Unsaved changes — saving shortly",
+    "autosaveSaved": "Draft is up to date",
+    "autosaveFailed": "Draft was not saved. Keep this page open and retry Save. If another tab changed it, copy your changes before reloading.",
+    "unsavedNavigation": "This draft has unsaved changes. Leave this page and discard them?",
+    "inReviewCaption": "Reviews started and still open",
+    "filterControls": "Search and filters"
   },
   "admin": {
     "heading": "Clinical content",
@@ -699,7 +720,8 @@
     "audit_unavailable": "We could not record that safely, so nothing was changed. Please try again.",
     "mfa_required": "Set up your second factor first.",
     "network": "We could not reach the server. Check your connection.",
-    "generic": "Something went wrong."
+    "generic": "Something went wrong.",
+    "draft_conflict": "Another tab changed this draft. Your edits are still here. Copy them before reloading the current version."
   },
   "shell": {
     "accessDenied": "That area is not available to your account.",
@@ -754,7 +776,8 @@
     "stageReview": "Review and submit",
     "stageSymptoms": "Symptoms",
     "stageVisual": "Visual indicators",
-    "stepStatus": "Step {position} of {total}: {name}"
+    "stepStatus": "Step {position} of {total}: {name}",
+    "adaptiveProgress": "{answered} answers saved. Follow-up questions depend on your answers."
   },
   "history": {
     "addAllergy": "Add allergy",
@@ -867,7 +890,32 @@
     "surgery_liver_surgery": "Liver surgery",
     "surgery_other": "Something else",
     "surgeryOtherLabel": "Please describe",
-    "weightLabel": "Weight (kg)"
+    "weightLabel": "Weight (kg)",
+    "trajectoryHeading": "How this problem has changed",
+    "trajectoryHint": "Use your own words. Approximate dates and medicine or home-remedy names are useful. Reports are optional.",
+    "trajectory_onset": "When did you first notice it?",
+    "trajectory_course": "Since it started, is it…",
+    "trajectory_impact": "How does it affect eating, sleep or daily activities?",
+    "trajectory_remedies": "What medicines, OTC products or home remedies have you tried?",
+    "trajectory_response": "Did these help? Did the problem return?",
+    "trajectory_previousConsultations": "Have you seen anyone about this? When, and what were you told?",
+    "course_unknown": "Not sure",
+    "course_improving": "Improving",
+    "course_unchanged": "About the same",
+    "course_worsening": "Getting worse",
+    "course_comes_and_goes": "Coming and going",
+    "confirmMissingHeading": "Check the sections you left empty",
+    "confirmMissingHint": "An empty section means we do not know. Select none only if you can confirm it.",
+    "assertion_conditions": "Medical conditions",
+    "assertion_surgeries": "Previous surgery",
+    "assertion_medications": "Medicines",
+    "assertion_allergies": "Allergies",
+    "assertion_familyHistory": "Family history",
+    "notEstablished": "Not sure / not established",
+    "explicitNone": "I confirm none",
+    "chooseEntry": "Choose an item",
+    "smoking_unknown": "Not sure / not answered",
+    "alcohol_unknown": "Not sure / not answered"
   },
   "patientDashboard": {
     "activeHeading": "Your current consultation",
@@ -979,5 +1027,16 @@
       "already_released": "This has already been released.",
       "content_changed": "The review changed after finalization. Reload and finalize the current version before dispatch."
     }
+  },
+  "messages": {
+    "heading": "Questions and additional information",
+    "hint": "Use this space to clarify information or ask about an existing report. Replies are not immediate. Seek in-person help for urgent or worsening symptoms.",
+    "refresh": "Refresh",
+    "empty": "No messages yet.",
+    "you": "You",
+    "other": "Case participant",
+    "label": "Your message",
+    "sending": "Sending…",
+    "send": "Send message"
   }
 }

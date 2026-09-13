@@ -13,7 +13,7 @@ import {
   uploadedDocuments,
 } from '../schema';
 import type { Database } from '../client';
-import { AuditWriteError, AuthorizationError, ConsentGateError, IllegalTransitionError } from '../errors';
+import { AuditWriteError, AuthorizationError, ConsentGateError, IllegalTransitionError, DraftConflictError } from '../errors';
 import { authorizeCaseAccess, loadCaseIdentity } from '../access/authorize';
 import { assertConsent, hasConsentFor } from '../access/consent';
 import { databaseAuditWriter, type AuditOutcome, type AuditWriter } from '../access/audit';
@@ -891,6 +891,7 @@ export class ClinicalRepository {
     input: {
       caseId: string;
       reviewId: string;
+      expectedRevision?: number;
       finalSummary: unknown;
       doctorNotes: string | null;
       finalize?: boolean;
@@ -919,10 +920,10 @@ export class ClinicalRepository {
         if (!record || ['in_progress', 'released', 'closed'].includes(record.status)) throw new IllegalTransitionError(record?.status ?? 'missing', 'in_review');
         const [row] = await tx
           .update(doctorReviews)
-          .set({ finalSummary: input.finalSummary, doctorNotes: input.doctorNotes, status: input.finalize ? 'finalized' : 'in_review', finalizedAt: input.finalize ? new Date() : null })
-          .where(and(eq(doctorReviews.id, input.reviewId), eq(doctorReviews.caseId, input.caseId), notInArray(doctorReviews.status, ['released'])))
+          .set({ finalSummary: input.finalSummary, doctorNotes: input.doctorNotes, draftRevision: sql`${doctorReviews.draftRevision} + 1`, status: input.finalize ? 'finalized' : 'in_review', finalizedAt: input.finalize ? new Date() : null })
+          .where(and(eq(doctorReviews.id, input.reviewId), eq(doctorReviews.caseId, input.caseId), eq(doctorReviews.draftRevision, input.expectedRevision ?? 0), notInArray(doctorReviews.status, ['released'])))
           .returning();
-        if (!row) throw new IllegalTransitionError('locked', 'in_review');
+        if (!row) throw new DraftConflictError();
         await tx.update(cases).set({ status: input.finalize ? 'reviewed' : 'in_review', updatedAt: new Date() }).where(eq(cases.id, input.caseId));
 
         // Overrides are recorded fresh each save so the diff set always reflects the current
@@ -1243,6 +1244,8 @@ export class ClinicalRepository {
     input: {
       caseId: string;
       heightCm: number | null;
+      trajectory?: unknown;
+      assertions?: unknown;
       weightKg: string | null;
       conditions: unknown[];
       surgeries: unknown[];
@@ -1282,6 +1285,8 @@ export class ClinicalRepository {
         }
 
         const values = {
+          trajectory: input.trajectory ?? null,
+          assertions: input.assertions ?? {},
           heightCm: input.heightCm,
           weightKg: input.weightKg,
           conditions: input.conditions,

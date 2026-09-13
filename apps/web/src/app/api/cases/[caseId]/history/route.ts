@@ -40,6 +40,8 @@ export const GET = route<{ caseId: string }>({ roles: ['patient'] }, async ({ pa
 
   return ok({
     history: {
+      trajectory: history.trajectory,
+      assertions: history.assertions,
       heightCm: history.heightCm,
       weightKg: history.weightKg,
       conditions: history.conditions,
@@ -68,6 +70,8 @@ export const PUT = route<{ caseId: string }>({ roles: ['patient'] }, async ({ re
   const saved = await repo.saveClinicalHistory(context, {
     caseId: params.caseId,
     heightCm: input.heightCm,
+    trajectory: input.trajectory,
+    assertions: input.assertions,
     // The column is `numeric`, which the driver reads and writes as a string. Fixing the scale
     // here keeps "70" and "70.00" from round-tripping as different values.
     weightKg: input.weightKg === null ? null : input.weightKg.toFixed(2),

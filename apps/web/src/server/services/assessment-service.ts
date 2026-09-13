@@ -308,6 +308,7 @@ async function compileSummaryForCase(caseId: string, meta: CaseMetadata): Promis
   const resolve = createTextResolver(document, 'en');
 
   const answers = await repo.listResponses(context, caseId);
+  const history = await repo.getClinicalHistory(context, caseId);
   const subject = meta.ageYears === null ? {} : { ageYears: meta.ageYears };
   const interview = computeInterview({
     index,
@@ -350,6 +351,7 @@ async function compileSummaryForCase(caseId: string, meta: CaseMetadata): Promis
     ),
     redFlags: flags.triggered.map((flag) => ({ ...flag, basisKey: flag.basisKey })),
     documents: extracts,
+    history,
     subject: { ageYears: meta.ageYears, sex: meta.sex },
     resolve: (key) => {
       const clinicalText = resolve(key);

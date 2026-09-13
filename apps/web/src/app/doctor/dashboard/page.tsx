@@ -54,7 +54,8 @@ export default async function DoctorDashboardPage() {
         {t('dashboardHeading')}
       </PageHeading>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <MetricCard label={t('filterQueueInReview')} value={metrics.inReview} caption={t('inReviewCaption')} icon={<ClipboardIcon className="h-4 w-4" />} href="/doctor/triage?filter=in_review" />
         <MetricCard
           label={t('metricPending')}
           value={metrics.pending}

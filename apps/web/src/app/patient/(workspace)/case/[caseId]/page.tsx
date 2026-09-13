@@ -16,6 +16,8 @@ import {
 import { requireWorkspace } from '@/lib/guard';
 import { clinical } from '@/server/db';
 import { caseReference } from '@/lib/references';
+import { EmergencyBanner } from '@/components/questionnaire/emergency-advisory';
+import { CaseMessages } from '@/components/case-messages';
 
 /**
  * What the patient sees about their case.
@@ -61,6 +63,7 @@ export default async function PatientCasePage({
   const caseRecord = await repo.getCase(context, caseId);
   if (caseRecord === null) redirect('/patient/records');
   if (caseRecord.status === 'in_progress') redirect(`/patient/intake/${caseId}`);
+  const flags = await repo.listRedFlags(context, caseId);
 
   const released =
     ['released', 'closed'].includes(caseRecord.status) ? await repo.getReleasedSummary(context, caseId) : null;
@@ -96,7 +99,9 @@ export default async function PatientCasePage({
 
   return (
     <div className="mx-auto max-w-3xl">
+      {flags.some(flag => flag.urgency === 'emergency') && <EmergencyBanner />}
       <LiveRefresh />
+      <CaseMessages caseId={caseId} />
       <div className="gi-no-print mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t('statusHeading')}</h1>

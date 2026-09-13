@@ -87,7 +87,6 @@ describe('a final-diagnosis field cannot enter the record', () => {
 describe('schema violations', () => {
   it.each([
     ['a missing required field', (a: AiAssessment) => { delete (a as Partial<AiAssessment>).kb_version; }],
-    ['an empty differential', (a: AiAssessment) => { a.differential_assessment = []; }],
     ['an unknown likelihood', (a: AiAssessment) => {
       (a.differential_assessment[0] as { likelihood: string }).likelihood = 'certain';
     }],
@@ -212,6 +211,18 @@ describe('the taxonomy bounds what the model may name', () => {
 });
 
 describe('no medication, dose, or treatment plan', () => {
+  it('allows an explicit insufficient-information response without padding the differential', () => {
+    const candidate = valid();
+    candidate.differential_assessment = [];
+    candidate.clinician_summary = 'There is insufficient information to support a differential. Direct clinical assessment is required.';
+    expect(validateAssessment(candidate).ok).toBe(true);
+  });
+  it.each(['Start with an upper GI endoscopy', 'Begin investigation with a full blood count', 'Check the reported haemoglobin value of 8 g/dL', 'Initiate referral for clinical assessment'])('accepts an investigation or source measurement: %s', text => {
+    expect(findProhibitedTreatmentContent({ recommended_next_steps: [text] })).toEqual([]);
+  });
+  it.each(['Start unfamiliar-drug 20 mg before breakfast', 'Take 1 g of an unlisted medicine', 'Give 2 units of blood', 'Give 100 ml of contrast', 'Acid suppression bd for four weeks'])('retains treatment guards: %s', text => {
+    expect(findProhibitedTreatmentContent({ recommended_next_steps: [text] }).length).toBeGreaterThan(0);
+  });
   it.each([
     ['a drug name in the next steps', (a: AiAssessment) => {
       a.recommended_next_steps = ['Start omeprazole'];

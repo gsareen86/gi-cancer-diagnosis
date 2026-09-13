@@ -71,6 +71,7 @@ export interface DeliveryEntry {
 
 /** The doctor's saved review. `finalSummary` is the structured object the sign-off panel writes. */
 export interface ReviewView {
+  draftRevision: number;
   id: string;
   status: string;
   finalSummary: unknown;
@@ -107,6 +108,7 @@ export const REFERRAL_URGENCIES: readonly ReferralUrgency[] = [
 ];
 
 export interface CaseWorkspaceData {
+  brief: import('@gi-compass/core').ClinicalSummary;
   case: {
     id: string;
     reference: string;

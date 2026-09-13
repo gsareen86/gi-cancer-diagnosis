@@ -44,6 +44,8 @@ were involved. Restate them if they are relevant, but do not raise, lower, or su
 they do not depend on you, and the patient has already been advised on them.
 - Reason only from the information given. Absence of a symptom in the summary means it was never \
 asked, unless it is explicitly listed as denied. Do not treat silence as reassurance.
+- Include at most five supported differential items; never fill the list just to reach a limit. \
+Use an empty differential list when the information is insufficient.
 - Where the information is too thin to support a differential, say so in the summary. An honest \
 "not enough information" is more useful to the doctor than a confident guess.
 

@@ -18,6 +18,8 @@ import { DeliveryAudit } from './delivery-audit';
 import { PatientRecordPanel } from './patient-record-panel';
 import { ReportsPanel } from './reports-panel';
 import { SignOffPanel } from './signoff-panel';
+import { ClinicalBrief } from './clinical-brief';
+import { CaseMessages } from '@/components/case-messages';
 import type { CaseWorkspaceData, FinalSummary } from './types';
 
 /**
@@ -67,18 +69,23 @@ export function CaseWorkspace({ caseId, data }: { caseId: string; data: CaseWork
       setRunning(false);
     }
   }
-  useEffect(() => {
-    if (data.review !== null) return;
-    void api.post(`/api/doctor/cases/${caseId}/review/start`).then((result) => { if (result.ok) router.refresh(); });
-  }, [caseId, data.review, router]);
+  const [starting, setStarting] = useState(false);
+  async function startReview() {
+    if (starting) return;
+    setStarting(true);
+    const result = await api.post(`/api/doctor/cases/${caseId}/review/start`);
+    setStarting(false);
+    if (result.ok) router.refresh();
+    else toast({ message: t('saveFailed'), tone: 'emergency' });
+  }
 
   const tier = riskTier(highestUrgency(data));
   const sla = slaState(data.case.submittedAt);
   const released = data.review?.status === 'released';
   const saved = (data.review?.finalSummary ?? null) as FinalSummary | null;
 
-  const record = <PatientRecordPanel data={data} />;
-  const reports = <ReportsPanel caseId={caseId} data={data} />;
+  const record = <><ClinicalBrief data={data} /><PatientRecordPanel data={data} /></>;
+  const reports = <><ReportsPanel caseId={caseId} data={data} /><CaseMessages caseId={caseId} /></>;
   const cds = (
     <CdsPanel
       assessment={assessment}
@@ -98,6 +105,7 @@ export function CaseWorkspace({ caseId, data }: { caseId: string; data: CaseWork
       generate={generate}
       saved={saved}
       reviewStatus={data.review?.status ?? null}
+      draftRevision={data.review?.draftRevision ?? 0}
       doctorNotes={data.review?.doctorNotes ?? null}
     />
   );
@@ -111,6 +119,7 @@ export function CaseWorkspace({ caseId, data }: { caseId: string; data: CaseWork
 
   return (
     <div className="gi-review-workspace">
+      {data.review === null && !['in_progress', 'closed', 'released'].includes(data.case.status) && <div className="mb-4 flex justify-end"><button type="button" className="gi-button-primary" disabled={starting} onClick={() => void startReview()}>{t('startReview')}</button></div>}
       {/* ------------------------------------------------------------------- Case bar --- */}
       <header className="mb-5 overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
         <div className="flex flex-wrap items-center justify-between gap-3 bg-surface-deep px-5 py-2.5 text-white">

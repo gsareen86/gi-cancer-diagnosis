@@ -38,6 +38,7 @@ export function SignOffPanel({
   generate,
   saved,
   reviewStatus,
+  draftRevision,
   doctorNotes,
 }: {
   caseId: string;
@@ -47,6 +48,7 @@ export function SignOffPanel({
   generate: GenerateAssessment;
   saved: FinalSummary | null;
   reviewStatus: string | null;
+  draftRevision: number;
   doctorNotes: string | null;
 }) {
   const t = useTranslations('doctor');
@@ -97,6 +99,29 @@ export function SignOffPanel({
   const [finalizedVersion, setFinalizedVersion] = useState(reviewStatus === 'finalized' ? draftVersion : null);
   const canDispatch = finalized && finalizedVersion === draftVersion;
   const initialDraft = useRef(draftVersion);
+  const revision = useRef(draftRevision);
+  const saving = useRef(false);
+  const [autosaving, setAutosaving] = useState(false);
+  const [edited, setEdited] = useState(false);
+  const [savedVersion, setSavedVersion] = useState(draftVersion);
+  const dirty = edited && draftVersion !== savedVersion && !released;
+  useEffect(() => {
+    if (!dirty) revision.current = draftRevision;
+  }, [draftRevision]);
+  // Server drafts preserve clinical notes without leaving PHI in shared-device storage.
+  useEffect(() => {
+    if (!dirty) return;
+    const unload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    const navigation = (event: MouseEvent) => {
+      const link = (event.target as Element | null)?.closest('a[href]');
+      if (link && !link.getAttribute('href')?.startsWith('#') && !window.confirm(t('unsavedNavigation'))) {
+        event.preventDefault(); event.stopPropagation();
+      }
+    };
+    window.addEventListener('beforeunload', unload);
+    document.addEventListener('click', navigation, true);
+    return () => { window.removeEventListener('beforeunload', unload); document.removeEventListener('click', navigation, true); };
+  }, [dirty, t]);
   const adoptedAssessment = useRef(payload);
   useEffect(() => {
     if (payload === null || adoptedAssessment.current === payload) return;
@@ -114,6 +139,7 @@ export function SignOffPanel({
     if (!result.ok) { toast({ message: t(`aiDraft_${result.reason}`), tone: 'caution' }); return; }
     if (field === 'summary') setPatientSummary(result.value);
     else setWorkup(result.value);
+    setEdited(true);
     setFinalized(false);
     setFinalizedVersion(null);
     toast({ message: t('aiApplied'), tone: 'ok' });
@@ -171,11 +197,14 @@ export function SignOffPanel({
     return diffs;
   }
 
-  async function save(finalize: boolean) {
-    setPending(true);
+  async function save(finalize: boolean, automatic = false) {
+    if (saving.current || released) return;
+    saving.current = true;
+    if (automatic) setAutosaving(true); else setPending(true);
     setProblem(null);
 
-    const result = await api.put<{ status: string }>(`/api/doctor/cases/${caseId}/review`, {
+    const result = await api.put<{ status: string; draftRevision: number }>(`/api/doctor/cases/${caseId}/review`, {
+      expectedRevision: revision.current,
       differential,
       recommendedNextSteps: releasedSteps(),
       clinicalImpression: impression,
@@ -191,15 +220,19 @@ export function SignOffPanel({
       finalize,
     });
     setPending(false);
+    setAutosaving(false);
+    saving.current = false;
 
     if (!result.ok) {
       setProblem(result.problem);
-      toast({
+      if (!automatic) toast({
         message: finalize ? t('finalizeFailed') : t('saveFailed'),
         tone: 'emergency',
       });
       return;
     }
+    revision.current = result.data.draftRevision;
+    setSavedVersion(draftVersion);
 
     if (finalize) {
       setFinalized(true);
@@ -208,9 +241,17 @@ export function SignOffPanel({
     } else {
       setFinalized(false);
       setFinalizedVersion(null);
-      toast({ message: t('saveSucceeded'), tone: 'ok' });
+      if (!automatic) toast({ message: t('saveSucceeded'), tone: 'ok' });
     }
   }
+
+  const saveLatest = useRef(save);
+  saveLatest.current = save;
+  useEffect(() => {
+    if (!dirty || pending || autosaving || problem !== null || confirming) return;
+    const timer = window.setTimeout(() => void saveLatest.current(false, true), 1000);
+    return () => window.clearTimeout(timer);
+  }, [dirty, draftVersion, pending, autosaving, problem, confirming]);
 
   const lockedNotice = released ? (
     <Notice tone="ok" role="status" title={t('releasedTitle')}>
@@ -223,12 +264,13 @@ export function SignOffPanel({
   ) : null;
 
   return (
-    <div className="space-y-6 pb-2">
+    <div className="space-y-6 pb-2" onChangeCapture={() => setEdited(true)}>
+      {!released && <p role="status" className="text-xs text-ink-muted">{t(autosaving ? 'autosaving' : problem !== null ? 'autosaveFailed' : dirty ? 'autosavePending' : 'autosaveSaved')}</p>}
       {lockedNotice}
 
       <details className="rounded-xl border border-line bg-surface">
         <summary className="cursor-pointer px-4 py-3 text-sm font-semibold">{t('yourDifferentialHeading')}</summary>
-        <DifferentialEditor items={differential} onChange={setDifferential} disabled={released || pending} />
+        <DifferentialEditor items={differential} onChange={(value) => { setEdited(true); setDifferential(value); }} disabled={released || pending} />
       </details>
 
       {/* ------------------------------------------------------------- Doctor-only --- */}
@@ -420,7 +462,7 @@ export function SignOffPanel({
             <button
               type="button"
               className="gi-button-secondary"
-              disabled={pending}
+              disabled={pending || autosaving}
               onClick={() => void save(false)}
             >
               {t('save')}
@@ -428,7 +470,7 @@ export function SignOffPanel({
             <button
               type="button"
               className="gi-button-secondary"
-              disabled={pending}
+              disabled={pending || autosaving}
               onClick={() => void save(true)}
             >
               <CheckIcon className="h-4 w-4" />
@@ -437,7 +479,7 @@ export function SignOffPanel({
             <button
               type="button"
               className="gi-button-primary"
-              disabled={pending || !canDispatch}
+              disabled={pending || autosaving || dirty || !canDispatch}
               onClick={() => setConfirming(true)}
             >
               {t('signAndDispatch')}

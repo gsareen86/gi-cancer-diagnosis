@@ -218,7 +218,7 @@ describe('emergency escalation', () => {
     const emergency = triggering.body.emergency as { messages: string[]; contacts: Array<{ number: string }> };
 
     expect(emergency).not.toBeNull();
-    expect(emergency.contacts.map((contact) => contact.number)).toEqual(['112', '108']);
+    expect(emergency.contacts).toEqual([]);
     expect(triggering.body.newlyTriggeredRuleIds).toContain('rf_upper_gi_bleed_with_hypovolaemia');
   });
 

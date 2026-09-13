@@ -18,7 +18,8 @@ export const GET = route<{ caseId: string }>({ roles: ['doctor', 'patient'] }, a
     session.role === 'doctor' ? 'share_with_assigned_doctor' : 'account_processing',
     metadata,
   );
-  return ok({ messages: await clinical().listMessages(context, params.caseId) });
+  const messages = await clinical().listMessages(context, params.caseId);
+  return ok({ messages: messages.map(message => ({ id: message.id, body: message.body, sentAt: message.sentAt, mine: message.senderId === session.userId })) });
 });
 
 /**

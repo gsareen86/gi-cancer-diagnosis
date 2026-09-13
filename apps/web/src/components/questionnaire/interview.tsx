@@ -29,7 +29,6 @@ import type { AnswerValue, InterviewView } from './types';
 export function Interview({
   caseId,
   initialView,
-  hasEmergencyContact,
 }: {
   caseId: string;
   initialView: InterviewView;
@@ -129,7 +128,6 @@ export function Interview({
       <EmergencyAdvisoryScreen
         advisory={view.emergency}
         onAcknowledge={acknowledge}
-        hasEmergencyContact={hasEmergencyContact}
       />
     );
   }

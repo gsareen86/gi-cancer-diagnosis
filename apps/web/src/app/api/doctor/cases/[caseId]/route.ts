@@ -1,4 +1,4 @@
-import { createTextResolver } from '@gi-compass/core';
+import { createTextResolver, compileClinicalSummary } from '@gi-compass/core';
 import { clinical, database } from '@/server/db';
 import { tables } from '@gi-compass/db';
 import { eq } from 'drizzle-orm';
@@ -70,6 +70,14 @@ export const GET = route<{ caseId: string }>({ roles: ['doctor'] }, async ({ par
   const rules = await currentRedFlagRules();
   const flagText = createTextResolver({ clinicalText: rules.clinicalText }, doctorLocale);
   const storedFlags = await repo.listRedFlags(context, params.caseId);
+  const sourceAnswers = await repo.listResponses(context, params.caseId);
+  const brief = compileClinicalSummary({
+    caseId: params.caseId, index, history,
+    orderedQuestionIds: view.answeredQuestions.map(entry => entry.question.id),
+    answers: sourceAnswers, revealedBy: new Map(), redFlags: [],
+    documents: documents.filter(doc => doc.scanStatus === 'clean').map(doc => ({ documentId: doc.id, reportType: doc.patientTypeTag, reportDate: doc.patientDateTag, keyFindings: [], abnormalValues: [], machineReadable: doc.machineReadable ?? false, aiGeneratedUnverified: doc.extractVerifiedAt === null })),
+    subject: { ageYears: ageInYears(patient?.dateOfBirth ?? null), sex: patient?.sex ?? null }, resolve: resolveText,
+  });
 
   // Grouped by symptom cluster, which is how the interview was organized and how a clinician
   // reads a history.
@@ -80,6 +88,7 @@ export const GET = route<{ caseId: string }>({ roles: ['doctor'] }, async ({ par
   }
 
   return ok({
+    brief,
     case: {
       id: caseRecord.id,
       reference: caseReference(caseRecord.publicNumber),
@@ -180,6 +189,7 @@ export const GET = route<{ caseId: string }>({ roles: ['doctor'] }, async ({ par
             status: review.status,
             finalSummary: review.finalSummary,
             doctorNotes: review.doctorNotes,
+            draftRevision: review.draftRevision,
             releasedAt: review.releasedAt,
           },
   });

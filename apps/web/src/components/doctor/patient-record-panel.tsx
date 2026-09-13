@@ -181,7 +181,7 @@ export function PatientRecordPanel({ data }: { data: CaseWorkspaceData }) {
               icon={<PulseIcon className="h-4 w-4" />}
               title={t('historyConditions')}
               empty={
-                history.completedAt === null ? t('historyIncomplete') : tHistory('noneReported')
+                t('historyIncomplete')
               }
               items={history.conditions.map((entry) => ({
                 key: `${entry.code}-${entry.label ?? ''}`,
@@ -204,7 +204,7 @@ export function PatientRecordPanel({ data }: { data: CaseWorkspaceData }) {
               icon={<ScissorsIcon className="h-3.5 w-3.5" />}
               title={t('historySurgeries')}
               empty={
-                history.completedAt === null ? t('historyIncomplete') : tHistory('noneReported')
+                t('historyIncomplete')
               }
               items={history.surgeries.map((entry, index) => ({
                 key: `${entry.code}-${index}`,
@@ -225,7 +225,7 @@ export function PatientRecordPanel({ data }: { data: CaseWorkspaceData }) {
               icon={<PillIcon className="h-3.5 w-3.5" />}
               title={t('historyMedications')}
               empty={
-                history.completedAt === null ? t('historyIncomplete') : tHistory('noneReported')
+                t('historyIncomplete')
               }
               items={history.medications.map((entry, index) => ({
                 key: `${entry.name}-${index}`,
@@ -244,7 +244,7 @@ export function PatientRecordPanel({ data }: { data: CaseWorkspaceData }) {
               icon={<AlertIcon className="h-4 w-4" />}
               title={t('historyAllergies')}
               empty={
-                history.completedAt === null ? t('historyIncomplete') : tHistory('noneReported')
+                t('historyIncomplete')
               }
               items={history.allergies.map((entry, index) => ({
                 key: `${entry.substance}-${index}`,
@@ -257,7 +257,7 @@ export function PatientRecordPanel({ data }: { data: CaseWorkspaceData }) {
               icon={<UsersIcon className="h-3.5 w-3.5" />}
               title={t('historyFamily')}
               empty={
-                history.completedAt === null ? t('historyIncomplete') : tHistory('noneReported')
+                t('historyIncomplete')
               }
               items={history.familyHistory.map((entry, index) => ({
                 key: `${entry.relation}-${entry.condition}-${index}`,

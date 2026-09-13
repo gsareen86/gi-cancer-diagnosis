@@ -29,8 +29,6 @@ export function ProfileForm({
   const [dateOfBirth, setDateOfBirth] = useState(initial.dateOfBirth);
   const [sex, setSex] = useState(initial.sex ?? '');
   const [phone, setPhone] = useState('');
-  const [contactName, setContactName] = useState('');
-  const [contactPhone, setContactPhone] = useState('');
   const [pending, setPending] = useState(false);
   const [problem, setProblem] = useState<ApiProblem | null>(null);
 
@@ -46,8 +44,6 @@ export function ProfileForm({
       ...(dateOfBirth === null ? {} : { dateOfBirth }),
       ...(sex === '' ? {} : { sex }),
       ...(phone === '' ? {} : { phone }),
-      ...(contactName === '' ? {} : { emergencyContactName: contactName }),
-      ...(contactPhone === '' ? {} : { emergencyContactPhone: contactPhone }),
     });
     setPending(false);
 
@@ -73,7 +69,7 @@ export function ProfileForm({
       </Field>
 
       <Field label={t('dateOfBirth')} htmlFor="dob-day" hint={t('dateOfBirthHint')}>
-        <DateField value={dateOfBirth} onChange={setDateOfBirth} />
+        <DateField id="dob" value={dateOfBirth} onChange={setDateOfBirth} />
       </Field>
 
       {/* Stated as soon as we can tell, rather than after they have filled in everything else. */}
@@ -110,24 +106,6 @@ export function ProfileForm({
         />
       </Field>
 
-      <fieldset className="mt-8">
-        <legend className="gi-label">{t('emergencyContactName')}</legend>
-        <p className="gi-hint mb-3">{t('emergencyContactHint')}</p>
-        <input
-          className="gi-input mb-3"
-          aria-label={t('emergencyContactName')}
-          value={contactName}
-          onChange={(event) => setContactName(event.target.value)}
-        />
-        <input
-          className="gi-input"
-          type="tel"
-          inputMode="tel"
-          aria-label={t('emergencyContactPhone')}
-          value={contactPhone}
-          onChange={(event) => setContactPhone(event.target.value)}
-        />
-      </fieldset>
 
       {problem !== null && (
         <div className="mt-4">

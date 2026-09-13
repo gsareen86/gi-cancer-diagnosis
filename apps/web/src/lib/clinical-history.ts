@@ -68,8 +68,8 @@ export const FAMILY_CONDITION_CODES = [
   'other',
 ] as const;
 
-export const SMOKING_STATUSES = ['never', 'former', 'current'] as const;
-export const ALCOHOL_STATUSES = ['never', 'occasional', 'weekly', 'daily'] as const;
+export const SMOKING_STATUSES = ['unknown', 'never', 'former', 'current'] as const;
+export const ALCOHOL_STATUSES = ['unknown', 'never', 'occasional', 'weekly', 'daily'] as const;
 export const DIET_TYPES = ['vegetarian', 'non_vegetarian', 'vegan', 'other'] as const;
 
 /**
@@ -124,6 +124,15 @@ export const lifestyle = z.object({
 });
 
 export const clinicalHistoryInput = z.object({
+  trajectory: z.object({
+    onset: z.string().max(300).default(''),
+    course: z.enum(['unknown', 'improving', 'unchanged', 'worsening', 'comes_and_goes']).default('unknown'),
+    impact: z.string().max(1000).default(''),
+    remedies: z.string().max(1000).default(''),
+    response: z.string().max(1000).default(''),
+    previousConsultations: z.string().max(1000).default(''),
+  }).nullable().default(null),
+  assertions: z.record(z.enum(['conditions', 'surgeries', 'medications', 'allergies', 'familyHistory']), z.enum(['none', 'unknown', 'provided'])).default({}),
   /** Centimetres and kilograms. Both nullable; BMI simply is not shown without both. */
   heightCm: z.number().int().min(50).max(260).nullable(),
   weightKg: z.number().min(10).max(400).nullable(),
@@ -153,6 +162,8 @@ export type ClinicalHistoryInput = z.infer<typeof clinicalHistoryInput>;
 
 /** What the API returns. `weightKg` arrives as a string because the column is `numeric`. */
 export interface ClinicalHistoryView {
+  trajectory?: ClinicalHistoryInput['trajectory'];
+  assertions?: ClinicalHistoryInput['assertions'];
   heightCm: number | null;
   weightKg: string | null;
   conditions: ConditionEntry[];
@@ -179,9 +190,9 @@ export function bodyMassIndex(
   heightCm: number | null | undefined,
   weightKg: number | string | null | undefined,
 ): number | null {
-  if (heightCm === null || heightCm === undefined || heightCm <= 0) return null;
+  if (heightCm == null || !Number.isFinite(heightCm) || heightCm < 50 || heightCm > 260) return null;
   const weight = typeof weightKg === 'string' ? Number.parseFloat(weightKg) : weightKg;
-  if (weight === null || weight === undefined || Number.isNaN(weight) || weight <= 0) return null;
+  if (weight == null || !Number.isFinite(weight) || weight < 10 || weight > 400) return null;
 
   const metres = heightCm / 100;
   return Math.round((weight / (metres * metres)) * 10) / 10;

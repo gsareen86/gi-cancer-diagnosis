@@ -62,6 +62,7 @@ export function TriageTable({
   const t = useTranslations('doctor');
   const format = useFormatter();
   const now = useMemo(() => new Date(), [rows]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [filters, setFilters] = useState<Filters>({
     query: '',
@@ -127,7 +128,8 @@ export function TriageTable({
       }
       bodyClassName=""
     >
-      <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
+      <div className="px-4 py-3 md:hidden"><button className="gi-button-secondary" type="button" aria-expanded={filtersOpen} aria-controls="triage-filters" onClick={() => setFiltersOpen(!filtersOpen)}><FilterIcon className="h-4 w-4" />{t('filterControls')} ({active.length})</button></div>
+      <div id="triage-filters" className={`${filtersOpen ? 'flex' : 'hidden'} flex-wrap items-center gap-2 border-b border-line px-4 py-3 md:flex`}>
         <div className="relative min-w-[14rem] flex-1">
           <span
             aria-hidden="true"
@@ -275,7 +277,17 @@ export function TriageTable({
           }
         />
       ) : (
-        <div className="gi-scroll overflow-x-auto">
+        <>
+        <ul className="divide-y divide-line md:hidden">
+          {filtered.map(row => <li key={row.id} className="space-y-3 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-mono text-sm font-semibold">{row.caseReference}</span><RiskBadge tone={RISK_TONE[riskTier(row.highestUrgency)]}>{t(RISK_LABEL_KEY[riskTier(row.highestUrgency)] as never)}</RiskBadge></div>
+            <p className="text-sm font-semibold">{row.patientName ?? row.patientReference} · {row.entryPoint}</p>
+            <p className="text-sm text-ink-muted">{row.snapshot ?? t('assessmentAbsent')}</p>
+            <div className="flex flex-wrap items-center justify-between gap-2"><StatusChip tone={STATUS_TONE[row.status] ?? 'neutral'}>{t((STATUS_KEY[row.status] ?? 'statusSubmitted') as never)}</StatusChip><time className="text-xs text-ink-muted" dateTime={row.submittedAt ?? row.createdAt}>{format.dateTime(new Date(row.submittedAt ?? row.createdAt), { dateStyle: 'medium' })}</time></div>
+            {row.assigned ? <Link href={`/doctor/case/${row.id}`} className="gi-button-primary w-full">{t(['released', 'closed'].includes(row.status) ? 'viewSummary' : 'openReview')}</Link> : <ClaimButton caseId={row.id} compact />}
+          </li>)}
+        </ul>
+        <div className="gi-scroll hidden overflow-x-auto md:block">
           <table className="gi-table min-w-[68rem]">
             <caption className="sr-only">{t('queueTableCaption')}</caption>
             <thead>
@@ -398,6 +410,7 @@ export function TriageTable({
             </tbody>
           </table>
         </div>
+        </>
       )}
     </Panel>
   );

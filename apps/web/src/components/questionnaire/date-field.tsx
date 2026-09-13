@@ -20,13 +20,16 @@ export function DateField({
   value,
   onChange,
   disabled,
+  id,
 }: {
   value: string | null;
   onChange: (isoDate: string) => void;
   disabled?: boolean | undefined;
+  id?: string;
 }) {
   const t = useTranslations('profile');
-  const fieldId = useId();
+  const generatedId = useId();
+  const fieldId = id ?? generatedId;
   const [parts, setParts] = useState(() => split(value));
 
   useEffect(() => {

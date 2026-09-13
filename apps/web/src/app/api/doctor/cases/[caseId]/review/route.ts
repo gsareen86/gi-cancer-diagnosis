@@ -31,6 +31,7 @@ const diff = z.object({
 const referralUrgency = z.enum(['emergency', 'within_week', 'routine', 'none']);
 
 const body = z.object({
+  expectedRevision: z.number().int().nonnegative().default(0),
   differential: z.array(differentialItem).max(12),
   /** Physician-approved guidance released with the finalized summary. */
   recommendedNextSteps: z.array(z.string().min(1).max(4000)).max(12),
@@ -81,9 +82,10 @@ export const PUT = route<{ caseId: string }>({ roles: ['doctor'] }, async ({ req
     prescriptionInstructions: input.prescriptionInstructions,
   };
 
-  await repo.saveReviewDraft(context, {
+  const updated = await repo.saveReviewDraft(context, {
     caseId: params.caseId,
     reviewId: review.id,
+    expectedRevision: input.expectedRevision,
     finalSummary,
     doctorNotes: input.doctorNotes ?? null,
     finalize: input.finalize,
@@ -101,7 +103,7 @@ export const PUT = route<{ caseId: string }>({ roles: ['doctor'] }, async ({ req
 
   // Draft content and its approval are written together: a concurrent browser tab cannot
   // replace the notes between a save and a separate finalization transaction.
-  return ok({ status: input.finalize ? 'finalized' : 'saved', reviewId: review.id });
+  return ok({ status: input.finalize ? 'finalized' : 'saved', reviewId: review.id, draftRevision: updated?.draftRevision });
 });
 
 /** A physician must finalize substantive content before the separate release action. */
