@@ -1,8 +1,9 @@
 # Clinical workspace refinement
 
 Implementation guide for the OpenSpec change `elevate-clinical-workspace`.
-The change remains active, not archived. Its proposal, design, delta specs and task checklist
-are in `openspec/changes/elevate-clinical-workspace/`.
+The change was superseded on 2026-09-13, not completed or archived. Its preserved artifacts
+are in `docs/history/2026-09-13/openspec/changes/elevate-clinical-workspace/`.
+Use the [current brief](specialty-navigation/brief.md) for product requirements.
 
 ## Page views and routes
 

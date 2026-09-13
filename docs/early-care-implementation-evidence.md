@@ -1,5 +1,8 @@
 # Early-care implementation evidence
 
+> Historical evidence for the earlier branch. The [2026-09-13 reset](specialty-navigation/planning-validation.md)
+> preserves this work but does not treat these results as validation of the new scope.
+
 ## Branch and baseline
 
 Implementation branch: `codex/early-gi-care-journey`. The original worktree had 382 source/planning files with substantial staged and unstaged work; an ignored local copy and patches were captured under `var/early-care-baseline-20260906/` before editing. No reset or baseline commit was performed by this implementation session.

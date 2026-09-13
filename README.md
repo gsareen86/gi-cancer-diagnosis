@@ -1,220 +1,56 @@
 # GI Compass
 
-An AI-assisted gastrointestinal diagnostic-support platform for patients in India.
+GI specialty navigation and clinician decision support for a clinic-based workflow
+in India. The planned application combines patient history and symptoms with optional
+existing reports, lets a clinician review AI hypotheses and urgency, and provides
+clinician-approved next steps and the appropriate **type of doctor** to the patient.
+AI differentials remain clinician-only in v1.
 
-A patient answers a guided, image-assisted, adaptive symptom questionnaire and uploads prior
-reports. The system compiles a structured clinical summary, grounds an LLM call on a doctor-curated
-knowledge base, and produces a **decision-support differential assessment for a Registered Medical
-Practitioner** — who reviews, overrides, and explicitly releases everything the patient ever sees.
+## Current branch and status
 
-> **The AI never diagnoses, never prescribes, and its output never reaches a patient.**
-> Emergency escalation is deterministic and never waits on a model call.
+The product direction was reset on **2026-09-13** on
+`codex/gi-specialty-navigation`. The revised OpenSpec package is ready for implementation;
+this reset changes planning/context only. The inherited application is not certified
+against the new scope, and no real-patient pilot is enabled or approved by these files.
 
----
+Previous work is preserved on `codex/early-gi-care-journey` at checkpoint `842cd47`.
+Historical changes were moved out of the active OpenSpec backlog without marking them
+completed. Source and database contents were preserved.
 
-## The four guardrails, and where they live
+## Start here
 
-These are not policies written in a document and hoped for. Each is enforced somewhere a mistake
-cannot quietly bypass.
+- [Clean implementation handoff](docs/specialty-navigation/START-HERE.md)
+- [Current product brief and decisions](docs/specialty-navigation/brief.md)
+- [Bounded implementation sequence](docs/specialty-navigation/implementation-plan.md)
+- [Clinical content review worksheet](docs/specialty-navigation/clinical-content-review.md)
+- [Pilot measurement protocol](docs/specialty-navigation/pilot-measurement.md)
+- [Evidence and unresolved assumptions](docs/specialty-navigation/evidence-notes.md)
+- [Current OpenSpec change](openspec/changes/establish-specialty-navigation-pilot/proposal.md)
 
-| Guardrail | How it is enforced | Where |
-|---|---|---|
-| The AI cannot state a diagnosis | The output schema has no field capable of holding one, and it is `strict()`, so an added field is a rejection rather than something to trim | `packages/core/src/assessment/schema.ts` |
-| Nothing reaches a patient unreviewed | The case state machine has **no edge** from any pre-review state to `released` | `packages/db/src/repositories/clinical-repository.ts` |
-| Emergencies never wait on a model | A test walks the red-flag evaluator's transitive import graph and fails on any HTTP client, AI client, database import, or asynchrony | `packages/core/src/safety/no-ai-dependency.test.ts` |
-| Clinical data is unreachable without consent and an audit trail | `@gi-compass/db` does not export the clinical tables at all — the only path is a repository that requires an `AccessContext`, applies the consent gate, and writes the audit entry in the same transaction | `packages/db/src/public-schema.ts` |
+The first sites are the clinical lead's clinic and a **proposed** Metro pilot. Intake
+is planned for patient self-service or coordinator-assisted tablets, with a complete
+desktop clinician workspace and responsive phone web. Existing PDFs and readable
+scans/photos remain optional. Phone OTP, emergency calling/SOS, named-doctor directories
+and e-prescribing are outside v1. Immediate-assistance advice remains part of the design.
 
-The audit trail is append-only at the **privilege** level: the application role holds `INSERT` and
-`SELECT` on it and nothing else. A trigger refuses mutation even from the table owner.
+## Engineering baseline
 
----
+Retain the npm workspace monorepo: Next.js/TypeScript/Tailwind, PostgreSQL/Drizzle,
+and the Python AI service. Local demonstrations use synthetic data; the pilot requires
+approved India processing and Azure deployment evidence. No paid cloud resources have
+been provisioned by this reset.
 
-## Running it
+Existing local development commands are preserved:
 
-Once, to set up:
-
-```bash
+```text
 npm ci
-cp .env.example .env               # in the repository root — see the note below
-cd services/ai && uv venv .venv && uv pip install --python .venv/bin/python -e ".[dev]"
+npm run dev
+npm run dev:status
+npm run dev:down
+npm run typecheck
+npm test
 ```
 
-Then, every time:
-
-```bash
-npm run dev          # everything: postgres, mailpit, llama-server, the AI service, the web app
-npm run dev:status   # which of them is actually answering
-npm run dev:down     # stop all of it
-```
-
-Five processes have to be running before a case can reach a doctor with an AI analysis attached,
-and starting them by hand means five terminals and an order to remember — with the failure from a
-missing one surfacing much later as an unexplained error on a review screen. `npm run dev`
-migrates, seeds, rebuilds the web app only when a source file is newer than the build, and waits
-for each component to *answer* rather than sleeping and hoping. It prints what it started and
-where the logs are.
-
-If `LLAMA_SERVER_BIN` and `LLAMA_MODEL` are unset it starts everything else and says plainly that
-the model is not running. Nothing but the AI analysis button depends on it — emergency escalation
-included, which never touches the AI pipeline.
-
-`npm run dev:status` is the first thing to run when something is wrong. It distinguishes a
-component that is not running from one that is listening but not answering, and names the model
-the local endpoint actually reports rather than the one configuration claims.
-
-All three work the same from PowerShell, cmd, and Git Bash. They go through
-`scripts/dev-stack.mjs`, which finds the bash that Git for Windows ships rather than trusting the
-one on PATH — on Windows that is `C:\Windows\System32\bash.exe`, the WSL launcher, which fails
-with `execvpe(/bin/bash) failed` and looks like a broken script rather than the wrong interpreter.
-
-Tests need none of that running except PostgreSQL:
-
-```bash
-npm test                                       # TypeScript
-cd services/ai && .venv/bin/python -m pytest    # Python, no network
-```
-
-Registration sends a verification email, so `SMTP_URL` must point at a mail server. `docker
-compose up` starts Mailpit for local use — its inbox is at http://localhost:8025. Without
-`SMTP_URL` the message is written to the server log instead, link included, and its delivery row
-records `logged_only` rather than `sent`.
-
-The test suite never touches your database: it derives a `*_test` sibling, creates and migrates
-it, and refuses to run its destructive helpers against anything else.
-
-`.env` goes in the **repository root**. The web app walks up from `apps/web` to find it, since
-Next.js only reads `.env` from its own directory and does not walk up in a monorepo. A `.env`
-inside `apps/web` also works and takes precedence, and real environment variables beat both. The
-server validates its configuration at startup and refuses to boot if anything required is missing,
-rather than failing later on a request.
-
-### Seeing the doctor's side
-
-Roles are granted, never self-selected, so the first doctor is created from the command line:
-
-```bash
-npm run user -- create doctor doctor@example.com     # prints a generated password once
-npm run user -- list
-npm run user -- reset-mfa doctor@example.com         # if the authenticator is lost
-```
-
-Sign in and the app lands on second-factor enrolment — scan the QR with any authenticator app,
-or type the key. Until that is done the session reaches the MFA endpoints and nothing else. After
-it, `/doctor/queue` lists the cases awaiting review, emergency-flagged first, plus any
-**unassigned** case for the taking.
-
-### Running the model locally
-
-The AI service is Python (`services/ai`) and is the only component that talks to a model provider.
-It supports a locally hosted model, which means no clinical content leaves the machine:
-
-```bash
-llama-server.exe -m <model>.gguf --host 127.0.0.1 --port 8080 -c 16384 -ngl 99 --flash-attn on
-```
-
-```ini
-AI_PROVIDER=llamacpp
-LLAMA_SERVER_URL=http://127.0.0.1:8080
-LOCAL_MODEL_CONTEXT=16384
-```
-
-Check what is actually answering before trusting a summary:
-
-```bash
-curl -s http://127.0.0.1:8000/health
-```
-
-`configuredModel` is what this file claims. `reachable` and `servedModel` are what the endpoint
-says about itself, which is the part worth reading — they are reported separately precisely so a
-disagreement is visible. `LOCAL_MODEL_NAME` is only a fallback label for a server that declines to
-name itself; what gets stored against a case and shown to the doctor as a version pin is always
-what actually answered.
-
-The shape of the response is guaranteed either way: against Claude by a forced tool call with a
-strict schema, against llama.cpp by constrained decoding, which compiles the same JSON Schema into
-a grammar so a non-conforming token cannot be sampled. Both are then validated server-side by the
-core application, which is the actual control.
-
-End-to-end browser walkthroughs live in [`e2e/`](e2e/README.md).
-
----
-
-## Layout
-
-```
-packages/core     The clinical domain: questionnaire engine, red-flag rules, consent policy,
-                  clinical-summary compiler, AI output schema. No database, no network, no
-                  framework — so the safety-critical logic can be tested exhaustively.
-packages/db       Schema, migrations, and the audited, consent-gated ClinicalRepository.
-apps/web          Next.js 15 — patient, doctor, and admin interfaces plus the core REST API.
-services/ai       Python FastAPI — the only component that talks to a model provider.
-openspec/         Specifications and change proposals.
-e2e/              Browser walkthroughs of the patient and doctor loops.
-docs/RUNBOOK.md   Bringing it up from nothing, and what blocks a real launch.
-```
-
----
-
-## Spec-driven
-
-Built with [OpenSpec](https://github.com/Fission-AI/OpenSpec): behaviour was specified before it was
-written, and the specs are the contract the implementation is verified against.
-
-```bash
-npx @fission-ai/openspec show add-gi-compass-mvp
-npx @fission-ai/openspec validate --strict
-```
-
-| Artifact | Path |
-|---|---|
-| Why & scope | `openspec/changes/add-gi-compass-mvp/proposal.md` |
-| Behaviour contract, 16 capabilities | `openspec/changes/add-gi-compass-mvp/specs/**/spec.md` |
-| Architecture & decisions | `openspec/changes/add-gi-compass-mvp/design.md` |
-| Implementation checklist | `openspec/changes/add-gi-compass-mvp/tasks.md` |
-
-Writing the specs first paid for itself twice. The seeded question bank failed publication
-validation on a four-hop branching cycle and an unreachable question — both real content bugs, both
-caught before a patient could hit them. And the spec's demand that the emergency path never depend
-on the AI pipeline is what turned into the import-graph test, rather than a comment nobody checks.
-
----
-
-## Regulatory frame
-
-Architecture is shaped by these, not retrofitted to them:
-
-- **Telemedicine Practice Guidelines 2020** — AI may only support a Registered Medical Practitioner.
-- **CDSCO / Medical Device Rules 2017** — Phase 1 is framed as an internal clinical tool for
-  affiliated doctors. **A regulatory opinion is a launch blocker.**
-- **DPDP Act 2023 + DPDP Rules 2025** — health data is sensitive personal data; consent is a
-  versioned, per-purpose, revocable object, and processing is gated on it in the data-access layer.
-- **Data residency** — patient data stays in an India cloud region.
-
----
-
-## What is deliberately not finished
-
-Stated plainly, because a healthcare system that looks complete is more dangerous than one that
-does not.
-
-- **The clinical content is a starting point, not a validated instrument.** 61 questions, 29
-  branching rules, and 17 red-flag rules drawn from the build brief's warning signs. Every prompt,
-  branch, and threshold needs the clinical co-founder's review before a real patient sees it.
-- **Reference images ship unpublished.** Their source and licence are placeholders, so a caption
-  appears where a picture should be. Scraped clinical images are not an option.
-- **Embeddings are a declared placeholder.** Retrieval reports itself non-semantic, so assessments
-  are marked ungrounded rather than pretending to be grounded.
-- **The malware scanner and the breached-password list are development stubs.**
-- **Hindi clinical text is written but not clinician-approved**, so Hindi is not offered. The
-  interface catalogue is at full parity, ready for it.
-- **Retention ships with no periods set** — the job alerts rather than deletes until counsel sets
-  them.
-
-Seven product decisions are open. Each is implemented as the safer default and marked in code:
-
-```bash
-grep -rn "TODO(confirm): Decision" --include="*.ts" --include="*.tsx" --include="*.py" .
-```
-
-See `openspec/changes/add-gi-compass-mvp/design.md` § D13 for the table of defaults taken, and
-[`docs/RUNBOOK.md`](docs/RUNBOOK.md) for what must be true before the first real patient.
+See the [previous setup reference](docs/history/2026-09-13/README-before-reset.md) for
+inherited setup details. It is historical: its feature/readiness statements are not
+claims about the new product. Do not import real patient data into development.

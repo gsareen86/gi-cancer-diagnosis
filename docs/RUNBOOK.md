@@ -1,5 +1,8 @@
 # Deployment runbook
 
+> Inherited runbook, pending revalidation against the [2026-09-13 product brief](specialty-navigation/brief.md).
+> It does not authorise or establish readiness for the clinic/Metro pilot. Use synthetic data for local development.
+
 Bringing GI Compass up from nothing. Follow it in order — several steps exist specifically to make
 a later guarantee true, and skipping one leaves the system looking correct while a control is
 missing.

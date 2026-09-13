@@ -1,80 +1,75 @@
 schema: spec-driven
 
 context: |
-  Project: "GI Compass" — an AI-assisted gastrointestinal (GI) diagnostic-support
-  platform for patients in India. A patient completes an adaptive, image-assisted
-  symptom questionnaire and uploads prior reports; the system compiles a structured
-  clinical summary, grounds an LLM call on a doctor-curated knowledge base, and
-  produces a *decision-support* differential assessment that a Registered Medical
-  Practitioner (RMP) must review and release. The AI never diagnoses, never
-  prescribes, and its raw output is never shown to the patient.
+  GI Compass: GI specialty navigation and clinician decision support in India.
+  Current product authority: docs/specialty-navigation/brief.md (2026-09-13).
+  Start each session with docs/specialty-navigation/START-HERE.md and ONE selected
+  OpenSpec change. Historical discussions and docs/history are not the current backlog.
 
-  Regulatory frame (shapes architecture, never bolted on):
-  - India Telemedicine Practice Guidelines 2020: AI may only support an RMP.
-  - CDSCO Medical Device Rules 2017 / MDSW guidance: Phase 1 ships as an internal
-    clinical tool for affiliated doctors, not a marketed public diagnostic product.
-  - India privacy baseline as of 2026-09-04: IT Act 2000 section 43A and SPDI Rules
-    2011 classify health conditions and medical records/history as sensitive personal
-    data or information; the DPDP Act 2023 does not create that separate category.
-  - DPDP Act 2023 + final DPDP Rules 2025 commence in phases: institutional provisions
-    in November 2025, Consent Manager provisions one year after Gazette publication,
-    and most operational duties eighteen months after publication (May 2027).
-    Prepare now; do not describe all provisions as already effective. Consent is a
-    versioned, per-purpose, revocable first-class object — never a boolean.
-  - CERT-In directions under IT Act section 70B apply independently: assess reportable
-    incidents, reporting deadlines, ICT log retention/location, and time synchronisation.
-  - Data residency is project policy: patient-data processing, storage, backups and
-    logs stay in approved India regions. This is not a blanket DPDP localisation mandate.
-  - See docs/india-privacy.md for dated applicability, official sources and production
-    evidence gates. Architecture and tests alone are not a legal compliance claim.
+  Intended use: collect patient history, symptoms and optional existing reports;
+  help a clinician assess possible causes, suitable specialty and urgency; release
+  clinician-reviewed navigation instructions to the patient. No early-detection,
+  cancer-screening, autonomous diagnosis or treatment claim. AI differentials,
+  including malignancy hypotheses, are clinician-only in v1.
 
-  Tech stack:
-  - Monorepo via npm workspaces.
-  - apps/web: Next.js 15 (App Router) + TypeScript + Tailwind CSS. Serves both the
-    patient/doctor/admin UI and the core REST API via Route Handlers.
-  - packages/core: framework-agnostic TypeScript domain logic (questionnaire engine,
-    red-flag rules, consent, AI output schema) — unit-testable without a DB or network.
-  - packages/db: Drizzle ORM schema + SQL migrations for PostgreSQL 16 (+ pgvector).
-  - services/ai: Python 3.11 FastAPI microservice for RAG, OCR/document parsing, and
-    the structured LLM call. The current deployment uses local llama.cpp GGUF inference
-    (AI_PROVIDER=llamacpp) with schema-constrained JSON; a hosted-provider adapter is
-    available but is not the currently configured deployment.
-  - Storage: S3-compatible object storage (India region), signed short-lived URLs.
+  First sites: the clinical lead's own clinic and proposed Metro pilot. Metro has
+  not approved a pilot. Tablet self-service and coordinator-assisted tablet intake;
+  full desktop clinician workspace and responsive phone web. Phone OTP, WhatsApp,
+  named-doctor directories, e-prescribing and emergency calling/SOS are out of v1.
+  Immediate-care advice remains available without waiting for AI or review.
 
-  Conventions:
-  - TypeScript strict mode. Zod for all runtime validation at trust boundaries.
-  - Every patient-clinical-data read/write goes through audit-logging + consent-check
-    hooks. These are enforced in the data-access layer, not the UI.
-  - RBAC enforced at the API layer, never by hiding UI.
-  - All patient-facing strings go through an i18n layer (en + hi) from day one.
-  - Conventional commits.
-  - Unresolved product decisions are marked in code as `TODO(confirm): Decision X`
-    referring to the build brief's open-decisions list.
+  Product owner: user, building through their IT company; IP ownership is their
+  stated intent. The company is the proposed primary data fiduciary, subject to
+  actual purposes, site agreements and applicable law. Personally sourced records
+  are not automatically authorised for development, evaluation or processing.
+  Local demo: synthetic data and local inference. Real-data pilot: approved India
+  hosting and Azure OpenAI processing, with deployment geography, terms, retention,
+  consent and site authority verified. No Global/DataZone/provider fallback that
+  breaks India-only processing. No cloud resource or expense without authorisation.
+
+  Clinical lead authors and signs off wording, value sets and urgency rules. Draft
+  content stays unpublished; AI suggestions never count as clinical approval.
+  Version clinical data, source facts, prompts/models and released documents.
+  An AI result cannot lower the deterministic urgency floor. Unknown/omitted and
+  machine-extracted facts are distinct from patient denials or verified findings.
+  Partial intake must preserve advice and uncertainty, not imply serious disease
+  is absent. No fixed clinical deadlines or numerical priors invented by developers.
+
+  Retain audited, consent-checked data access and API authorisation; tablet sessions
+  must isolate patients, sites and coordinators. No PHI in logs, browser persistence,
+  analytics, fixtures or prompts to coding agents. Approved release is explicit and
+  tied to the reviewed source version. Clinical agreement and OPD time saved are the
+  pilot outcomes; agreement with one reviewer is not diagnostic accuracy.
+
+  Existing stack: npm workspaces; Next.js 15, strict TypeScript, Tailwind, next-intl;
+  Zod domain contracts in packages/core; Drizzle/PostgreSQL in packages/db; Python
+  FastAPI AI service with local inference. Reuse only after testing against the new
+  scope. Supabase is not adopted. No rewrite or provider migration by implication.
+  Refer to docs/specialty-navigation/implementation-plan.md for bounded changes.
+  Regulatory applicability is a dated evidence question, not a compliance badge.
 
 rules:
   proposal:
-    - State the regulatory constraint that motivates a requirement whenever one applies.
-    - Always include a "Non-goals" section that explicitly excludes autonomous diagnosis,
-      autonomous prescribing, and patient-facing raw AI output. Physician-authored manual
-      prescriptions and editable AI drafts are allowed only with RMP review and explicit
-      sign-off/release; the AI must not independently prescribe or dispatch advice.
+    - State user-visible scope and exclusions; distinguish prototype, demo and real-data pilot.
+    - Include Non-goals; do not add diagnosis, prescribing, directory or emergency dispatch.
   specs:
-    - Every requirement that touches patient clinical data must have a scenario covering
-      the audit-log and consent-check behaviour.
-    - Safety-critical requirements (red flags, AI output constraints) must include at
-      least one negative scenario proving the unsafe path is blocked.
+    - Use testable MUST/SHALL requirements and Given/When/Then scenarios.
+    - Clinical-data requirements include authorisation, consent, audit and cross-patient/site denial scenarios.
+    - Safety requirements include unknown inputs, partial intake, model failure and unsafe-path rejection.
+    - Distinguish a clinical content approval from a passing software test.
   design:
-    - Record every deviation from the build brief's suggested stack with its rationale.
-    - Name the open decisions the design assumes a default for, and the marker used in code.
+    - Document reuse versus replacement and data migration/rollback; no silent stack changes.
+    - Identify open decisions by ID from the current brief and separate demo defaults from pilot gates.
   tasks:
-    - Group tasks by capability, and keep each task independently verifiable.
+    - Keep the change bounded; map independently verifiable tasks to requirements and evidence.
+    - Leave tasks unchecked until implemented and verified; historical completion is not new evidence.
 
 operations:
   apply:
     guidance:
-      - Implement safety-critical logic (red-flag evaluation, AI schema validation,
-        consent gating) with unit tests before wiring any UI.
-      - Never let an LLM call be on the critical path of an emergency escalation.
+      - Read START-HERE and only the selected change plus directly relevant code.
+      - Add failing tests before changing safety, access, publication or clinical-output boundaries.
+      - Never let AI, report processing or an account gate delay immediate-care advice.
   archive:
     guidance:
-      - Summarize which regulatory guardrails the shipped change satisfies.
+      - Record checks and remaining clinical/site approvals; never archive incomplete work as delivered.

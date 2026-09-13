@@ -1,8 +1,11 @@
 # GI Compass implementation plan
 
+> Superseded on 2026-09-13. Use the [specialty-navigation brief](specialty-navigation/brief.md)
+> and [current sequence](specialty-navigation/implementation-plan.md). This document is historical.
+
 Date: 6 September 2026  
 Status: Proposed implementation programme; application code unchanged  
-Planning change: `openspec/changes/enable-early-gi-care-journey`
+Historical change: `docs/history/2026-09-13/openspec/changes/enable-early-gi-care-journey`
 
 ## 1. Product objective and boundaries
 
