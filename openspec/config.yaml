@@ -1,75 +1,79 @@
 schema: spec-driven
 
 context: |
-  GI Compass: GI specialty navigation and clinician decision support in India.
-  Current product authority: docs/specialty-navigation/brief.md (2026-09-13).
-  Start each session with docs/specialty-navigation/START-HERE.md and ONE selected
-  OpenSpec change. Historical discussions and docs/history are not the current backlog.
+  GI Compass: clinic-based GI specialty navigation with clinician decision support, India.
+  Product authority: docs/product-brief.md (decisions dated 2026-09-13).
+  Work on ONE change per session; read only that change plus directly relevant code.
 
-  Intended use: collect patient history, symptoms and optional existing reports;
-  help a clinician assess possible causes, suitable specialty and urgency; release
-  clinician-reviewed navigation instructions to the patient. No early-detection,
-  cancer-screening, autonomous diagnosis or treatment claim. AI differentials,
-  including malignancy hypotheses, are clinician-only in v1.
+  Intended use (DRAFT, pending regulatory review): collect an adult patient's GI symptoms,
+  history and existing reports; present them with rule-based urgency flags and AI summaries
+  to a registered medical practitioner, who decides the appropriate specialty and urgency
+  and approves next steps for the patient. No diagnosis, screening or prediction claims.
 
-  First sites: the clinical lead's own clinic and proposed Metro pilot. Metro has
-  not approved a pilot. Tablet self-service and coordinator-assisted tablet intake;
-  full desktop clinician workspace and responsive phone web. Phone OTP, WhatsApp,
-  named-doctor directories, e-prescribing and emergency calling/SOS are out of v1.
-  Immediate-care advice remains available without waiting for AI or review.
+  Pilot: the clinical lead's own clinic, then Metro Hospital OPD (not yet approached).
+  Tablet intake, patient self-service or coordinator-assisted. Full desktop clinician
+  workspace; phone browsers supported, each layout designed for its device.
+  Primary output: appropriate specialty type, with urgency never below the deterministic floor.
 
-  Product owner: user, building through their IT company; IP ownership is their
-  stated intent. The company is the proposed primary data fiduciary, subject to
-  actual purposes, site agreements and applicable law. Personally sourced records
-  are not automatically authorised for development, evaluation or processing.
-  Local demo: synthetic data and local inference. Real-data pilot: approved India
-  hosting and Azure OpenAI processing, with deployment geography, terms, retention,
-  consent and site authority verified. No Global/DataZone/provider fallback that
-  breaks India-only processing. No cloud resource or expense without authorisation.
+  Stack: Next.js (App Router) + strict TypeScript; Supabase (Postgres, Auth, Storage, RLS),
+  local Supabase for the demo, ap-south-1 (Mumbai) for the pilot. Every model call goes
+  through the LLM Gateway (docs/reference/llm-gateway.md): local llama.cpp for the demo,
+  Azure OpenAI regional deployment in India for the pilot. Demo uses synthetic data only.
 
-  Clinical lead authors and signs off wording, value sets and urgency rules. Draft
-  content stays unpublished; AI suggestions never count as clinical approval.
-  Version clinical data, source facts, prompts/models and released documents.
-  An AI result cannot lower the deterministic urgency floor. Unknown/omitted and
-  machine-extracted facts are distinct from patient denials or verified findings.
-  Partial intake must preserve advice and uncertainty, not imply serious disease
-  is absent. No fixed clinical deadlines or numerical priors invented by developers.
+  Clinical content (questions, patient wording, value sets, urgency rules, specialty
+  mapping) is authored and signed off by the clinical lead. Developers and AI agents draft
+  and mark content DRAFT; they never approve it.
 
-  Retain audited, consent-checked data access and API authorisation; tablet sessions
-  must isolate patients, sites and coordinators. No PHI in logs, browser persistence,
-  analytics, fixtures or prompts to coding agents. Approved release is explicit and
-  tied to the reviewed source version. Clinical agreement and OPD time saved are the
-  pilot outcomes; agreement with one reviewer is not diagnostic accuracy.
+  Safety invariants. No change may violate these:
+  S1  Urgency floor: deterministic rules set a minimum urgency without AI. AI output MAY
+      raise urgency; it MUST NOT lower it below the floor.
+  S2  No reassurance: no patient-facing output states or implies the absence of serious
+      disease or that no action is needed.
+  S3  A human closes every case. The system ranks and surfaces; only a clinician
+      dispositions. Low-priority cases remain in a reviewed queue, never discarded.
+  S4  Rule matches, not probabilities: urgency is explained by the matched rules and the
+      facts that triggered them. No numeric or graded (high/moderate/low) likelihood for
+      any condition is generated or displayed in v1.
+  S5  Clinician-only differential: AI hypotheses, including any malignancy, never reach
+      patient-facing screens, APIs, PDFs or messages.
+  S6  Immediate-care advice never waits for AI, report processing or login.
+  S7  Every abandonment point yields a valid conservative output (advice plus pending
+      clinician review). Unknown or declined answers are never treated as "no".
+  S8  Extracted report fields are proposals carrying document, page, source text, confidence
+      and verification status; they never silently overwrite patient or clinician entries.
+  S9  AI hypothesis generation MUST explicitly consider region-relevant infectious and
+      inflammatory causes, abdominal tuberculosis at minimum, stating evidence for or against.
+  S10 Clinical logic is versioned data (author, approver, date), never hardcoded in code or
+      buried in prompts. Every clinical parameter carries provenance:
+      assumed | guideline-derived | locally-validated.
 
-  Existing stack: npm workspaces; Next.js 15, strict TypeScript, Tailwind, next-intl;
-  Zod domain contracts in packages/core; Drizzle/PostgreSQL in packages/db; Python
-  FastAPI AI service with local inference. Reuse only after testing against the new
-  scope. Supabase is not adopted. No rewrite or provider migration by implication.
-  Refer to docs/specialty-navigation/implementation-plan.md for bounded changes.
-  Regulatory applicability is a dated evidence question, not a compliance badge.
+  Data invariants:
+  D1  Every PHI read and write is audit-logged with actor, timestamp, purpose and record.
+  D2  PHI rows are site-scoped; RLS enforces site and role isolation. Tablet sessions are
+      encounter-scoped and fully reset between patients.
+  D3  Versioned DPDP notice and consent are recorded before any clinical data is captured.
+  D4  India only: data at rest in India; model egress only through the LLM Gateway to a
+      connector approved for the environment; never a silent provider fallback.
+  D5  No real patient data in the repository, fixtures, logs, analytics, screenshots or
+      prompts to coding agents.
+
+  Not in v1: patient-visible differential, probabilities, screening or early-detection
+  claims, public website, referring-GP channel, WhatsApp/native apps, ABDM, e-prescribing,
+  named-doctor recommendations, emergency dispatch.
 
 rules:
   proposal:
-    - State user-visible scope and exclusions; distinguish prototype, demo and real-data pilot.
-    - Include Non-goals; do not add diagnosis, prescribing, directory or emergency dispatch.
+    - State whether the change serves the synthetic demo, the real-data pilot, or both.
+    - List the invariants (S1-S10, D1-D5) the change touches and how it upholds each.
+    - Include Non-goals.
   specs:
-    - Use testable MUST/SHALL requirements and Given/When/Then scenarios.
-    - Clinical-data requirements include authorisation, consent, audit and cross-patient/site denial scenarios.
-    - Safety requirements include unknown inputs, partial intake, model failure and unsafe-path rejection.
-    - Distinguish a clinical content approval from a passing software test.
+    - Use RFC 2119 keywords and Given/When/Then scenarios readable by the clinical lead.
+    - Clinical behaviour covers unknown/declined answers, partial intake, AI unavailable and AI proposing lower urgency.
+    - PHI access covers cross-site and cross-patient denial and the resulting audit entry.
+    - Clinical values in scenarios are marked DRAFT unless an approved content version is cited.
   design:
-    - Document reuse versus replacement and data migration/rollback; no silent stack changes.
-    - Identify open decisions by ID from the current brief and separate demo defaults from pilot gates.
+    - Record decisions with rejected alternatives; justify every new dependency or service.
+    - Tag each clinical parameter with provenance (assumed, guideline-derived, locally-validated).
   tasks:
-    - Keep the change bounded; map independently verifiable tasks to requirements and evidence.
-    - Leave tasks unchecked until implemented and verified; historical completion is not new evidence.
-
-operations:
-  apply:
-    guidance:
-      - Read START-HERE and only the selected change plus directly relevant code.
-      - Add failing tests before changing safety, access, publication or clinical-output boundaries.
-      - Never let AI, report processing or an account gate delay immediate-care advice.
-  archive:
-    guidance:
-      - Record checks and remaining clinical/site approvals; never archive incomplete work as delivered.
+    - Small, independently verifiable tasks; write failing tests first for safety, access and clinical-output boundaries.
+    - End with a cross-model review task (the agent that did not author the change reviews it) and record its findings.

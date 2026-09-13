@@ -1,14 +1,13 @@
 ---
-name: openspec-apply-change
-description: Implement tasks from an OpenSpec change. Use when the user wants to start implementing, continue implementation, or work through tasks.
-allowed-tools: Bash(openspec:*)
-license: MIT
-compatibility: Requires openspec CLI.
-metadata:
-  author: openspec
-  version: "1.0"
-  generatedBy: "1.13.0"
+name: "source-command-opsx-apply"
+description: "Implement tasks from an OpenSpec change (Experimental)"
 ---
+
+# source-command-opsx-apply
+
+Use this skill when the user asks to run the migrated source command `opsx-apply`.
+
+## Command Template
 
 Implement tasks from an OpenSpec change.
 
