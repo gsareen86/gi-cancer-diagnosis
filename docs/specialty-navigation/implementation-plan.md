@@ -25,10 +25,27 @@ first change is already specified; the others are planned, not secretly marked d
 ## First coherent demo
 
 Demonstrate the encounter end to end with invented patients before Metro receives any
-real-data access. It must show a no-report patient, an optional clean report, a quality
-failure, an unknown/partial form, immediate-care advice without a model, AI unavailable,
-a clinician disagreement, a corrected source and the final two different artifacts.
-Existing features may accelerate the sequence only after their tests meet the new spec.
+real-data access. It must be a realistic, working encounter rather than a scripted screen tour: upload
+and process synthetic patient reports (PDFs, photos and scans), capture past history,
+and run the patient questionnaire through both partial and complete submissions.
+Combine questionnaire answers, past history and verified report findings into actual
+local LLM analysis and a source-linked summary, making missing information and
+uncertainty explicit. This integrated clinical picture is the core demonstration of
+value for Metro's IT department and Medical Superintendent.
+
+Follow AI generation with clinician review: record an independent clinical assessment
+before revealing AI hypotheses, then check agreement and disagreements, resolve or
+record outstanding clarifications, and require clinician approval before releasing
+the two distinct final artifacts: a patient navigation letter with care actions and
+a receiving-clinician summary. Keep AI hypotheses clinician-only and make source
+corrections invalidate stale analysis and review before release.
+
+The working sequence must also show a no-report patient, a clean report, a report
+quality failure with a retake path, unknown/partial answers, immediate-care advice
+without a model, AI unavailable, a clinician disagreement and a corrected source.
+Use synthetic fixtures throughout; realistic functionality does not authorise real
+patient-data access. Existing features may accelerate the sequence only after their
+tests meet the new spec.
 
 The operating boundary in change 1 prevents an unfinished prototype being mistaken
 for the authorised pilot. Subsequent changes keep that boundary closed while building
@@ -39,7 +56,7 @@ the actual encounter. Do not add a boolean “compliant=true” escape hatch to 
 | Existing component | Decision |
 | --- | --- |
 | Next.js/TypeScript/Tailwind/next-intl | Retain; use wide desktop layouts with report/summary panes and tablet-specific encounter flow. |
-| PostgreSQL/Drizzle/migrations | Retain; add site and encounter access explicitly. Do not assume current global user roles provide tenant isolation. |
+| Supabase PostgreSQL (primary database for both demo and pilot)/Drizzle/migrations | Retain; add site and encounter access explicitly. Do not assume current global user roles provide tenant isolation. |
 | Auth, MFA, audited repository, consent | Retain useful primitives; assess account-centric assumptions before tablet access. Patient need not receive a staff account. |
 | Questionnaire and safety engines | Retain only with behavioural tests; current seeded clinical content is not approved for the new pilot. |
 | Clinical history, brief, report viewer, draft revision | Reuse after regression checks; new source/version/verification semantics still required. |
