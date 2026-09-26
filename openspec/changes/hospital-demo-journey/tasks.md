@@ -79,7 +79,7 @@ Operational documentation is in `docs/reference/ai-providers.md`. At that point 
 - [x] 10.5 Distinguish worker liveness from backend access and test unhealthy preflight; reconcile migration safety and synthetic-entry notices with the review.
 - [x] 10.6 Run unit/SQL/Auth/responsive tests and a complete actual demo-environment report-to-AI-to-clinician-release rehearsal using fictional records; review generated text and update readiness/runbook.
 - [x] 10.7 Independently review the final correction, resolve findings, refresh the local app/worker and record remaining production prerequisites accurately.
-- [ ] 10.8 Inspect the complete working tree for credentials/private data, commit the application on the owner-designated branch and push it to the configured remote.
+- [x] 10.8 Inspect the complete working tree for credentials/private data, commit the application on the owner-designated branch and push it to the configured remote.
 
 Section 10 verification (26 September): 172 unit checks, 503 rolled-back SQL assertions,
 35 actual Auth/HTTP checks, 21 responsive patient browser cases and 17 actual recovery
@@ -93,6 +93,11 @@ independent review found no remaining concrete blocker in these additions. Build
 lint, strict change validation and all six final runtime checks pass. All 23 migrations are
 applied to both existing projects. Clinical approval and broader gates 5.3/6.7 remain open;
 the change is not archived and no real-patient production readiness is claimed.
+
+Delivery: application commit `9e8cc75` was pushed to
+`origin/claude/gi-compass-clean-slate`. Credential-pattern and private-path inspection
+excluded environment keys, runtime artifacts, uploads and owner-visit identifiers.
+The committed binaries are the owner-supplied UI mockups and generated fictional PDFs.
 
 Section 9 verification (26 September, India time): 145 unit checks, 454 isolated SQL
 assertions, 35 real Auth/HTTP checks, 21 responsive public/questionnaire browser cases,
