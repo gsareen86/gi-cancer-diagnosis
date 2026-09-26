@@ -1,71 +1,64 @@
-# LLM Gateway: logic carried forward
+# LLM Gateway: contract to reverify during the fresh build
 
-Load this for the `llm-gateway` change (and when another change calls the gateway). It
-records the behaviour proven in the pre-reset AI service so the rebuild keeps it. The
-implementation language is decided in that change's design.
+Implementation update, 22 September: selectable local/Gemini/compatible adapters and
+versioned assessment, extraction and factual-check prompts now live in `src/lib/ai`.
+See [operator configuration and measured verification](ai-providers.md). Existing
+environment and data-governance restrictions remain separate from connector capability.
 
-## Role
+Load for changes 6–8. This specifies desired behaviour; old runtime/model settings are not
+proof for the new stack. No old implementation is imported implicitly.
 
-- The **only** component with model egress. It holds provider credentials; the web app never
-  calls a provider directly. Internal only, protected by a service token, and it refuses to
-  start without one.
-- Receives a compiled, minimised case plus a JSON Schema; returns a structured result and
-  the identity of the model that produced it. It makes no clinical decisions.
+## Role and approved connectors
 
-## Connectors
+The sole model-egress service receives a minimised, versioned encounter snapshot and an
+output schema. Internal callers authenticate; providers are selected from an explicit
+per-environment allowlist. Initial demo uses a pinned local llama.cpp build/model; pilot
+uses a verified Azure OpenAI regional India deployment. Unknown/unavailable connectors
+fail explicitly; no silent fallback. Credentials stay outside browser/runtime logs.
 
-| Connector | Use | Structured-output mechanism |
-| --- | --- | --- |
-| `llamacpp` | Demo on the local machine: `llama-server`'s OpenAI-compatible `/v1/chat/completions` | `response_format: json_schema, strict: true` (compiled to a grammar, so non-conforming tokens can't be sampled) |
-| `azure-openai` | Pilot: regional deployment in an India region only | Structured outputs, `json_schema` strict |
-| `anthropic` | Development with synthetic data only; never with real data | One forced tool with `strict: true`, `disable_parallel_tool_use: true`; adaptive thinking; no `temperature` on Claude 5 models (returns 400) |
+Every connector has executable contract tests for its actual API version: strict structured
+output, refusal, malformed/truncated output, context limit, served-model identity, timeout,
+health and error redaction. Pin binary/model hash or deployment/model version. No inherited
+claim about a particular model's temperature, thinking mode or sleep flag is accepted without
+checking its documentation and testing the selected version. Add providers only by a scoped
+change; synthetic-only development providers never become pilot fallbacks.
 
-- The connector is chosen by explicit configuration. An unknown value is a startup error.
-  **Never fall back silently** to another provider.
-- Each environment has an allowlist of connectors; real-data environments allow only
-  India-processing connectors (invariant D4).
+## Asynchronous execution and versions
 
-## Behaviours to keep
+Use durable jobs in Supabase Postgres and an independently running worker. Enqueue atomically
+with input snapshot/consent/site/version, unique idempotency key and status. Workers claim
+leased jobs, heartbeat, retry transient failures with bounded exponential backoff, and mark
+permanent failures for clinician/manual handling. A local model may take minutes; the browser
+receives a job ID and progress state rather than holding the only execution request open.
 
-- **The caller's schema validation is the control.** The gateway returns output verbatim, with
-  no repair or cleaning; a looser second pass would hide the responses validation must catch.
-- **Record the model that actually answered**, taken from the response rather than from
-  configuration. An alias or a stub on the expected port can differ from what was configured.
-- **Errors surface, not retry:** a refusal returns 422 with its category; no structured result
-  returns 502; an unreachable local server returns 502 with the reason. The case still reaches
-  the clinician with AI marked unavailable (invariant S6).
-- **Local sampling:** temperature 0.1 and top_p 0.9, because greedy decoding loops on quantised
-  models. Send `chat_template_kwargs: {enable_thinking: false}` for Qwen3-style models, since
-  thinking blocks fight constrained decoding.
-- **Context budget warning:** estimate prompt tokens (characters ÷ 3) plus max output
-  (default 2048) against the configured context (e.g. 16384); warn before the server truncates.
-- **Timeouts:** 900 s for local inference (a 27B model on an APU is slow); the caller waits slightly longer.
-- **Health without waking:** probe only `/props`, which is exempt from llama.cpp's idle timer.
-  Never probe `/v1/models` or a completion endpoint. Report configured and served model
-  separately, with `modelState` ready / sleeping / loading / unavailable. Sleeping counts as healthy.
-- **Idle sleep:** llama-server `--sleep-idle-seconds` (default 300; `-1` disables). Restart
-  the model only when all slots are idle, and only a listener matching the configured binary and
-  model file. Never kill an unknown process, and never download binaries or weights automatically.
+Check consent and current snapshot before work and before publishing. Duplicate delivery is
+safe, withdrawal cancels publication, and results for superseded snapshots are retained only
+as appropriately governed historical artifacts, never released as the current assessment.
+The clinician's worklist remains usable throughout AI failure or processing delay.
 
-## Local runtime on the owner's machine
+## Structured output and source support
 
-```text
-env: HIP_VISIBLE_DEVICES=0  GGML_VULKAN_UNIFIED_MEMORY=1  ROCBLAS_USE_HIPBLASLT=1
-llama-server -m <model>.gguf --host 127.0.0.1 --port 8080 --alias <name> -c 16384 -ngl 99 --no-mmap
-  --sleep-idle-seconds 300 --flash-attn on -b 512 -ub 64 -t 4 -tb 12 -ctk q8_0 -ctv q8_0
-```
+Caller validation remains mandatory despite provider schema constraints. Do not repair output
+silently or treat a second model's agreement as truth. Keep source document/page/field IDs,
+verification status and missing/contradictory facts through compilation. Report text and patient
+free text are data, not instructions. Patient-facing possible diagnoses are an explicitly
+preliminary projection under S5, with concise factual reasoning, uncertainty and care navigation;
+clinician internal notes and private model reasoning never leak into it.
 
-Previously configured model label: `qwen3-27b-q4_k_m`. The earlier local settings files
-(binary and model paths, tokens) were moved to `var/pre-reset-local/` (not in git).
+Use the selected model's tokenizer and enforce input plus output budgets. If a snapshot cannot
+fit, use explicit source-preserving chunking/summarisation with provenance or return incomplete.
+Never rely on a character estimate plus a warning before silent truncation. Never drop safety
+facts, medication/history fields or contradictory evidence without recording incompleteness.
 
-## Deliberately not carried forward
+## Failure, privacy and lifecycle
 
-- The old assessment prompt and its high/moderate/low likelihood schema (conflicts with S4)
-- Regex report extraction and the hashing-placeholder embeddings/retrieval
-- The pre-reset clinical request/response schemas
+Output states include queued, running, completed, refused, incomplete, failed and cancelled.
+Use coded errors and request IDs; no raw provider error/body, prompts, tokens or clinical data
+in ordinary logs. Immediate-care advice runs independently. Valid patient output cannot
+reduce the deterministic floor, fabricate evidence, show probabilities, claim a confirmed
+diagnosis or silently describe itself as clinician-reviewed.
 
-## Archived source
-
-On branch `codex/gi-specialty-navigation`, read with `git show codex/gi-specialty-navigation:<path>`:
-`services/ai/gi_ai/provider.py`, `local_model.py`, `model.py`, `app.py`, `services/ai/tests/test_local_model.py`,
-`test_model.py`, `scripts/start-ai.ps1`, `e2e/model-idle.mjs`, `e2e/stub-llama-server.mjs`.
+Health checks report configured/served model and readiness without issuing clinical prompts.
+Sleep/wake behaviour is capability-tested against the pinned runtime; never kill unknown
+processes, download models automatically or assume historic command flags are supported.
+Local binary/weight paths remain operator configuration, not committed machine-specific paths.

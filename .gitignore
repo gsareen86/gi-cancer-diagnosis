@@ -1,6 +1,7 @@
 # Dependencies and build output
 node_modules/
 .next/
+next-env.d.ts
 out/
 dist/
 build/
@@ -22,18 +23,26 @@ __pycache__/
 supabase/.branches/
 supabase/.temp/
 supabase/.env
+/supabase/certs/
 
 # Environment: never commit credentials or provider keys
 .env
 .env.*
 !.env.example
+!.env.operator.example
+!.env.test.example
+!.env.model.example
+!.env.ai.example
 
 # Local-only data: spikes, uploads, logs, runtime state. Patient data never reaches git.
 /var/
 uploads/
 .storage/
 *.log
+playwright-report/
+test-results/
 
 # OS and editor
 .DS_Store
 Thumbs.db
+.next-hosted-test/

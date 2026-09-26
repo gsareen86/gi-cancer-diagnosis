@@ -1,0 +1,225 @@
+{
+  "version": "intake-flow-draft-2026-09-22.1",
+  "contentVersion": "intake-draft-2026-09-22.2",
+  "status": "DRAFT",
+  "author": "AI-assisted presentation draft",
+  "approver": null,
+  "date": "2026-09-22",
+  "provenance": "assumed",
+  "intro": "Answer the main questions first. You can add more detail at the end, or review the answers you have already given.",
+  "optionalIntro": "These extra details are optional. Choose a topic you want to add to, then return to review.",
+  "topics": [
+    {
+      "id": "pain",
+      "label": "Tummy pain",
+      "step": 2,
+      "essential": [
+        "pain_presence",
+        "pain_now_severity",
+        "pain_onset",
+        "pain_touch"
+      ],
+      "details": [
+        "pain_site",
+        "pain_started",
+        "pain_pattern",
+        "pain_frequency",
+        "pain_episode_length",
+        "pain_score",
+        "pain_character",
+        "pain_radiates",
+        "food_effect",
+        "position_effect",
+        "pain_relief",
+        "pain_change"
+      ]
+    },
+    {
+      "id": "awareness",
+      "label": "Faintness and awareness",
+      "step": 2,
+      "essential": [
+        "faint",
+        "faint_timing",
+        "faint_recovery",
+        "faint_context",
+        "confusion",
+        "confusion_onset"
+      ],
+      "details": []
+    },
+    {
+      "id": "vomit-blood",
+      "label": "Blood in vomit",
+      "step": 2,
+      "essential": ["vomit_blood", "vomit_blood_timing", "bleeding_unwell"],
+      "details": ["vomit_blood_amount", "vomit_retching"]
+    },
+    {
+      "id": "stool",
+      "label": "Stool and bleeding",
+      "step": 2,
+      "essential": [
+        "black_stool",
+        "black_stool_timing",
+        "rectal_blood",
+        "rectal_blood_timing",
+        "rectal_blood_amount",
+        "stool_colour",
+        "appearance_stool_timing",
+        "appearance_stool_amount"
+      ],
+      "details": [
+        "bowel_frequency",
+        "mucus",
+        "bleeding_frequency",
+        "bleeding_details"
+      ]
+    },
+    {
+      "id": "fluids",
+      "label": "Vomiting and fluids",
+      "step": 2,
+      "essential": [
+        "vomiting",
+        "fluids",
+        "urine",
+        "vomiting_appearance",
+        "appearance_blood_timing",
+        "appearance_blood_unwell"
+      ],
+      "details": [
+        "vomiting_frequency",
+        "fluid_duration",
+        "vomiting_started",
+        "appearance_blood_amount",
+        "vomiting_amount",
+        "vomiting_meals",
+        "vomiting_nausea",
+        "vomiting_relief"
+      ]
+    },
+    {
+      "id": "swelling",
+      "label": "Swelling and bowel movement",
+      "step": 2,
+      "essential": ["distended", "no_gas", "obstruction_episode"],
+      "details": []
+    },
+    {
+      "id": "fever-yellowing",
+      "label": "Fever and yellowing",
+      "step": 2,
+      "essential": ["jaundice", "fever", "biliary_episode"],
+      "details": [
+        "fever_chills",
+        "fever_started",
+        "fever_pattern",
+        "fever_onset",
+        "fever_measurement",
+        "jaundice_started",
+        "jaundice_onset",
+        "jaundice_pattern",
+        "urine_colour"
+      ]
+    },
+    {
+      "id": "swallowing",
+      "label": "Swallowing",
+      "step": 2,
+      "essential": ["swallowing", "saliva_now"],
+      "details": ["swallowing_started", "swallowing_trend", "swallowing_pain"]
+    },
+    {
+      "id": "main-concern",
+      "label": "Your main concern",
+      "step": 3,
+      "essential": ["concern", "duration", "pattern"],
+      "details": ["first_symptom_date", "anything_else"]
+    },
+    {
+      "id": "eating",
+      "label": "Appetite and weight",
+      "step": 3,
+      "essential": ["appetite", "early_full", "weight_loss"],
+      "details": ["appetite_started", "weight_details"]
+    },
+    {
+      "id": "digestion",
+      "label": "Other digestive symptoms",
+      "step": 3,
+      "essential": ["reflux", "bowel_change"],
+      "details": [
+        "reflux_frequency",
+        "reflux_started",
+        "reflux_triggers",
+        "upper_fullness",
+        "itching",
+        "itch_started",
+        "itch_impact",
+        "bowel_started",
+        "bowel_onset",
+        "bowel_trend",
+        "bowel_treatment"
+      ]
+    },
+    {
+      "id": "daily-life",
+      "label": "Energy and other changes",
+      "step": 3,
+      "essential": ["fatigue", "anaemia", "lump"],
+      "details": ["breathlessness", "anaemia_details", "lump_details"]
+    },
+    {
+      "id": "medicines",
+      "label": "Medicines and allergies",
+      "step": 4,
+      "essential": [
+        "medicines_status",
+        "medicines",
+        "allergy_status",
+        "allergies"
+      ],
+      "details": []
+    },
+    {
+      "id": "medical-history",
+      "label": "Medical history",
+      "step": 4,
+      "essential": ["conditions", "surgery", "tb_history"],
+      "details": ["tb_details", "night_sweats"]
+    },
+    {
+      "id": "previous-care",
+      "label": "Care so far",
+      "step": 4,
+      "essential": ["previous_tests_status", "previous_treatment"],
+      "details": [
+        "first_contact",
+        "first_contact_date",
+        "treatment_effect",
+        "visits",
+        "referral",
+        "previous_tests"
+      ]
+    },
+    {
+      "id": "family-habits",
+      "label": "Family history and habits",
+      "step": 4,
+      "essential": [],
+      "details": [
+        "family_status",
+        "family",
+        "tobacco",
+        "tobacco_details",
+        "areca",
+        "areca_details",
+        "alcohol",
+        "alcohol_details",
+        "hepatitis",
+        "hepatitis_details"
+      ]
+    }
+  ]
+}

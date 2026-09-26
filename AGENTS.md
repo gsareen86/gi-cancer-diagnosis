@@ -11,6 +11,7 @@ Open `docs/roadmap.md`, `docs/clinical/question-inventory.md` or
 
 ## Session protocol
 
+- Work only on `claude/gi-compass-clean-slate`, as directed by the owner. Do not port old application code implicitly.
 - **One OpenSpec change per session:** propose → cross-review → apply → verify → archive.
   Start the next change in a fresh session. Use the OpenSpec skills (`/opsx:propose`,
   `/opsx:apply`, `/opsx:archive`).
@@ -29,3 +30,13 @@ Open `docs/roadmap.md`, `docs/clinical/question-inventory.md` or
 - The pre-reset application lives on branch `codex/gi-specialty-navigation`. Don't read it
   unless a change explicitly ports a named module, and port by re-specifying and re-testing,
   not by copying.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

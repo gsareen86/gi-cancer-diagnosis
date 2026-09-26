@@ -1,0 +1,285 @@
+{
+  "invariants": [
+    {
+      "id": "S1",
+      "controls": [
+        {
+          "id": "S1.clinical",
+          "owner": "urgency-rules",
+          "status": "deferred",
+          "evidenceType": "automated",
+          "tests": [],
+          "rationale": "Clinical behaviour for S1 is absent from foundation and requires verification in urgency-rules."
+        }
+      ]
+    },
+    {
+      "id": "S2",
+      "controls": [
+        {
+          "id": "S2.clinical",
+          "owner": "clinical-reasoning",
+          "status": "deferred",
+          "evidenceType": "automated",
+          "tests": [],
+          "rationale": "Clinical behaviour for S2 is absent from foundation and requires verification in clinical-reasoning."
+        }
+      ]
+    },
+    {
+      "id": "S3",
+      "controls": [
+        {
+          "id": "S3.clinical",
+          "owner": "clinician-review",
+          "status": "deferred",
+          "evidenceType": "automated",
+          "tests": [],
+          "rationale": "Clinical behaviour for S3 is absent from foundation and requires verification in clinician-review."
+        }
+      ]
+    },
+    {
+      "id": "S4",
+      "controls": [
+        {
+          "id": "S4.clinical",
+          "owner": "clinical-reasoning",
+          "status": "deferred",
+          "evidenceType": "automated",
+          "tests": [],
+          "rationale": "Clinical behaviour for S4 is absent from foundation and requires verification in clinical-reasoning."
+        }
+      ]
+    },
+    {
+      "id": "S5",
+      "controls": [
+        {
+          "id": "S5.clinical",
+          "owner": "output-generation",
+          "status": "deferred",
+          "evidenceType": "automated",
+          "tests": [],
+          "rationale": "Clinical behaviour for S5 is absent from foundation and requires verification in output-generation."
+        }
+      ]
+    },
+    {
+      "id": "S6",
+      "controls": [
+        {
+          "id": "S6.clinical",
+          "owner": "urgency-rules",
+          "status": "deferred",
+          "evidenceType": "automated",
+          "tests": [],
+          "rationale": "Clinical behaviour for S6 is absent from foundation and requires verification in urgency-rules."
+        }
+      ]
+    },
+    {
+      "id": "S7",
+      "controls": [
+        {
+          "id": "S7.clinical",
+          "owner": "encounters-and-consent",
+          "status": "deferred",
+          "evidenceType": "automated",
+          "tests": [],
+          "rationale": "Clinical behaviour for S7 is absent from foundation and requires verification in encounters-and-consent."
+        }
+      ]
+    },
+    {
+      "id": "S8",
+      "controls": [
+        {
+          "id": "S8.clinical",
+          "owner": "report-ingestion",
+          "status": "deferred",
+          "evidenceType": "automated",
+          "tests": [],
+          "rationale": "Clinical behaviour for S8 is absent from foundation and requires verification in report-ingestion."
+        }
+      ]
+    },
+    {
+      "id": "S9",
+      "controls": [
+        {
+          "id": "S9.clinical",
+          "owner": "clinical-reasoning",
+          "status": "deferred",
+          "evidenceType": "automated",
+          "tests": [],
+          "rationale": "Clinical behaviour for S9 is absent from foundation and requires verification in clinical-reasoning."
+        }
+      ]
+    },
+    {
+      "id": "S10",
+      "controls": [
+        {
+          "id": "S10.clinical",
+          "owner": "questionnaire-content-v1",
+          "status": "deferred",
+          "evidenceType": "automated",
+          "tests": [],
+          "rationale": "Clinical behaviour for S10 is absent from foundation and requires verification in questionnaire-content-v1."
+        }
+      ]
+    },
+    {
+      "id": "D1",
+      "controls": [
+        {
+          "id": "D1.atomic_audit",
+          "owner": "foundation",
+          "status": "implemented",
+          "evidenceType": "automated",
+          "tests": [
+            "Hosted: allowed audit has exactly returned patient IDs",
+            "Hosted: omitted purpose denial persists",
+            "Hosted: denial committed across connections",
+            "Hosted: audit does not expose foreign existence",
+            "Hosted: functional admin audit read",
+            "001_privileges.sql: Private audit writer cannot be called by client",
+            "001_privileges.sql: Executor cannot mutate audit",
+            "002_access_and_sessions.sql: audit failure prevents patient response",
+            "002_access_and_sessions.sql: owner accidental update denied",
+            "002_access_and_sessions.sql: operator history deletion denied",
+            "002_access_and_sessions.sql: owner accidental truncate denied"
+          ],
+          "rationale": "Protected reads and their audit must commit together; expected denials retain no foreign identifiers."
+        },
+        {
+          "id": "D1.boundary_logs",
+          "owner": "foundation",
+          "status": "pending",
+          "evidenceType": "manual",
+          "rationale": "Pre-RPC rejections require separate provider and application log evidence; retention is not verified."
+        }
+      ]
+    },
+    {
+      "id": "D2",
+      "controls": [
+        {
+          "id": "D2.site_role",
+          "owner": "foundation",
+          "status": "implemented",
+          "evidenceType": "automated",
+          "tests": [
+            "001_privileges.sql: Patient RLS enabled and forced",
+            "001_privileges.sql: Executor cannot log in or bypass RLS",
+            "001_privileges.sql: Reader does not own protected table",
+            "002_access_and_sessions.sql: other site is refused",
+            "002_access_and_sessions.sql: coordinator cannot read audit history",
+            "002_access_and_sessions.sql: explicit second-site membership gives only that site records",
+            "Hosted: site admin alone cannot read patients after clinician role revocation",
+            "Hosted: foreign identifier refused",
+            "Hosted: password-only PHI denied",
+            "Browser: admin role alone never renders patients"
+          ],
+          "rationale": "Current membership and role must restrict each protected operation to an authorised site."
+        },
+        {
+          "id": "D2.staff_session",
+          "owner": "foundation",
+          "status": "implemented",
+          "evidenceType": "automated",
+          "rationale": "Protected staff sessions require current Auth authority, deadlines and cleared browser content. Patient encounter reset remains separate.",
+          "tests": [
+            "Hosted: forged JWT is rejected by the hosted API",
+            "Hosted: expired touch cannot resurrect",
+            "Hosted: waiting renewal cannot revive a concurrently expired session",
+            "Hosted: captured JWT rejected after signout",
+            "Operator: failed Auth recovery blocks captured session",
+            "Operator: interrupted disable commits account and session revocation before Auth",
+            "Browser: forged Auth cookie cannot render protected records",
+            "Browser: logout clears other tab",
+            "Browser: Back after logout does not restore patient content",
+            "Browser: absolute expiry clears rendered patient data",
+            "Browser: offline logout clears PHI and reports pending revocation",
+            "Browser: offline signout cannot reopen protected content on reconnect",
+            "Browser: signout removes protected selection cookies"
+          ]
+        },
+        {
+          "id": "D2.encounter_reset",
+          "owner": "encounters-and-consent",
+          "status": "deferred",
+          "evidenceType": "automated",
+          "tests": [],
+          "rationale": "Staff isolation does not verify patient tablet sessions or clearing between encounters."
+        }
+      ]
+    },
+    {
+      "id": "D3",
+      "controls": [
+        {
+          "id": "D3.consent",
+          "owner": "encounters-and-consent",
+          "status": "deferred",
+          "evidenceType": "automated",
+          "tests": [],
+          "rationale": "Versioned notice and consent must precede clinical capture; intake is absent from foundation."
+        }
+      ]
+    },
+    {
+      "id": "D4",
+      "controls": [
+        {
+          "id": "D4.target_guard",
+          "owner": "foundation",
+          "status": "implemented",
+          "evidenceType": "automated",
+          "tests": [
+            "Hosted command boundaries refuses the demo as a test target",
+            "Hosted command boundaries does not fall back to the demo URL",
+            "Hosted command boundaries refuses a mismatched database host without printing its password",
+            "Cloud deployment boundary fails closed without credentials and names only missing settings",
+            "Browser: privileged credentials are absent from browser bundles"
+          ],
+          "rationale": "Runtime and operator commands must reject unapproved projects and local fallback."
+        },
+        {
+          "id": "D4.residency",
+          "owner": "pilot-readiness",
+          "status": "deferred",
+          "evidenceType": "manual",
+          "rationale": "Dashboard region and contracts must cover storage, logs, backups and model egress before pilot."
+        }
+      ]
+    },
+    {
+      "id": "D5",
+      "controls": [
+        {
+          "id": "D5.fixed_seed",
+          "owner": "foundation",
+          "status": "implemented",
+          "evidenceType": "automated",
+          "tests": [
+            "001_privileges.sql: No arbitrary patient write for anon",
+            "001_privileges.sql: No arbitrary patient write for authenticated",
+            "001_privileges.sql: No arbitrary patient write for service_role",
+            "001_privileges.sql: No arbitrary patient write for gi_api_executor",
+            "002_access_and_sessions.sql: even the operator cannot store a non-synthetic marker"
+          ],
+          "rationale": "Fixed synthetic fixtures and no arbitrary intake reduce entry risk; the marker cannot classify personal data."
+        },
+        {
+          "id": "D5.handling",
+          "owner": "foundation",
+          "status": "pending",
+          "evidenceType": "manual",
+          "rationale": "Review data handling separately; passing fixture tests cannot prove all logs and repository content are synthetic."
+        }
+      ]
+    }
+  ]
+}

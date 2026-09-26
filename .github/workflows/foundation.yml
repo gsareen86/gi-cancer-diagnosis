@@ -1,0 +1,74 @@
+name: Foundation checks
+on:
+  pull_request:
+  push:
+    branches: [claude/gi-compass-clean-slate]
+  workflow_dispatch:
+    inputs:
+      reviewed_sha:
+        description: Exact full commit SHA reviewed for the designated synthetic test project
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  local:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test:unit
+      - run: npm run check:invariants
+      - run: npm run build
+      - run: node node_modules/@playwright/test/cli.js install --with-deps chromium
+      - run: npm run test:e2e
+      - run: node node_modules/@fission-ai/openspec/bin/openspec.js validate foundation --strict
+        env:
+          OPENSPEC_TELEMETRY: "0"
+
+  hosted:
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'gsareen86/gi-cancer-diagnosis' && github.ref == 'refs/heads/claude/gi-compass-clean-slate' && inputs.reviewed_sha == github.sha
+    needs: local
+    environment: synthetic-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: gi-compass-synthetic-test
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      # Installation never receives project/database/Auth credentials.
+      - run: npm ci
+      - run: node node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Verify and test the reviewed synthetic project
+        run: node scripts/ci-hosted.mjs
+        env:
+          SUPABASE_EXPECTED_PROJECT_REF: ${{ vars.DEMO_PROJECT_REF }}
+          TEST_SUPABASE_EXPECTED_PROJECT_REF: ${{ vars.TEST_PROJECT_REF }}
+          TEST_SUPABASE_URL: ${{ vars.TEST_SUPABASE_URL }}
+          TEST_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.TEST_SUPABASE_PUBLISHABLE_KEY }}
+          TEST_SUPABASE_VERIFIED_REGION: ${{ vars.TEST_SUPABASE_VERIFIED_REGION }}
+          TEST_SUPABASE_REGION_VERIFIED_AT: ${{ vars.TEST_SUPABASE_REGION_VERIFIED_AT }}
+          TEST_SUPABASE_DATABASE_URL: ${{ secrets.TEST_SUPABASE_DATABASE_URL }}
+          TEST_SUPABASE_DATABASE_CA_PEM: ${{ secrets.TEST_SUPABASE_DATABASE_CA_PEM }}
+          TEST_SUPABASE_AUTH_ADMIN_KEY: ${{ secrets.TEST_SUPABASE_AUTH_ADMIN_KEY }}
+          TEST_SUPABASE_ACCESS_TOKEN: ${{ secrets.TEST_SUPABASE_ACCESS_TOKEN }}
+          OPERATOR_ID: github-actions:${{ github.repository }}:${{ github.run_id }}

@@ -1,0 +1,4510 @@
+{
+  "version": "intake-draft-2026-09-22.2",
+  "status": "DRAFT",
+  "author": "AI-assisted draft for clinical lead review",
+  "approver": null,
+  "date": "2026-09-22",
+  "provenance": "assumed",
+  "noticeVersion": "gi-privacy-2026-09-22",
+  "urgencies": [
+    "review",
+    "prompt",
+    "immediate"
+  ],
+  "specialties": [
+    "Gastroenterology",
+    "GI / HPB surgery",
+    "Surgical oncology",
+    "General medicine",
+    "Emergency department"
+  ],
+  "questions": [
+    {
+      "id": "pain_presence",
+      "section": "safety",
+      "domain": 1,
+      "label": "Are you having abdominal (tummy) pain now, or have you had episodes recently?",
+      "kind": "choice",
+      "options": [
+        "Pain is present now",
+        "Pain comes and goes; no pain right now",
+        "Pain happened before but has stopped",
+        "No abdominal pain",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_now_severity",
+      "section": "safety",
+      "domain": 1,
+      "label": "How strong is the abdominal pain right now?",
+      "kind": "choice",
+      "options": [
+        "Mild — I can carry on with usual activities",
+        "Moderate — it limits some activities",
+        "Severe — I cannot carry on with usual activities",
+        "Unbearable pain",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now"
+            ]
+          }
+        ]
+      },
+      "help": "Describe the pain now, not the worst pain in the past.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_onset",
+      "section": "safety",
+      "domain": 1,
+      "label": "How did this episode of pain begin?",
+      "kind": "choice",
+      "options": [
+        "Very suddenly, over seconds or minutes",
+        "Gradually, over hours or days",
+        "Longstanding pain that has recently become worse",
+        "Longstanding pain without a recent change",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now",
+              "Pain comes and goes; no pain right now",
+              "Pain happened before but has stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_site",
+      "section": "safety",
+      "domain": 1,
+      "label": "Where do you feel the abdominal pain? Choose all areas that apply.",
+      "kind": "multi",
+      "options": [
+        "Right upper",
+        "Upper middle",
+        "Left upper",
+        "Right side",
+        "Around the navel",
+        "Left side",
+        "Right lower",
+        "Lower middle",
+        "Left lower",
+        "All over",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now",
+              "Pain comes and goes; no pain right now",
+              "Pain happened before but has stopped"
+            ]
+          }
+        ]
+      },
+      "help": "Use your own right and left. You can select more than one area.",
+      "status": "DRAFT",
+      "provenance": "assumed",
+      "exclusive": [
+        "All over"
+      ]
+    },
+    {
+      "id": "pain_touch",
+      "section": "safety",
+      "domain": 1,
+      "label": "Without pressing to test it, have you noticed pain from light touch or an unusually hard tummy?",
+      "kind": "choice",
+      "options": [
+        "Very painful with light touch",
+        "Unusually hard and painful",
+        "Neither of these",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now"
+            ]
+          }
+        ]
+      },
+      "help": "Do not press on your tummy to answer this question.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "faint",
+      "section": "safety",
+      "domain": 15,
+      "label": "Have you felt lightheaded, or actually passed out?",
+      "kind": "choice",
+      "options": [
+        "Lightheaded or dizzy, without passing out",
+        "Passed out or lost consciousness",
+        "Neither lightheadedness nor fainting",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "faint_timing",
+      "section": "safety",
+      "domain": 15,
+      "label": "When did the lightheadedness or fainting most recently happen?",
+      "kind": "choice",
+      "options": [
+        "Happening now",
+        "Earlier today, now stopped",
+        "Within the past week, now stopped",
+        "More than a week ago, now stopped",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "faint",
+            "values": [
+              "Lightheaded or dizzy, without passing out",
+              "Passed out or lost consciousness"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "faint_recovery",
+      "section": "safety",
+      "domain": 15,
+      "label": "How is the person affected now?",
+      "kind": "choice",
+      "options": [
+        "Fully recovered and back to usual",
+        "Still lightheaded but able to sit and talk normally",
+        "Not fully recovered, hard to wake, or difficulty speaking or moving",
+        "Feels about to collapse and cannot stand safely",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "faint",
+            "values": [
+              "Lightheaded or dizzy, without passing out",
+              "Passed out or lost consciousness"
+            ]
+          }
+        ]
+      },
+      "help": "If the patient cannot answer, a person with them can describe what they observe.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "faint_context",
+      "section": "safety",
+      "domain": 15,
+      "label": "Did the faint happen with any of these features?",
+      "kind": "choice",
+      "options": [
+        "During exercise",
+        "While lying down",
+        "With chest pain or a racing/irregular heartbeat",
+        "With a serious injury or shaking/jerking",
+        "None of these",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "faint",
+            "values": [
+              "Passed out or lost consciousness"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "confusion",
+      "section": "safety",
+      "domain": 15,
+      "label": "Has there been a change in awareness, orientation or ability to think clearly?",
+      "kind": "choice",
+      "options": [
+        "A new change in awareness or confusion",
+        "Longstanding memory/confusion problems without a new change",
+        "No change in awareness",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "For example, not knowing where you are or being unable to follow a conversation.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "confusion_onset",
+      "section": "safety",
+      "domain": 15,
+      "label": "How did this new change in awareness begin?",
+      "kind": "choice",
+      "options": [
+        "Suddenly, and it is happening now or happened today",
+        "More gradually over several days",
+        "A past episode that has resolved",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "confusion",
+            "values": [
+              "A new change in awareness or confusion"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "vomit_blood",
+      "section": "safety",
+      "domain": 9,
+      "label": "Have you noticed blood or material like coffee grounds in vomit?",
+      "kind": "choice",
+      "options": [
+        "Fresh red blood",
+        "Dark material like coffee grounds",
+        "Possible blood, but appearance unclear",
+        "No blood noticed / no vomiting",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "vomit_blood_timing",
+      "section": "safety",
+      "domain": 9,
+      "label": "When did the blood or coffee-ground material in vomit occur?",
+      "kind": "choice",
+      "options": [
+        "Happening now",
+        "Earlier today, now stopped",
+        "Within the past week, now stopped",
+        "More than a week ago, now stopped",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "vomit_blood",
+            "values": [
+              "Fresh red blood",
+              "Dark material like coffee grounds",
+              "Possible blood, but appearance unclear"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "vomit_blood_amount",
+      "section": "safety",
+      "domain": 9,
+      "label": "How much blood or coffee-ground material was there?",
+      "kind": "choice",
+      "options": [
+        "A few streaks or spots",
+        "More than streaks, or clots",
+        "Mostly blood / repeated amounts",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "vomit_blood",
+            "values": [
+              "Fresh red blood",
+              "Dark material like coffee grounds",
+              "Possible blood, but appearance unclear"
+            ]
+          }
+        ]
+      },
+      "help": "Use the detail box for an approximate amount; do not delay getting help to measure it.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "bleeding_unwell",
+      "section": "safety",
+      "domain": 9,
+      "label": "During that bleeding episode, was there faintness, new confusion, cold clammy skin, fast breathing or abdominal pain?",
+      "kind": "choice",
+      "options": [
+        "Yes, with the same bleeding episode",
+        "No, none of these during the bleeding",
+        "These happened at a different time",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "vomit_blood",
+            "values": [
+              "Fresh red blood",
+              "Dark material like coffee grounds",
+              "Possible blood, but appearance unclear"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "black_stool",
+      "section": "safety",
+      "domain": 9,
+      "label": "Has your stool looked unusually black?",
+      "kind": "choice",
+      "options": [
+        "Black, sticky, tar-like stool",
+        "Dark stool but not sticky or tar-like",
+        "No black stool",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "black_stool_timing",
+      "section": "safety",
+      "domain": 9,
+      "label": "When did the black stool last occur?",
+      "kind": "choice",
+      "options": [
+        "Happening now",
+        "Earlier today, now stopped",
+        "Within the past week, now stopped",
+        "More than a week ago, now stopped",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "black_stool",
+            "values": [
+              "Black, sticky, tar-like stool",
+              "Dark stool but not sticky or tar-like"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "rectal_blood",
+      "section": "safety",
+      "domain": 9,
+      "label": "Have you noticed red blood when passing stool or from the bottom?",
+      "kind": "choice",
+      "options": [
+        "Blood on the paper or outside the stool",
+        "Blood mixed into the stool or toilet water",
+        "Blood passing even without stool",
+        "No red blood noticed",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "rectal_blood_timing",
+      "section": "safety",
+      "domain": 9,
+      "label": "When did the red bleeding last occur?",
+      "kind": "choice",
+      "options": [
+        "Happening now",
+        "Earlier today, now stopped",
+        "Within the past week, now stopped",
+        "More than a week ago, now stopped",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "rectal_blood",
+            "values": [
+              "Blood on the paper or outside the stool",
+              "Blood mixed into the stool or toilet water",
+              "Blood passing even without stool"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "rectal_blood_amount",
+      "section": "safety",
+      "domain": 9,
+      "label": "How much red bleeding was there in the most recent episode?",
+      "kind": "choice",
+      "options": [
+        "A few spots or streaks",
+        "More than streaks, but not a large amount",
+        "A large amount, large clots, or bleeding that will not stop",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "rectal_blood",
+            "values": [
+              "Blood on the paper or outside the stool",
+              "Blood mixed into the stool or toilet water",
+              "Blood passing even without stool"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "vomiting",
+      "section": "safety",
+      "domain": 2,
+      "label": "When have you been vomiting?",
+      "kind": "choice",
+      "options": [
+        "Vomiting today",
+        "Vomiting on and off, but not today",
+        "Vomiting earlier in this illness, now stopped",
+        "No vomiting",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "vomiting_frequency",
+      "section": "safety",
+      "domain": 2,
+      "label": "On a day with vomiting, about how many times does it happen?",
+      "kind": "choice",
+      "options": [
+        "Once",
+        "2–3 times",
+        "4–6 times",
+        "More than 6 times",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "vomiting",
+            "values": [
+              "Vomiting today",
+              "Vomiting on and off, but not today",
+              "Vomiting earlier in this illness, now stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "fluids",
+      "section": "safety",
+      "domain": 15,
+      "label": "What happens when you try to drink fluids today?",
+      "kind": "choice",
+      "options": [
+        "Usual drinks stay down",
+        "Only small sips stay down",
+        "Even small sips come back up",
+        "Have not tried drinking",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "fluid_duration",
+      "section": "safety",
+      "domain": 15,
+      "label": "How long have drinks been difficult to keep down?",
+      "kind": "choice",
+      "options": [
+        "Less than 4 hours",
+        "4–12 hours",
+        "12–24 hours",
+        "More than 24 hours",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "fluids",
+            "values": [
+              "Only small sips stay down",
+              "Even small sips come back up"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "urine",
+      "section": "safety",
+      "domain": 15,
+      "label": "How much urine are you passing today compared with usual?",
+      "kind": "choice",
+      "options": [
+        "About the usual amount",
+        "Less than usual / noticeably darker",
+        "Very little or none for many hours",
+        "Unable to pass urine despite needing to",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "distended",
+      "section": "safety",
+      "domain": 15,
+      "label": "Is your tummy unusually swollen or bloated?",
+      "kind": "choice",
+      "options": [
+        "Swollen now and not settling",
+        "Comes and goes; swollen now",
+        "Comes and goes; not swollen now",
+        "No unusual swelling",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "no_gas",
+      "section": "safety",
+      "domain": 15,
+      "label": "Are you able to pass stool and wind (gas) now?",
+      "kind": "choice",
+      "options": [
+        "Passing both stool and gas",
+        "Constipated but still passing gas",
+        "Unable to pass either stool or gas",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "obstruction_episode",
+      "section": "safety",
+      "domain": 15,
+      "label": "Are the swelling, vomiting and inability to pass stool or gas happening together in the same current episode?",
+      "kind": "choice",
+      "options": [
+        "Yes, together in this episode",
+        "No, at different times",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "distended",
+            "values": [
+              "Swollen now and not settling",
+              "Comes and goes; swollen now"
+            ]
+          },
+          {
+            "field": "no_gas",
+            "values": [
+              "Unable to pass either stool or gas"
+            ]
+          },
+          {
+            "field": "vomiting",
+            "values": [
+              "Vomiting today"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "jaundice",
+      "section": "safety",
+      "domain": 5,
+      "label": "Have the whites of your eyes or your skin become yellow?",
+      "kind": "choice",
+      "options": [
+        "Yellow now / recently noticed",
+        "Comes and goes; yellow now",
+        "Yellow in the past, not now",
+        "No yellowing noticed",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "fever",
+      "section": "safety",
+      "domain": 3,
+      "label": "Have you had a fever or felt unusually hot during this illness?",
+      "kind": "choice",
+      "options": [
+        "Measured a raised temperature today",
+        "Feel feverish today, not measured",
+        "Fever on earlier days, not today",
+        "No fever noticed",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "fever_chills",
+      "section": "safety",
+      "domain": 3,
+      "label": "Do chills or shaking shivers happen with the fever?",
+      "kind": "choice",
+      "options": [
+        "Shaking shivers",
+        "Chills without shaking",
+        "No chills or shivering",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "fever",
+            "values": [
+              "Measured a raised temperature today",
+              "Feel feverish today, not measured",
+              "Fever on earlier days, not today"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "biliary_episode",
+      "section": "safety",
+      "domain": 5,
+      "label": "Are the yellowing, fever and tummy pain occurring together in this illness?",
+      "kind": "choice",
+      "options": [
+        "Yes, together in this illness",
+        "No, these happened at different times",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "jaundice",
+            "values": [
+              "Yellow now / recently noticed",
+              "Comes and goes; yellow now"
+            ]
+          },
+          {
+            "field": "fever",
+            "values": [
+              "Measured a raised temperature today",
+              "Feel feverish today, not measured"
+            ]
+          },
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "swallowing",
+      "section": "safety",
+      "domain": 11,
+      "label": "What, if anything, is difficult to swallow?",
+      "kind": "choice",
+      "options": [
+        "Food sticks, but liquids go down",
+        "Liquids are difficult",
+        "Both food and liquids are difficult",
+        "Trouble swallowing saliva",
+        "No difficulty swallowing",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "saliva_now",
+      "section": "safety",
+      "domain": 11,
+      "label": "Can you swallow your own saliva right now?",
+      "kind": "choice",
+      "options": [
+        "Cannot swallow saliva / drooling because it will not go down",
+        "Can swallow saliva now",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "swallowing",
+            "values": [
+              "Trouble swallowing saliva"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "concern",
+      "section": "symptoms",
+      "domain": 10,
+      "label": "What is the main problem you want your care team to help with?",
+      "kind": "text",
+      "options": [],
+      "showWhen": null,
+      "help": "Use your own words, including anything the options do not capture.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "duration",
+      "section": "symptoms",
+      "domain": 10,
+      "label": "When did the main problem first start?",
+      "kind": "choice",
+      "options": [
+        "Today",
+        "2–7 days ago",
+        "1–2 weeks ago",
+        "3–6 weeks ago",
+        "2–3 months ago",
+        "More than 3 months ago",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "pattern",
+      "section": "symptoms",
+      "domain": 10,
+      "label": "How has the main problem changed recently?",
+      "kind": "choice",
+      "options": [
+        "Getting better",
+        "About the same",
+        "Getting worse",
+        "Varies from day to day",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_started",
+      "section": "symptoms",
+      "domain": 1,
+      "label": "When did you first start having this abdominal pain?",
+      "kind": "choice",
+      "options": [
+        "Today",
+        "2–7 days ago",
+        "1–2 weeks ago",
+        "3–6 weeks ago",
+        "2–3 months ago",
+        "More than 3 months ago",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now",
+              "Pain comes and goes; no pain right now",
+              "Pain happened before but has stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_pattern",
+      "section": "symptoms",
+      "domain": 1,
+      "label": "What is the pattern of the pain?",
+      "kind": "choice",
+      "options": [
+        "Continuous, without pain-free periods",
+        "Comes and goes, with pain-free periods",
+        "One episode that has now stopped",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now",
+              "Pain comes and goes; no pain right now",
+              "Pain happened before but has stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_frequency",
+      "section": "symptoms",
+      "domain": 1,
+      "label": "How often do painful episodes happen?",
+      "kind": "choice",
+      "options": [
+        "Less than once a week",
+        "A few days each week",
+        "Most days",
+        "Every day",
+        "Several episodes each day",
+        "Only one episode so far",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now",
+              "Pain comes and goes; no pain right now",
+              "Pain happened before but has stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_episode_length",
+      "section": "symptoms",
+      "domain": 1,
+      "label": "How long does a typical painful episode last?",
+      "kind": "choice",
+      "options": [
+        "A few seconds",
+        "Minutes",
+        "Less than an hour",
+        "Several hours",
+        "Most of the day or longer",
+        "Pain is continuous",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now",
+              "Pain comes and goes; no pain right now",
+              "Pain happened before but has stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_score",
+      "section": "symptoms",
+      "domain": 1,
+      "label": "At its worst during this illness, how strong has the pain been (0–10)?",
+      "kind": "choice",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now",
+              "Pain comes and goes; no pain right now",
+              "Pain happened before but has stopped"
+            ]
+          }
+        ]
+      },
+      "help": "0 means no pain; 10 means the worst pain you can imagine. This is separate from your pain right now.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_character",
+      "section": "symptoms",
+      "domain": 1,
+      "label": "What does the pain feel like?",
+      "kind": "choice",
+      "options": [
+        "Dull ache",
+        "Burning",
+        "Cramping or waves",
+        "Sharp or stabbing",
+        "Pressure or heaviness",
+        "Another sensation",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now",
+              "Pain comes and goes; no pain right now",
+              "Pain happened before but has stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_radiates",
+      "section": "symptoms",
+      "domain": 1,
+      "label": "Does the pain spread anywhere?",
+      "kind": "multi",
+      "options": [
+        "Back",
+        "Right shoulder",
+        "Groin or side of the waist",
+        "Testicle",
+        "Another area",
+        "Stays in the same place",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now",
+              "Pain comes and goes; no pain right now",
+              "Pain happened before but has stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed",
+      "exclusive": [
+        "Stays in the same place"
+      ]
+    },
+    {
+      "id": "food_effect",
+      "section": "symptoms",
+      "domain": 1,
+      "label": "How does eating affect the pain?",
+      "kind": "choice",
+      "options": [
+        "Usually improves it",
+        "Usually makes it worse",
+        "No clear effect",
+        "Different foods have different effects",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now",
+              "Pain comes and goes; no pain right now",
+              "Pain happened before but has stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "position_effect",
+      "section": "symptoms",
+      "domain": 1,
+      "label": "Does your position affect the pain?",
+      "kind": "choice",
+      "options": [
+        "Better leaning forward",
+        "Worse lying flat",
+        "Better lying still",
+        "Worse with movement",
+        "No clear effect",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now",
+              "Pain comes and goes; no pain right now",
+              "Pain happened before but has stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_relief",
+      "section": "symptoms",
+      "domain": 1,
+      "label": "What usually makes the pain settle?",
+      "kind": "choice",
+      "options": [
+        "Settles on its own",
+        "Relieved by passing stool or wind",
+        "Relieved by tablets or home remedies",
+        "Needed an injection or drip",
+        "Does not settle",
+        "Something else",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now",
+              "Pain comes and goes; no pain right now",
+              "Pain happened before but has stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_change",
+      "section": "symptoms",
+      "domain": 1,
+      "label": "If you have had pain before, what is different this time?",
+      "kind": "choice",
+      "options": [
+        "First time with this pain",
+        "Same as earlier episodes",
+        "More severe or more frequent",
+        "Lasts longer or no longer settles",
+        "Different location or character",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "pain_presence",
+            "values": [
+              "Pain is present now",
+              "Pain comes and goes; no pain right now",
+              "Pain happened before but has stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "vomiting_started",
+      "section": "symptoms",
+      "domain": 2,
+      "label": "When did the vomiting first start?",
+      "kind": "choice",
+      "options": [
+        "Today",
+        "2–7 days ago",
+        "1–2 weeks ago",
+        "3–6 weeks ago",
+        "2–3 months ago",
+        "More than 3 months ago",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "vomiting",
+            "values": [
+              "Vomiting today",
+              "Vomiting on and off, but not today",
+              "Vomiting earlier in this illness, now stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "vomiting_appearance",
+      "section": "symptoms",
+      "domain": 2,
+      "label": "What does the vomit usually look like?",
+      "kind": "choice",
+      "options": [
+        "Undigested food",
+        "Partly digested food",
+        "Green or yellow fluid",
+        "Clear or frothy fluid",
+        "Blood or coffee-ground material",
+        "Something else",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "vomiting",
+            "values": [
+              "Vomiting today",
+              "Vomiting on and off, but not today",
+              "Vomiting earlier in this illness, now stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "appearance_blood_timing",
+      "section": "symptoms",
+      "domain": 9,
+      "label": "When did this blood or coffee-ground material last occur?",
+      "kind": "choice",
+      "options": [
+        "Happening now",
+        "Earlier today, now stopped",
+        "Within the past week, now stopped",
+        "More than a week ago, now stopped",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "vomiting_appearance",
+            "values": [
+              "Blood or coffee-ground material"
+            ]
+          }
+        ]
+      },
+      "help": "Clarify this even if an earlier answer was different.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "appearance_blood_unwell",
+      "section": "symptoms",
+      "domain": 9,
+      "label": "Did faintness, confusion, clammy skin, fast breathing or tummy pain occur with this bleeding?",
+      "kind": "choice",
+      "options": [
+        "Yes, during the same episode",
+        "No, none of these during the bleeding",
+        "These happened at another time",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "vomiting_appearance",
+            "values": [
+              "Blood or coffee-ground material"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "appearance_blood_amount",
+      "section": "symptoms",
+      "domain": 9,
+      "label": "How much blood or coffee-ground material was there?",
+      "kind": "choice",
+      "options": [
+        "A few streaks or spots",
+        "More than streaks, or clots",
+        "Mostly blood / repeated amounts",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "vomiting_appearance",
+            "values": [
+              "Blood or coffee-ground material"
+            ]
+          }
+        ]
+      },
+      "help": "Use the detail box for an approximate amount; do not delay getting help to measure it.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "vomiting_amount",
+      "section": "symptoms",
+      "domain": 2,
+      "label": "About how much comes up each time?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "vomiting",
+            "values": [
+              "Vomiting today",
+              "Vomiting on and off, but not today",
+              "Vomiting earlier in this illness, now stopped"
+            ]
+          }
+        ]
+      },
+      "help": "If possible, estimate millilitres (mL), or give the size of the cup/container and fraction filled. Say it is an estimate.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "vomiting_meals",
+      "section": "symptoms",
+      "domain": 2,
+      "label": "How is vomiting related to meals?",
+      "kind": "choice",
+      "options": [
+        "Soon after eating",
+        "Several hours after eating",
+        "On an empty stomach",
+        "No clear relation",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "vomiting",
+            "values": [
+              "Vomiting today",
+              "Vomiting on and off, but not today",
+              "Vomiting earlier in this illness, now stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "vomiting_nausea",
+      "section": "symptoms",
+      "domain": 2,
+      "label": "Do you feel nauseated before vomiting?",
+      "kind": "choice",
+      "options": [
+        "Usually nauseated first",
+        "Vomiting without warning",
+        "Varies between episodes",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "vomiting",
+            "values": [
+              "Vomiting today",
+              "Vomiting on and off, but not today",
+              "Vomiting earlier in this illness, now stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "vomiting_relief",
+      "section": "symptoms",
+      "domain": 2,
+      "label": "How do you feel after vomiting?",
+      "kind": "choice",
+      "options": [
+        "Pain or fullness improves",
+        "No improvement",
+        "Pain feels worse",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "vomiting",
+            "values": [
+              "Vomiting today",
+              "Vomiting on and off, but not today",
+              "Vomiting earlier in this illness, now stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "vomit_retching",
+      "section": "symptoms",
+      "domain": 9,
+      "label": "Did blood appear before or after repeated retching?",
+      "kind": "choice",
+      "options": [
+        "Before any repeated retching",
+        "Only after repeated retching",
+        "No retching before blood",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "any": [
+          {
+            "field": "vomit_blood",
+            "values": [
+              "Fresh red blood",
+              "Dark material like coffee grounds",
+              "Possible blood, but appearance unclear"
+            ]
+          },
+          {
+            "field": "vomiting_appearance",
+            "values": [
+              "Blood or coffee-ground material"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "fever_started",
+      "section": "symptoms",
+      "domain": 3,
+      "label": "When did the fever first start?",
+      "kind": "choice",
+      "options": [
+        "Today",
+        "2–7 days ago",
+        "1–2 weeks ago",
+        "3–6 weeks ago",
+        "2–3 months ago",
+        "More than 3 months ago",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "fever",
+            "values": [
+              "Measured a raised temperature today",
+              "Feel feverish today, not measured",
+              "Fever on earlier days, not today"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "fever_pattern",
+      "section": "symptoms",
+      "domain": 3,
+      "label": "What is the pattern of the fever?",
+      "kind": "choice",
+      "options": [
+        "Comes and goes",
+        "Feels continuous",
+        "Only one episode",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "fever",
+            "values": [
+              "Measured a raised temperature today",
+              "Feel feverish today, not measured",
+              "Fever on earlier days, not today"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "fever_onset",
+      "section": "symptoms",
+      "domain": 3,
+      "label": "How did the fever start?",
+      "kind": "choice",
+      "options": [
+        "Suddenly",
+        "Gradually",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "fever",
+            "values": [
+              "Measured a raised temperature today",
+              "Feel feverish today, not measured",
+              "Fever on earlier days, not today"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "fever_measurement",
+      "section": "symptoms",
+      "domain": 3,
+      "label": "What temperature was measured, if any?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "fever",
+            "values": [
+              "Measured a raised temperature today",
+              "Feel feverish today, not measured",
+              "Fever on earlier days, not today"
+            ]
+          }
+        ]
+      },
+      "help": "Give the number, °C or °F, and when it was measured. If no thermometer was used, say felt feverish, not measured.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "reflux",
+      "section": "symptoms",
+      "domain": 4,
+      "label": "Do you have burning or acid coming back up?",
+      "kind": "choice",
+      "options": [
+        "Burning behind the breastbone",
+        "Burning in the upper tummy",
+        "Sour or bitter fluid in the mouth",
+        "More than one of these",
+        "None of these",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "reflux_frequency",
+      "section": "symptoms",
+      "domain": 4,
+      "label": "How often does the burning or acid coming up happen?",
+      "kind": "choice",
+      "options": [
+        "Less than once a week",
+        "A few days each week",
+        "Most days",
+        "Every day",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "reflux",
+            "values": [
+              "Burning behind the breastbone",
+              "Burning in the upper tummy",
+              "Sour or bitter fluid in the mouth",
+              "More than one of these"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "reflux_started",
+      "section": "symptoms",
+      "domain": 4,
+      "label": "When did the burning or acid coming up start?",
+      "kind": "choice",
+      "options": [
+        "Today",
+        "2–7 days ago",
+        "1–2 weeks ago",
+        "3–6 weeks ago",
+        "2–3 months ago",
+        "More than 3 months ago",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "reflux",
+            "values": [
+              "Burning behind the breastbone",
+              "Burning in the upper tummy",
+              "Sour or bitter fluid in the mouth",
+              "More than one of these"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "reflux_triggers",
+      "section": "symptoms",
+      "domain": 4,
+      "label": "When is the burning or acid coming up most noticeable?",
+      "kind": "choice",
+      "options": [
+        "After meals",
+        "When lying down or at night",
+        "With particular foods or drinks",
+        "No clear pattern",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "reflux",
+            "values": [
+              "Burning behind the breastbone",
+              "Burning in the upper tummy",
+              "Sour or bitter fluid in the mouth",
+              "More than one of these"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "upper_fullness",
+      "section": "symptoms",
+      "domain": 4,
+      "label": "How often do you feel bloated or uncomfortably full in the upper tummy?",
+      "kind": "choice",
+      "options": [
+        "Never",
+        "Occasionally",
+        "Most days",
+        "After almost every meal",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "early_full",
+      "section": "symptoms",
+      "domain": 13,
+      "label": "Does eating a small amount make you feel too full to finish a usual meal?",
+      "kind": "choice",
+      "options": [
+        "Can finish a usual meal",
+        "Sometimes full after a small amount",
+        "Usually full after a small amount",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "appetite",
+      "section": "symptoms",
+      "domain": 13,
+      "label": "How has your appetite changed?",
+      "kind": "choice",
+      "options": [
+        "About usual",
+        "Less appetite than usual",
+        "Almost no appetite",
+        "More appetite than usual",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "appetite_started",
+      "section": "symptoms",
+      "domain": 13,
+      "label": "When did the reduced appetite or early fullness start?",
+      "kind": "choice",
+      "options": [
+        "Today",
+        "2–7 days ago",
+        "1–2 weeks ago",
+        "3–6 weeks ago",
+        "2–3 months ago",
+        "More than 3 months ago",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "any": [
+          {
+            "field": "appetite",
+            "values": [
+              "Less appetite than usual",
+              "Almost no appetite"
+            ]
+          },
+          {
+            "field": "early_full",
+            "values": [
+              "Sometimes full after a small amount",
+              "Usually full after a small amount"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "weight_loss",
+      "section": "symptoms",
+      "domain": 12,
+      "label": "What has happened to your weight?",
+      "kind": "choice",
+      "options": [
+        "Weight unchanged",
+        "Lost weight without trying",
+        "Lost weight intentionally",
+        "Gained weight",
+        "Clothes looser, but weight not checked",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "weight_details",
+      "section": "symptoms",
+      "domain": 12,
+      "label": "What were your previous and current weights, and when?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "weight_loss",
+            "values": [
+              "Lost weight without trying",
+              "Lost weight intentionally",
+              "Gained weight",
+              "Clothes looser, but weight not checked"
+            ]
+          }
+        ]
+      },
+      "help": "Give kg and dates or the time between weights. Say measured on a scale or estimated; do not invent a number.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "jaundice_started",
+      "section": "symptoms",
+      "domain": 5,
+      "label": "When was yellowing first noticed?",
+      "kind": "choice",
+      "options": [
+        "Today",
+        "2–7 days ago",
+        "1–2 weeks ago",
+        "3–6 weeks ago",
+        "2–3 months ago",
+        "More than 3 months ago",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "jaundice",
+            "values": [
+              "Yellow now / recently noticed",
+              "Comes and goes; yellow now",
+              "Yellow in the past, not now"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "jaundice_onset",
+      "section": "symptoms",
+      "domain": 5,
+      "label": "How did the yellowing start?",
+      "kind": "choice",
+      "options": [
+        "Suddenly noticed",
+        "Gradually became noticeable",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "jaundice",
+            "values": [
+              "Yellow now / recently noticed",
+              "Comes and goes; yellow now",
+              "Yellow in the past, not now"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "jaundice_pattern",
+      "section": "symptoms",
+      "domain": 5,
+      "label": "How has the yellowing changed?",
+      "kind": "choice",
+      "options": [
+        "Persistent, about the same",
+        "Getting more noticeable",
+        "Comes and goes",
+        "Has cleared",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "jaundice",
+            "values": [
+              "Yellow now / recently noticed",
+              "Comes and goes; yellow now",
+              "Yellow in the past, not now"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "urine_colour",
+      "section": "symptoms",
+      "domain": 5,
+      "label": "What colour has the urine been during the yellowing?",
+      "kind": "choice",
+      "options": [
+        "Usual colour",
+        "Dark yellow",
+        "Tea or cola coloured",
+        "Another colour",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "jaundice",
+            "values": [
+              "Yellow now / recently noticed",
+              "Comes and goes; yellow now",
+              "Yellow in the past, not now"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "itching",
+      "section": "symptoms",
+      "domain": 6,
+      "label": "Where, if anywhere, are you itching?",
+      "kind": "choice",
+      "options": [
+        "No itching",
+        "One area of the body",
+        "Several areas",
+        "All over",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "itch_started",
+      "section": "symptoms",
+      "domain": 6,
+      "label": "When did the itching start?",
+      "kind": "choice",
+      "options": [
+        "Today",
+        "2–7 days ago",
+        "1–2 weeks ago",
+        "3–6 weeks ago",
+        "2–3 months ago",
+        "More than 3 months ago",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "itching",
+            "values": [
+              "One area of the body",
+              "Several areas",
+              "All over"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "itch_impact",
+      "section": "symptoms",
+      "domain": 6,
+      "label": "How much does itching affect you?",
+      "kind": "choice",
+      "options": [
+        "Does not affect sleep or activities",
+        "Disturbs sleep",
+        "Interferes with daily activities",
+        "Both sleep and activities",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "itching",
+            "values": [
+              "One area of the body",
+              "Several areas",
+              "All over"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "bowel_change",
+      "section": "symptoms",
+      "domain": 7,
+      "label": "How are your bowel habits different from usual?",
+      "kind": "choice",
+      "options": [
+        "No change",
+        "Harder or less frequent stools",
+        "Looser or more frequent stools",
+        "Alternating hard and loose stools",
+        "Urgency or a feeling of incomplete emptying",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "bowel_started",
+      "section": "symptoms",
+      "domain": 7,
+      "label": "When did the bowel change begin?",
+      "kind": "choice",
+      "options": [
+        "Today",
+        "2–7 days ago",
+        "1–2 weeks ago",
+        "3–6 weeks ago",
+        "2–3 months ago",
+        "More than 3 months ago",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "bowel_change",
+            "values": [
+              "Harder or less frequent stools",
+              "Looser or more frequent stools",
+              "Alternating hard and loose stools",
+              "Urgency or a feeling of incomplete emptying"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "bowel_onset",
+      "section": "symptoms",
+      "domain": 7,
+      "label": "Did the bowel change start suddenly or gradually?",
+      "kind": "choice",
+      "options": [
+        "Suddenly",
+        "Gradually",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "bowel_change",
+            "values": [
+              "Harder or less frequent stools",
+              "Looser or more frequent stools",
+              "Alternating hard and loose stools",
+              "Urgency or a feeling of incomplete emptying"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "bowel_trend",
+      "section": "symptoms",
+      "domain": 7,
+      "label": "How are the bowel changes developing?",
+      "kind": "choice",
+      "options": [
+        "Getting better",
+        "About the same",
+        "Getting worse",
+        "Varies from day to day",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "bowel_change",
+            "values": [
+              "Harder or less frequent stools",
+              "Looser or more frequent stools",
+              "Alternating hard and loose stools",
+              "Urgency or a feeling of incomplete emptying"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "bowel_frequency",
+      "section": "symptoms",
+      "domain": 8,
+      "label": "How often do you pass stool now, compared with before?",
+      "kind": "text",
+      "options": [],
+      "showWhen": null,
+      "help": "Give a count per day or per week for now and for usual. Include night-time visits if any.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "bowel_treatment",
+      "section": "symptoms",
+      "domain": 7,
+      "label": "Have you tried anything to help pass stool or control diarrhoea?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "bowel_change",
+            "values": [
+              "Harder or less frequent stools",
+              "Looser or more frequent stools",
+              "Alternating hard and loose stools",
+              "Urgency or a feeling of incomplete emptying"
+            ]
+          }
+        ]
+      },
+      "help": "Give its name, how long you used it and whether it helped, or say nothing tried.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "stool_colour",
+      "section": "symptoms",
+      "domain": 8,
+      "label": "What does your stool usually look like during this illness?",
+      "kind": "choice",
+      "options": [
+        "Brown",
+        "Black and sticky",
+        "Dark but not sticky",
+        "Pale or clay coloured",
+        "Yellow",
+        "Red or blood mixed in",
+        "Another appearance",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "appearance_stool_timing",
+      "section": "symptoms",
+      "domain": 9,
+      "label": "When did this black sticky or blood-stained stool last occur?",
+      "kind": "choice",
+      "options": [
+        "Happening now",
+        "Earlier today, now stopped",
+        "Within the past week, now stopped",
+        "More than a week ago, now stopped",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "stool_colour",
+            "values": [
+              "Black and sticky",
+              "Red or blood mixed in"
+            ]
+          }
+        ]
+      },
+      "help": "Clarify this even if an earlier answer was different.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "appearance_stool_amount",
+      "section": "symptoms",
+      "domain": 9,
+      "label": "How much blood was there in this stool episode?",
+      "kind": "choice",
+      "options": [
+        "A few spots or streaks",
+        "More than streaks, but not a large amount",
+        "A large amount, large clots, or bleeding that will not stop",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "stool_colour",
+            "values": [
+              "Red or blood mixed in"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "mucus",
+      "section": "symptoms",
+      "domain": 8,
+      "label": "How often is there mucus or a jelly-like coating in the stool?",
+      "kind": "choice",
+      "options": [
+        "Not noticed",
+        "Occasionally",
+        "Often or most bowel movements",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "bleeding_frequency",
+      "section": "symptoms",
+      "domain": 9,
+      "label": "How often have you noticed red blood from the bottom?",
+      "kind": "choice",
+      "options": [
+        "Once only",
+        "Occasionally",
+        "Most bowel movements",
+        "Every bowel movement",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "rectal_blood",
+            "values": [
+              "Blood on the paper or outside the stool",
+              "Blood mixed into the stool or toilet water",
+              "Blood passing even without stool"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "bleeding_details",
+      "section": "symptoms",
+      "domain": 9,
+      "label": "Is there anything else to describe about the bleeding?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "rectal_blood",
+            "values": [
+              "Blood on the paper or outside the stool",
+              "Blood mixed into the stool or toilet water",
+              "Blood passing even without stool"
+            ]
+          }
+        ]
+      },
+      "help": "For example clots, pain when passing stool, or bleeding separate from bowel movements.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "swallowing_started",
+      "section": "symptoms",
+      "domain": 11,
+      "label": "When did difficulty swallowing begin?",
+      "kind": "choice",
+      "options": [
+        "Today",
+        "2–7 days ago",
+        "1–2 weeks ago",
+        "3–6 weeks ago",
+        "2–3 months ago",
+        "More than 3 months ago",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "swallowing",
+            "values": [
+              "Food sticks, but liquids go down",
+              "Liquids are difficult",
+              "Both food and liquids are difficult",
+              "Trouble swallowing saliva"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "swallowing_trend",
+      "section": "symptoms",
+      "domain": 11,
+      "label": "How is swallowing changing?",
+      "kind": "choice",
+      "options": [
+        "Getting easier",
+        "About the same",
+        "Getting harder",
+        "Varies between meals",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "swallowing",
+            "values": [
+              "Food sticks, but liquids go down",
+              "Liquids are difficult",
+              "Both food and liquids are difficult",
+              "Trouble swallowing saliva"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "swallowing_pain",
+      "section": "symptoms",
+      "domain": 11,
+      "label": "Is swallowing painful?",
+      "kind": "choice",
+      "options": [
+        "No pain when swallowing",
+        "Pain with solids",
+        "Pain with liquids",
+        "Pain with both",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "swallowing",
+            "values": [
+              "Food sticks, but liquids go down",
+              "Liquids are difficult",
+              "Both food and liquids are difficult",
+              "Trouble swallowing saliva"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "fatigue",
+      "section": "symptoms",
+      "domain": 14,
+      "label": "How is tiredness affecting your usual activities?",
+      "kind": "choice",
+      "options": [
+        "Usual energy",
+        "More tired but can do usual activities",
+        "Need to rest during usual activities",
+        "Too tired to manage usual activities",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "breathlessness",
+      "section": "symptoms",
+      "domain": 14,
+      "label": "When do you feel short of breath?",
+      "kind": "choice",
+      "options": [
+        "Not unusually short of breath",
+        "Only with strenuous activity",
+        "With usual walking or daily activity",
+        "At rest",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "anaemia",
+      "section": "symptoms",
+      "domain": 14,
+      "label": "Have you been told you have anaemia (low haemoglobin)?",
+      "kind": "choice",
+      "options": [
+        "No known diagnosis",
+        "Diagnosed previously",
+        "Diagnosed on a recent test",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "anaemia_details",
+      "section": "symptoms",
+      "domain": 14,
+      "label": "What was the haemoglobin result, and when was it checked?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "anaemia",
+            "values": [
+              "Diagnosed previously",
+              "Diagnosed on a recent test"
+            ]
+          }
+        ]
+      },
+      "help": "Give the number, units and test date if known. A reported result is separate from a verified report.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "lump",
+      "section": "symptoms",
+      "domain": 15,
+      "label": "Have you noticed a new lump or a localised swelling in your tummy?",
+      "kind": "choice",
+      "options": [
+        "No lump noticed",
+        "A new lump or swelling",
+        "A longstanding lump that has changed",
+        "A longstanding unchanged lump",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "lump_details",
+      "section": "symptoms",
+      "domain": 15,
+      "label": "Where is the lump and when did you first notice it?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "lump",
+            "values": [
+              "A new lump or swelling",
+              "A longstanding lump that has changed",
+              "A longstanding unchanged lump"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "medicines_status",
+      "section": "history",
+      "domain": 16,
+      "label": "Are you taking any medicines or remedies currently or recently?",
+      "kind": "choice",
+      "options": [
+        "No medicines or remedies",
+        "Prescription medicines",
+        "Non-prescription or herbal remedies",
+        "Both prescription and other remedies",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "medicines",
+      "section": "history",
+      "domain": 16,
+      "label": "Which medicines or remedies have you taken, and for how long?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "medicines_status",
+            "values": [
+              "Prescription medicines",
+              "Non-prescription or herbal remedies",
+              "Both prescription and other remedies"
+            ]
+          }
+        ]
+      },
+      "help": "Include painkillers, blood thinners, iron, acidity medicines and herbal remedies. Add dose if known; names can be checked with staff.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "allergy_status",
+      "section": "history",
+      "domain": 16,
+      "label": "Do you have any known medicine or food allergies?",
+      "kind": "choice",
+      "options": [
+        "No known allergies",
+        "Known allergy or previous reaction",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "allergies",
+      "section": "history",
+      "domain": 16,
+      "label": "What caused the allergic reaction, and what happened?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "allergy_status",
+            "values": [
+              "Known allergy or previous reaction"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "conditions",
+      "section": "history",
+      "domain": 17,
+      "label": "What illnesses have you been diagnosed with, and when?",
+      "kind": "text",
+      "options": [],
+      "showWhen": null,
+      "help": "Include diabetes (especially recent onset), liver disease, hepatitis, ulcers, gallstones and other conditions. Say none known only if that is accurate.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "surgery",
+      "section": "history",
+      "domain": 17,
+      "label": "Have you had operations or hospital admissions?",
+      "kind": "text",
+      "options": [],
+      "showWhen": null,
+      "help": "Describe what was done, why, and the approximate date, or say none.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "family_status",
+      "section": "history",
+      "domain": 18,
+      "label": "Has a blood relative had a digestive-system cancer or bowel polyps?",
+      "kind": "choice",
+      "options": [
+        "No known family history",
+        "Cancer in a blood relative",
+        "Bowel polyps in a blood relative",
+        "Both cancer and polyps in the family",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "family",
+      "section": "history",
+      "domain": 18,
+      "label": "Which relative, what cancer or polyp diagnosis, and at what age?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "family_status",
+            "values": [
+              "Cancer in a blood relative",
+              "Bowel polyps in a blood relative",
+              "Both cancer and polyps in the family"
+            ]
+          }
+        ]
+      },
+      "help": "Include stomach, bowel, food pipe, liver, gallbladder and pancreas if known.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "tobacco",
+      "section": "history",
+      "domain": 19,
+      "label": "Have you used tobacco (smoked or chewed)?",
+      "kind": "choice",
+      "options": [
+        "Never used",
+        "Currently use",
+        "Used previously, now stopped",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "tobacco_details",
+      "section": "history",
+      "domain": 19,
+      "label": "What tobacco, how much and for how many years?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "tobacco",
+            "values": [
+              "Currently use",
+              "Used previously, now stopped"
+            ]
+          }
+        ]
+      },
+      "help": "For example cigarettes per day or chewing portions per day, years used and when stopped.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "areca",
+      "section": "history",
+      "domain": 19,
+      "label": "Have you chewed betel nut / areca nut or paan?",
+      "kind": "choice",
+      "options": [
+        "Never used",
+        "Currently use",
+        "Used previously, now stopped",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "areca_details",
+      "section": "history",
+      "domain": 19,
+      "label": "How much betel/areca or paan, for how long, and does it contain tobacco?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "areca",
+            "values": [
+              "Currently use",
+              "Used previously, now stopped"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "alcohol",
+      "section": "history",
+      "domain": 19,
+      "label": "Do you drink alcohol?",
+      "kind": "choice",
+      "options": [
+        "Never drink",
+        "Drink currently",
+        "Drank previously, now stopped",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "alcohol_details",
+      "section": "history",
+      "domain": 19,
+      "label": "What do you drink, how much and how often?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "alcohol",
+            "values": [
+              "Drink currently",
+              "Drank previously, now stopped"
+            ]
+          }
+        ]
+      },
+      "help": "Describe drink type, serving volume (mL), days per week, years used and when stopped.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "hepatitis",
+      "section": "history",
+      "domain": 19,
+      "label": "Have you ever been tested or treated for hepatitis?",
+      "kind": "choice",
+      "options": [
+        "Never tested / no known diagnosis",
+        "Tested, told negative",
+        "Hepatitis B diagnosed",
+        "Hepatitis C diagnosed",
+        "Another hepatitis diagnosis",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "hepatitis_details",
+      "section": "history",
+      "domain": 19,
+      "label": "What test or treatment did you have, and when?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "hepatitis",
+            "values": [
+              "Tested, told negative",
+              "Hepatitis B diagnosed",
+              "Hepatitis C diagnosed",
+              "Another hepatitis diagnosis"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "tb_history",
+      "section": "history",
+      "domain": 17,
+      "label": "Any past tuberculosis or close contact with someone with TB?",
+      "kind": "choice",
+      "options": [
+        "No known TB or close contact",
+        "Previously diagnosed or treated for TB",
+        "Close contact with TB",
+        "Both past TB and close contact",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "tb_details",
+      "section": "history",
+      "domain": 17,
+      "label": "Please describe the TB diagnosis, treatment or contact and approximate dates.",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "tb_history",
+            "values": [
+              "Previously diagnosed or treated for TB",
+              "Close contact with TB",
+              "Both past TB and close contact"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "night_sweats",
+      "section": "history",
+      "domain": 17,
+      "label": "Have you had night sweats during this illness?",
+      "kind": "choice",
+      "options": [
+        "No night sweats",
+        "Some sweating at night",
+        "Sweating that soaks clothes or bedding",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "first_symptom_date",
+      "section": "history",
+      "domain": 10,
+      "label": "What is the approximate date you first noticed this problem?",
+      "kind": "text",
+      "options": [],
+      "showWhen": null,
+      "help": "An approximate month or season is useful if you cannot remember the date.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "first_contact",
+      "section": "history",
+      "domain": 10,
+      "label": "Who did you first consult about this problem?",
+      "kind": "choice",
+      "options": [
+        "Nobody yet",
+        "Pharmacist",
+        "General physician",
+        "GI specialist",
+        "Informal practitioner",
+        "Another practitioner",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "first_contact_date",
+      "section": "history",
+      "domain": 10,
+      "label": "When was the first consultation for this problem?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "first_contact",
+            "values": [
+              "Pharmacist",
+              "General physician",
+              "GI specialist",
+              "Informal practitioner",
+              "Another practitioner"
+            ]
+          }
+        ]
+      },
+      "help": "Give an approximate date or how many days/weeks after symptoms began.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "previous_treatment",
+      "section": "history",
+      "domain": 10,
+      "label": "What was the problem treated as, and what treatment was tried?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "first_contact",
+            "values": [
+              "Pharmacist",
+              "General physician",
+              "GI specialist",
+              "Informal practitioner",
+              "Another practitioner"
+            ]
+          }
+        ]
+      },
+      "help": "Include names if known and how long the treatment was used.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "treatment_effect",
+      "section": "history",
+      "domain": 10,
+      "label": "What happened after the treatment?",
+      "kind": "choice",
+      "options": [
+        "Improved and stayed better",
+        "Helped briefly, then symptoms returned",
+        "No improvement",
+        "Symptoms became worse",
+        "Treatment not started",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": {
+        "all": [
+          {
+            "field": "first_contact",
+            "values": [
+              "Pharmacist",
+              "General physician",
+              "GI specialist",
+              "Informal practitioner",
+              "Another practitioner"
+            ]
+          }
+        ]
+      },
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "visits",
+      "section": "history",
+      "domain": 10,
+      "label": "How many consultations have you had for this problem before today?",
+      "kind": "choice",
+      "options": [
+        "None",
+        "1",
+        "2–3",
+        "4–5",
+        "More than 5",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "referral",
+      "section": "history",
+      "domain": 10,
+      "label": "Who referred you for this visit, and when?",
+      "kind": "text",
+      "options": [],
+      "showWhen": null,
+      "help": "If you came on your own, say self-referred.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "previous_tests_status",
+      "section": "history",
+      "domain": 20,
+      "label": "Have you had tests for this problem?",
+      "kind": "choice",
+      "options": [
+        "No tests yet",
+        "Tests done, reports available",
+        "Tests done, reports not available",
+        "Tests arranged, waiting to have them",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "showWhen": null,
+      "help": "",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "previous_tests",
+      "section": "history",
+      "domain": 20,
+      "label": "Which tests were done or arranged, when, and what were you told?",
+      "kind": "text",
+      "options": [],
+      "showWhen": {
+        "all": [
+          {
+            "field": "previous_tests_status",
+            "values": [
+              "Tests done, reports available",
+              "Tests done, reports not available",
+              "Tests arranged, waiting to have them"
+            ]
+          }
+        ]
+      },
+      "help": "Include endoscopy, colonoscopy, scans, biopsy and blood tests. You can continue without reports.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    },
+    {
+      "id": "anything_else",
+      "section": "history",
+      "domain": 10,
+      "label": "Is there anything else your care team should know?",
+      "kind": "text",
+      "options": [],
+      "showWhen": null,
+      "help": "Include concerns, symptoms not covered, or help you need with the questionnaire.",
+      "status": "DRAFT",
+      "provenance": "assumed"
+    }
+  ],
+  "rules": [
+    {
+      "id": "current_severe_pain",
+      "urgency": "immediate",
+      "reason": "Pain is present now and is described as severe or unbearable.",
+      "all": [
+        {
+          "field": "pain_presence",
+          "values": [
+            "Pain is present now"
+          ]
+        },
+        {
+          "field": "pain_now_severity",
+          "values": [
+            "Severe — I cannot carry on with usual activities",
+            "Unbearable pain"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/stomach-ache/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Pain is present now and is described as severe or unbearable.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "Pain is present now and is described as severe or unbearable. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "sudden_current_pain",
+      "urgency": "immediate",
+      "reason": "Current abdominal pain began very suddenly.",
+      "all": [
+        {
+          "field": "pain_presence",
+          "values": [
+            "Pain is present now"
+          ]
+        },
+        {
+          "field": "pain_onset",
+          "values": [
+            "Very suddenly, over seconds or minutes"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/stomach-ache/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Current abdominal pain began very suddenly.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "Current abdominal pain began very suddenly. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "painful_touch",
+      "urgency": "immediate",
+      "reason": "Current abdominal pain is very painful to light touch or the tummy feels hard and painful.",
+      "all": [
+        {
+          "field": "pain_presence",
+          "values": [
+            "Pain is present now"
+          ]
+        },
+        {
+          "field": "pain_touch",
+          "values": [
+            "Very painful with light touch",
+            "Unusually hard and painful"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/stomach-ache/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Current abdominal pain is very painful to light touch or the tummy feels hard and painful.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "Current abdominal pain is very painful to light touch or the tummy feels hard and painful. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "collapse_now",
+      "urgency": "immediate",
+      "reason": "Fainting or lightheadedness is accompanied by incomplete recovery or inability to stand safely now.",
+      "all": [
+        {
+          "field": "faint",
+          "values": [
+            "Lightheaded or dizzy, without passing out",
+            "Passed out or lost consciousness"
+          ]
+        },
+        {
+          "field": "faint_recovery",
+          "values": [
+            "Not fully recovered, hard to wake, or difficulty speaking or moving",
+            "Feels about to collapse and cannot stand safely"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/fainting/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Fainting or lightheadedness is accompanied by incomplete recovery or inability to stand safely now.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "Fainting or lightheadedness is accompanied by incomplete recovery or inability to stand safely now. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "concerning_faint",
+      "urgency": "immediate",
+      "reason": "A recent faint occurred with an additional concerning feature.",
+      "all": [
+        {
+          "field": "faint",
+          "values": [
+            "Passed out or lost consciousness"
+          ]
+        },
+        {
+          "field": "faint_timing",
+          "values": [
+            "Happening now",
+            "Earlier today, now stopped"
+          ]
+        },
+        {
+          "field": "faint_context",
+          "values": [
+            "During exercise",
+            "While lying down",
+            "With chest pain or a racing/irregular heartbeat",
+            "With a serious injury or shaking/jerking"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/fainting/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "A recent faint occurred with an additional concerning feature.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "A recent faint occurred with an additional concerning feature. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "sudden_confusion",
+      "urgency": "immediate",
+      "reason": "A new change in awareness began suddenly and is current or occurred today.",
+      "all": [
+        {
+          "field": "confusion",
+          "values": [
+            "A new change in awareness or confusion"
+          ]
+        },
+        {
+          "field": "confusion_onset",
+          "values": [
+            "Suddenly, and it is happening now or happened today"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/confusion/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "A new change in awareness began suddenly and is current or occurred today.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "A new change in awareness began suddenly and is current or occurred today. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "active_vomit_blood",
+      "urgency": "immediate",
+      "reason": "Blood or coffee-ground material is being vomited now.",
+      "all": [
+        {
+          "field": "vomit_blood",
+          "values": [
+            "Fresh red blood",
+            "Dark material like coffee grounds",
+            "Possible blood, but appearance unclear"
+          ]
+        },
+        {
+          "field": "vomit_blood_timing",
+          "values": [
+            "Happening now"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/vomiting-blood/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Blood or coffee-ground material is being vomited now.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "Blood or coffee-ground material is being vomited now. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "bleeding_with_illness",
+      "urgency": "immediate",
+      "reason": "Blood in vomit occurred with faintness or other concerning symptoms in the same episode.",
+      "all": [
+        {
+          "field": "vomit_blood",
+          "values": [
+            "Fresh red blood",
+            "Dark material like coffee grounds",
+            "Possible blood, but appearance unclear"
+          ]
+        },
+        {
+          "field": "vomit_blood_timing",
+          "values": [
+            "Happening now",
+            "Earlier today, now stopped",
+            "Within the past week, now stopped"
+          ]
+        },
+        {
+          "field": "bleeding_unwell",
+          "values": [
+            "Yes, with the same bleeding episode"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/vomiting-blood/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Blood in vomit occurred with faintness or other concerning symptoms in the same episode.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "Blood in vomit occurred with faintness or other concerning symptoms in the same episode. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "current_tarry_stool",
+      "urgency": "immediate",
+      "reason": "Black sticky tar-like stool is current or occurred today.",
+      "all": [
+        {
+          "field": "black_stool",
+          "values": [
+            "Black, sticky, tar-like stool"
+          ]
+        },
+        {
+          "field": "black_stool_timing",
+          "values": [
+            "Happening now",
+            "Earlier today, now stopped"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/stomach-ache/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Black sticky tar-like stool is current or occurred today.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "Black sticky tar-like stool is current or occurred today. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "heavy_rectal_bleeding",
+      "urgency": "immediate",
+      "reason": "Current or today’s rectal bleeding is heavy, has large clots or will not stop.",
+      "all": [
+        {
+          "field": "rectal_blood",
+          "values": [
+            "Blood on the paper or outside the stool",
+            "Blood mixed into the stool or toilet water",
+            "Blood passing even without stool"
+          ]
+        },
+        {
+          "field": "rectal_blood_timing",
+          "values": [
+            "Happening now",
+            "Earlier today, now stopped"
+          ]
+        },
+        {
+          "field": "rectal_blood_amount",
+          "values": [
+            "A large amount, large clots, or bleeding that will not stop"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/bleeding-from-the-bottom-rectal-bleeding/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Current or today’s rectal bleeding is heavy, has large clots or will not stop.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "Current or today’s rectal bleeding is heavy, has large clots or will not stop. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "obstruction",
+      "urgency": "immediate",
+      "reason": "Swelling, vomiting and inability to pass stool or gas are occurring together now.",
+      "all": [
+        {
+          "field": "distended",
+          "values": [
+            "Swollen now and not settling",
+            "Comes and goes; swollen now"
+          ]
+        },
+        {
+          "field": "no_gas",
+          "values": [
+            "Unable to pass either stool or gas"
+          ]
+        },
+        {
+          "field": "vomiting",
+          "values": [
+            "Vomiting today"
+          ]
+        },
+        {
+          "field": "obstruction_episode",
+          "values": [
+            "Yes, together in this episode"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/stomach-ache/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Swelling, vomiting and inability to pass stool or gas are occurring together now.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "Swelling, vomiting and inability to pass stool or gas are occurring together now. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "biliary_fever",
+      "urgency": "immediate",
+      "reason": "Yellowing, fever and abdominal pain are occurring together in the current illness.",
+      "all": [
+        {
+          "field": "jaundice",
+          "values": [
+            "Yellow now / recently noticed",
+            "Comes and goes; yellow now"
+          ]
+        },
+        {
+          "field": "fever",
+          "values": [
+            "Measured a raised temperature today",
+            "Feel feverish today, not measured"
+          ]
+        },
+        {
+          "field": "pain_presence",
+          "values": [
+            "Pain is present now"
+          ]
+        },
+        {
+          "field": "biliary_episode",
+          "values": [
+            "Yes, together in this illness"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/conditions/gallstones/; assumed local adaptation",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Yellowing, fever and abdominal pain are occurring together in the current illness.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold. Pain location is recorded separately: generalised or uncertain location must not suppress a current same-illness pain/fever/yellowing warning. This does not diagnose cholangitis or gallstones.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "Yellowing, fever and abdominal pain are occurring together in the current illness. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "fluid_depletion",
+      "urgency": "immediate",
+      "reason": "Even small sips come back up and very little or no urine is being passed.",
+      "all": [
+        {
+          "field": "fluids",
+          "values": [
+            "Even small sips come back up"
+          ]
+        },
+        {
+          "field": "urine",
+          "values": [
+            "Very little or none for many hours"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/conditions/dehydration/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Even small sips come back up and very little or no urine is being passed.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "Even small sips come back up and very little or no urine is being passed. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "saliva",
+      "urgency": "immediate",
+      "reason": "Difficulty swallowing saliva is confirmed as an inability to swallow it now.",
+      "all": [
+        {
+          "field": "swallowing",
+          "values": [
+            "Trouble swallowing saliva"
+          ]
+        },
+        {
+          "field": "saliva_now",
+          "values": [
+            "Cannot swallow saliva / drooling because it will not go down"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/conditions/swallowing-problems-dysphagia/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Difficulty swallowing saliva is confirmed as an inability to swallow it now.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "Difficulty swallowing saliva is confirmed as an inability to swallow it now. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "appearance_active_blood",
+      "urgency": "immediate",
+      "reason": "The described vomit contains blood or coffee-ground material and is occurring now.",
+      "all": [
+        {
+          "field": "vomiting_appearance",
+          "values": [
+            "Blood or coffee-ground material"
+          ]
+        },
+        {
+          "field": "appearance_blood_timing",
+          "values": [
+            "Happening now"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/vomiting-blood/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "The described vomit contains blood or coffee-ground material and is occurring now.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "The described vomit contains blood or coffee-ground material and is occurring now. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "appearance_blood_illness",
+      "urgency": "immediate",
+      "reason": "The described vomit bleeding occurred recently with other concerning symptoms in the same episode.",
+      "all": [
+        {
+          "field": "vomiting_appearance",
+          "values": [
+            "Blood or coffee-ground material"
+          ]
+        },
+        {
+          "field": "appearance_blood_timing",
+          "values": [
+            "Happening now",
+            "Earlier today, now stopped",
+            "Within the past week, now stopped"
+          ]
+        },
+        {
+          "field": "appearance_blood_unwell",
+          "values": [
+            "Yes, during the same episode"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/vomiting-blood/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "The described vomit bleeding occurred recently with other concerning symptoms in the same episode.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "The described vomit bleeding occurred recently with other concerning symptoms in the same episode. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "appearance_tarry_stool",
+      "urgency": "immediate",
+      "reason": "The described black sticky stool is current or occurred today.",
+      "all": [
+        {
+          "field": "stool_colour",
+          "values": [
+            "Black and sticky"
+          ]
+        },
+        {
+          "field": "appearance_stool_timing",
+          "values": [
+            "Happening now",
+            "Earlier today, now stopped"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/stomach-ache/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "The described black sticky stool is current or occurred today.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "The described black sticky stool is current or occurred today. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "appearance_heavy_stool_blood",
+      "urgency": "immediate",
+      "reason": "The described blood-stained stool is current or occurred today with heavy bleeding or large clots.",
+      "all": [
+        {
+          "field": "stool_colour",
+          "values": [
+            "Red or blood mixed in"
+          ]
+        },
+        {
+          "field": "appearance_stool_timing",
+          "values": [
+            "Happening now",
+            "Earlier today, now stopped"
+          ]
+        },
+        {
+          "field": "appearance_stool_amount",
+          "values": [
+            "A large amount, large clots, or bleeding that will not stop"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/bleeding-from-the-bottom-rectal-bleeding/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "The described blood-stained stool is current or occurred today with heavy bleeding or large clots.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "The described blood-stained stool is current or occurred today with heavy bleeding or large clots. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "current_pain_no_gas",
+      "urgency": "immediate",
+      "reason": "Current abdominal pain is accompanied by inability to pass either stool or gas.",
+      "all": [
+        {
+          "field": "pain_presence",
+          "values": [
+            "Pain is present now"
+          ]
+        },
+        {
+          "field": "no_gas",
+          "values": [
+            "Unable to pass either stool or gas"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/stomach-ache/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Current abdominal pain is accompanied by inability to pass either stool or gas.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI.",
+      "staffHandover": "Current abdominal pain is accompanied by inability to pass either stool or gas. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "pain_review",
+      "urgency": "prompt",
+      "reason": "Abdominal pain or recurring episodes need clinical review.",
+      "all": [
+        {
+          "field": "pain_presence",
+          "values": [
+            "Pain is present now",
+            "Pain comes and goes; no pain right now",
+            "Pain happened before but has stopped"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/stomach-ache/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Abdominal pain or recurring episodes need clinical review.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "Abdominal pain or recurring episodes need clinical review. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "faint_review",
+      "urgency": "prompt",
+      "reason": "Lightheadedness or fainting needs assessment, including timing and recovery.",
+      "all": [
+        {
+          "field": "faint",
+          "values": [
+            "Lightheaded or dizzy, without passing out",
+            "Passed out or lost consciousness"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/fainting/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Lightheadedness or fainting needs assessment, including timing and recovery.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "Lightheadedness or fainting needs assessment, including timing and recovery. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "confusion_review",
+      "urgency": "prompt",
+      "reason": "A new change in awareness needs assessment; sudden onset needs immediate help.",
+      "all": [
+        {
+          "field": "confusion",
+          "values": [
+            "A new change in awareness or confusion"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/confusion/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "A new change in awareness needs assessment; sudden onset needs immediate help.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "A new change in awareness needs assessment; sudden onset needs immediate help. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "vomit_blood_review",
+      "urgency": "prompt",
+      "reason": "Blood or possible blood in vomit needs prompt medical assessment.",
+      "all": [
+        {
+          "field": "vomit_blood",
+          "values": [
+            "Fresh red blood",
+            "Dark material like coffee grounds",
+            "Possible blood, but appearance unclear"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/vomiting-blood/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Blood or possible blood in vomit needs prompt medical assessment.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "Blood or possible blood in vomit needs prompt medical assessment. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "tarry_review",
+      "urgency": "prompt",
+      "reason": "Tar-like stool needs assessment, including its timing.",
+      "all": [
+        {
+          "field": "black_stool",
+          "values": [
+            "Black, sticky, tar-like stool"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/bleeding-from-the-bottom-rectal-bleeding/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Tar-like stool needs assessment, including its timing.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "Tar-like stool needs assessment, including its timing. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "rectal_review",
+      "urgency": "prompt",
+      "reason": "Rectal bleeding needs prompt assessment.",
+      "all": [
+        {
+          "field": "rectal_blood",
+          "values": [
+            "Blood on the paper or outside the stool",
+            "Blood mixed into the stool or toilet water",
+            "Blood passing even without stool"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/bleeding-from-the-bottom-rectal-bleeding/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Rectal bleeding needs prompt assessment.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "Rectal bleeding needs prompt assessment. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "fluid_review",
+      "urgency": "prompt",
+      "reason": "Difficulty keeping drinks down needs prompt assessment.",
+      "all": [
+        {
+          "field": "fluids",
+          "values": [
+            "Only small sips stay down",
+            "Even small sips come back up"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/conditions/dehydration/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Difficulty keeping drinks down needs prompt assessment.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "Difficulty keeping drinks down needs prompt assessment. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "urine_review",
+      "urgency": "prompt",
+      "reason": "Very reduced or absent urine needs urgent clinical assessment.",
+      "all": [
+        {
+          "field": "urine",
+          "values": [
+            "Very little or none for many hours",
+            "Unable to pass urine despite needing to"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/conditions/dehydration/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Very reduced or absent urine needs urgent clinical assessment.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "Very reduced or absent urine needs urgent clinical assessment. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "gas_review",
+      "urgency": "prompt",
+      "reason": "Inability to pass stool and gas needs prompt assessment.",
+      "all": [
+        {
+          "field": "no_gas",
+          "values": [
+            "Unable to pass either stool or gas"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/stomach-ache/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Inability to pass stool and gas needs prompt assessment.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "Inability to pass stool and gas needs prompt assessment. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "yellow_review",
+      "urgency": "prompt",
+      "reason": "Current yellowing of the eyes or skin needs prompt assessment.",
+      "all": [
+        {
+          "field": "jaundice",
+          "values": [
+            "Yellow now / recently noticed",
+            "Comes and goes; yellow now"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/conditions/jaundice/; assumed local adaptation",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Current yellowing of the eyes or skin needs prompt assessment.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "Current yellowing of the eyes or skin needs prompt assessment. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "swallow_review",
+      "urgency": "prompt",
+      "reason": "Difficulty swallowing needs prompt assessment.",
+      "all": [
+        {
+          "field": "swallowing",
+          "values": [
+            "Food sticks, but liquids go down",
+            "Liquids are difficult",
+            "Both food and liquids are difficult",
+            "Trouble swallowing saliva"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/conditions/swallowing-problems-dysphagia/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Difficulty swallowing needs prompt assessment.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "Difficulty swallowing needs prompt assessment. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "weight_review",
+      "urgency": "prompt",
+      "reason": "Unintentional weight change needs clinical assessment.",
+      "all": [
+        {
+          "field": "weight_loss",
+          "values": [
+            "Lost weight without trying",
+            "Clothes looser, but weight not checked"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/unintentional-weight-loss/; assumed local adaptation",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Unintentional weight change needs clinical assessment.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold. The prompt local tier for reported or estimated weight loss is broader than the source; it is not a NICE cancer-referral threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "Unintentional weight change needs clinical assessment. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "stool_report",
+      "urgency": "prompt",
+      "reason": "Reported stool appearance needs prompt assessment, even if other answers differ.",
+      "all": [
+        {
+          "field": "stool_colour",
+          "values": [
+            "Black and sticky",
+            "Red or blood mixed in"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/bleeding-from-the-bottom-rectal-bleeding/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Reported stool appearance needs prompt assessment, even if other answers differ.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "Reported stool appearance needs prompt assessment, even if other answers differ. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "blood_appearance",
+      "urgency": "prompt",
+      "reason": "Possible blood described in vomit needs prompt assessment and clarification.",
+      "all": [
+        {
+          "field": "vomiting_appearance",
+          "values": [
+            "Blood or coffee-ground material"
+          ]
+        }
+      ],
+      "source": "https://www.nhs.uk/symptoms/vomiting-blood/",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Possible blood described in vomit needs prompt assessment and clarification.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "Possible blood described in vomit needs prompt assessment and clarification. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    },
+    {
+      "id": "persistent",
+      "urgency": "prompt",
+      "reason": "Persistent symptoms need prompt clinical review.",
+      "all": [
+        {
+          "field": "duration",
+          "values": [
+            "2–3 months ago",
+            "More than 3 months ago"
+          ]
+        }
+      ],
+      "source": "docs/clinical/question-inventory.md; assumed local adaptation",
+      "provenance": "assumed",
+      "status": "DRAFT",
+      "author": "AI-assisted draft for clinical lead review",
+      "approver": null,
+      "date": "2026-09-22",
+      "version": "intake-draft-2026-09-22.2",
+      "population": "Adults aged 18 years and over; synthetic demonstration only",
+      "unknownBehavior": "An unknown/declined/missing term never satisfies this rule. Positive broad warning facts retain their prompt-review rule while details are incomplete; no-match still needs clinician review.",
+      "timeRelationship": "Persistent symptoms need prompt clinical review.",
+      "adaptation": "Assumed draft adaptation of reference symptom advice to Indian clinic/hospital navigation; no emergency diagnosis or validation claim. Verbal current functional pain severity is separate from the clinical lead’s DRAFT 0–10 worst-pain bands. Felt fever is reported, not a measured threshold.",
+      "patientAdvice": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+      "staffHandover": "Persistent symptoms need prompt clinical review. Check the recorded facts, timing and current condition.",
+      "reviewer": "Independent software review recorded in change design; clinical reviewer pending"
+    }
+  ],
+  "advice": {
+    "review": "Arrange a clinician review. These answers cannot exclude serious disease. Seek immediate assistance if symptoms become severe or new warning signs appear.",
+    "prompt": "Contact a clinician promptly about these symptoms. If symptoms are severe now, suddenly worsen, or you feel seriously unwell, seek immediate assistance. Do not wait for AI or online review.",
+    "immediate": "Please seek medical assistance now or go to a hospital. If you are at the clinic, tell staff now. Do not delay getting help to finish these questions or wait for AI."
+  },
+  "specialtyDescriptions": {
+    "Gastroenterology": "A specialist in digestive conditions.",
+    "GI / HPB surgery": "A surgical team specialising in the digestive system, liver, pancreas and bile ducts.",
+    "Surgical oncology": "A specialist in surgical assessment and care for possible cancer.",
+    "General medicine": "A physician who can assess your symptoms and coordinate further care.",
+    "Emergency department": "A clinical team for immediate assessment and urgent care."
+  },
+  "investigations": [
+    "Blood tests",
+    "Upper GI endoscopy",
+    "Colonoscopy",
+    "Ultrasound abdomen",
+    "CT abdomen",
+    "MRI / MRCP",
+    "Biopsy / pathology review",
+    "Review existing investigations"
+  ],
+  "sources": [
+    "https://www.nhs.uk/symptoms/stomach-ache/",
+    "https://www.nhs.uk/symptoms/fainting/",
+    "https://www.nhs.uk/symptoms/confusion/",
+    "https://www.nhs.uk/symptoms/vomiting-blood/",
+    "https://www.nhs.uk/symptoms/bleeding-from-the-bottom-rectal-bleeding/",
+    "https://www.nhs.uk/conditions/dehydration/",
+    "https://www.nhs.uk/conditions/swallowing-problems-dysphagia/",
+    "https://www.nhs.uk/conditions/gallstones/",
+    "https://www.nhs.uk/conditions/jaundice/",
+    "https://www.nhs.uk/symptoms/unintentional-weight-loss/",
+    "docs/clinical/question-inventory.md"
+  ],
+  "continuationAdvice": "You can continue answering if you are able, including with help from someone with you. Getting medical assistance comes first.",
+  "incompleteAdvice": "Some important answers are missing or uncertain. Tell your care team what you are unsure about; this questionnaire cannot determine that it is safe to wait.",
+  "sourceCatalog": [
+    {
+      "url": "https://www.nhs.uk/symptoms/stomach-ache/",
+      "title": "NHS: Stomach ache",
+      "reviewed": "2023-05-26",
+      "recommendation": "a stomach ache came on very suddenly or is severe",
+      "accessed": "2026-09-22",
+      "originalPopulation": "UK public symptom advice",
+      "routingAdaptation": "UK service numbers replaced by clinic staff / hospital advice; clinical sign-off pending."
+    },
+    {
+      "url": "https://www.nhs.uk/symptoms/fainting/",
+      "title": "NHS: Fainting",
+      "reviewed": "2026-08-17",
+      "recommendation": "has not fully recovered or has difficulty with speech or movement",
+      "accessed": "2026-09-22",
+      "originalPopulation": "UK public symptom advice",
+      "routingAdaptation": "UK service numbers replaced by clinic staff / hospital advice; clinical sign-off pending."
+    },
+    {
+      "url": "https://www.nhs.uk/symptoms/confusion/",
+      "title": "NHS: Sudden confusion (delirium)",
+      "reviewed": "2024-05-28",
+      "recommendation": "someone suddenly becomes confused",
+      "accessed": "2026-09-22",
+      "originalPopulation": "UK public symptom advice",
+      "routingAdaptation": "UK service numbers replaced by clinic staff / hospital advice; clinical sign-off pending."
+    },
+    {
+      "url": "https://www.nhs.uk/symptoms/vomiting-blood/",
+      "title": "NHS: Vomiting blood",
+      "reviewed": "2025-08-18",
+      "recommendation": "You should always get medical help if you are vomiting blood",
+      "accessed": "2026-09-22",
+      "originalPopulation": "UK public symptom advice",
+      "routingAdaptation": "UK service numbers replaced by clinic staff / hospital advice; clinical sign-off pending."
+    },
+    {
+      "url": "https://www.nhs.uk/symptoms/bleeding-from-the-bottom-rectal-bleeding/",
+      "title": "NHS: Rectal bleeding",
+      "reviewed": "2023-04-12",
+      "recommendation": "you're bleeding non-stop",
+      "accessed": "2026-09-22",
+      "originalPopulation": "UK public symptom advice",
+      "routingAdaptation": "UK service numbers replaced by clinic staff / hospital advice; clinical sign-off pending."
+    },
+    {
+      "url": "https://www.nhs.uk/conditions/dehydration/",
+      "title": "NHS: Dehydration",
+      "reviewed": "2026-05-01",
+      "recommendation": "you feel dizzy when you stand up and it does not go away",
+      "accessed": "2026-09-22",
+      "originalPopulation": "UK public symptom advice",
+      "routingAdaptation": "UK service numbers replaced by clinic staff / hospital advice; clinical sign-off pending."
+    },
+    {
+      "url": "https://www.nhs.uk/conditions/swallowing-problems-dysphagia/",
+      "title": "NHS: Swallowing problems (dysphagia)",
+      "reviewed": "2023-05-02",
+      "recommendation": "has difficulty swallowing",
+      "accessed": "2026-09-22",
+      "originalPopulation": "UK public symptom advice",
+      "routingAdaptation": "UK service numbers replaced by clinic staff / hospital advice; clinical sign-off pending."
+    },
+    {
+      "url": "https://www.nhs.uk/conditions/gallstones/",
+      "title": "NHS: Gallstones — immediate action advice",
+      "reviewed": "2025-08-11",
+      "recommendation": "your temperature is very high, or you feel hot, cold or shivery",
+      "accessed": "2026-09-22",
+      "originalPopulation": "UK public advice about gallstone symptoms; not a general diagnostic rule",
+      "routingAdaptation": "UK service routing adapted to existing clinic/hospital advice. The combination, local tier and timing are assumed DRAFT adaptations; clinical sign-off pending."
+    },
+    {
+      "url": "https://www.nhs.uk/conditions/jaundice/",
+      "title": "NHS: Jaundice — urgent advice",
+      "reviewed": "2024-01-22",
+      "recommendation": "your skin or the white part of your eyes look yellow",
+      "accessed": "2026-09-22",
+      "originalPopulation": "UK public symptom advice",
+      "routingAdaptation": "UK service routing adapted to existing clinic/hospital advice. The combination, local tier and timing are assumed DRAFT adaptations; clinical sign-off pending."
+    },
+    {
+      "url": "https://www.nhs.uk/symptoms/unintentional-weight-loss/",
+      "title": "NHS: Unintentional weight loss — see a GP advice",
+      "reviewed": "2025-07-28",
+      "recommendation": "you keep losing weight without changing your diet or exercise routine",
+      "accessed": "2026-09-22",
+      "originalPopulation": "UK public symptom advice",
+      "routingAdaptation": "UK service routing adapted to existing clinic/hospital advice. The combination, local tier and timing are assumed DRAFT adaptations; clinical sign-off pending."
+    },
+    {
+      "url": "docs/clinical/question-inventory.md",
+      "title": "Clinical lead question inventory — general timeline and GI symptoms, repository draft",
+      "reviewed": "Unapproved clinical inventory as consulted 2026-09-22",
+      "recommendation": "Locally proposed review for symptoms reported as beginning two or more months ago. This timing is an assumption, not a guideline threshold.",
+      "accessed": "2026-09-22",
+      "originalPopulation": "Intended adult GI clinic intake; no validated population",
+      "routingAdaptation": "No validated threshold claimed. Clinical lead must review timing and applicability across symptom domains."
+    }
+  ],
+  "supportsNotes": true,
+  "assistedAdvice": "When helping someone answer, “you” and “your” in the questions refer to the patient. Record their account, or say when an answer is uncertain."
+}

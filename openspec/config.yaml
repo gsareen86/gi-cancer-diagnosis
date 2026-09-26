@@ -1,22 +1,27 @@
 schema: spec-driven
 
 context: |
-  GI Compass: clinic-based GI specialty navigation with clinician decision support, India.
+  GI Compass: clinic intake, patient-visible preliminary AI assessment and clinician review, India.
   Product authority: docs/product-brief.md (decisions dated 2026-09-13).
   Work on ONE change per session; read only that change plus directly relevant code.
 
   Intended use (DRAFT, pending regulatory review): collect an adult patient's GI symptoms,
-  history and existing reports; present them with rule-based urgency flags and AI summaries
-  to a registered medical practitioner, who decides the appropriate specialty and urgency
-  and approves next steps for the patient. No diagnosis, screening or prediction claims.
+  history and optional reports; provide the patient an explicitly preliminary AI assessment
+  with possible diagnoses, factual reasoning, uncertainty and next steps before clinician
+  review. A practitioner separately reviews the encounter and records their assessment.
+  Never present AI output as a confirmed diagnosis or validated cancer-screening result.
 
   Pilot: the clinical lead's own clinic, then Metro Hospital OPD (not yet approached).
   Tablet intake, patient self-service or coordinator-assisted. Full desktop clinician
   workspace; phone browsers supported, each layout designed for its device.
-  Primary output: appropriate specialty type, with urgency never below the deterministic floor.
+  Patient output: preliminary AI assessment and navigation, followed by a distinct clinician
+  assessment. Urgency never falls below the deterministic floor.
 
   Stack: Next.js (App Router) + strict TypeScript; Supabase (Postgres, Auth, Storage, RLS),
-  local Supabase for the demo, ap-south-1 (Mumbai) for the pilot. Every model call goes
+  the owner's Supabase Cloud account for both the synthetic demo and later pilot;
+  separate approved projects, with India region verified before use. No local Docker
+  Supabase setup or fallback. The web app and demo LLM run locally. Credentials go in
+  ignored .env; privileged keys never reach browser code. Every model call goes
   through the LLM Gateway (docs/reference/llm-gateway.md): local llama.cpp for the demo,
   Azure OpenAI regional deployment in India for the pilot. Demo uses synthetic data only.
 
@@ -34,15 +39,21 @@ context: |
   S4  Rule matches, not probabilities: urgency is explained by the matched rules and the
       facts that triggered them. No numeric or graded (high/moderate/low) likelihood for
       any condition is generated or displayed in v1.
-  S5  Clinician-only differential: AI hypotheses, including any malignancy, never reach
-      patient-facing screens, APIs, PDFs or messages.
+  S5  Patient-visible preliminary AI assessment is permitted without case-by-case clinician
+      approval. Label AI authorship and unreviewed status; give possible diagnoses, relevant
+      source facts, missing/conflicting evidence and next steps in plain language. Never
+      imply confirmation, exclude serious disease, invent evidence or claim clinician review.
+      Preserve a distinct, versioned clinician-reviewed assessment; never silently overwrite.
   S6  Immediate-care advice never waits for AI, report processing or login.
-  S7  Every abandonment point yields a valid conservative output (advice plus pending
-      clinician review). Unknown or declined answers are never treated as "no".
+  S7  Pre-consent abandonment receives generic advice without storing clinical answers.
+      A consented incomplete encounter stays assigned for human review with conservative
+      advice. Unknown or declined answers are never "no". Missing/failed AI yields an honest
+      unavailable/incomplete state, never a fabricated preliminary diagnosis.
   S8  Extracted report fields are proposals carrying document, page, source text, confidence
       and verification status; they never silently overwrite patient or clinician entries.
   S9  AI hypothesis generation MUST explicitly consider region-relevant infectious and
-      inflammatory causes, abdominal tuberculosis at minimum, stating evidence for or against.
+      inflammatory causes, abdominal tuberculosis at minimum, stating available evidence
+      for/against or explicitly unknown; no forced inclusion without supporting facts.
   S10 Clinical logic is versioned data (author, approver, date), never hardcoded in code or
       buried in prompts. Every clinical parameter carries provenance:
       assumed | guideline-derived | locally-validated.
@@ -57,7 +68,7 @@ context: |
   D5  No real patient data in the repository, fixtures, logs, analytics, screenshots or
       prompts to coding agents.
 
-  Not in v1: patient-visible differential, probabilities, screening or early-detection
+  Not in v1: confirmed autonomous AI diagnosis, probabilities, screening or early-detection
   claims, public website, referring-GP channel, WhatsApp/native apps, ABDM, e-prescribing,
   named-doctor recommendations, emergency dispatch.
 

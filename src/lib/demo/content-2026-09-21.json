@@ -1,0 +1,977 @@
+{
+  "date": "2026-09-21",
+  "rules": [
+    {
+      "id": "active_bleeding",
+      "all": [
+        {
+          "field": "vomit_blood",
+          "values": [
+            "Yes"
+          ]
+        }
+      ],
+      "reason": "Blood in vomit needs immediate medical assistance.",
+      "source": "NHS vomiting blood",
+      "status": "DRAFT",
+      "urgency": "immediate",
+      "provenance": "assumed"
+    },
+    {
+      "id": "black_faint",
+      "all": [
+        {
+          "field": "black_stool",
+          "values": [
+            "Yes"
+          ]
+        },
+        {
+          "field": "faint",
+          "values": [
+            "Yes"
+          ]
+        }
+      ],
+      "reason": "Black tar-like stool together with faintness or confusion needs immediate assistance.",
+      "source": "NHS vomiting blood",
+      "status": "DRAFT",
+      "urgency": "immediate",
+      "provenance": "assumed"
+    },
+    {
+      "id": "collapse",
+      "all": [
+        {
+          "field": "faint",
+          "values": [
+            "Yes"
+          ]
+        }
+      ],
+      "reason": "Fainting or new confusion needs immediate assessment.",
+      "source": "DRAFT conservative local adaptation",
+      "status": "DRAFT",
+      "urgency": "immediate",
+      "provenance": "assumed"
+    },
+    {
+      "id": "acute_pain",
+      "all": [
+        {
+          "field": "severe_pain",
+          "values": [
+            "Yes"
+          ]
+        }
+      ],
+      "reason": "Sudden severe abdominal pain needs immediate assessment.",
+      "source": "NHS stomach ache",
+      "status": "DRAFT",
+      "urgency": "immediate",
+      "provenance": "assumed"
+    },
+    {
+      "id": "rigid_abdomen",
+      "all": [
+        {
+          "field": "rigid",
+          "values": [
+            "Yes"
+          ]
+        }
+      ],
+      "reason": "A hard and very painful abdomen needs immediate assessment.",
+      "source": "DRAFT local adaptation",
+      "status": "DRAFT",
+      "urgency": "immediate",
+      "provenance": "assumed"
+    },
+    {
+      "id": "obstruction",
+      "all": [
+        {
+          "field": "distended",
+          "values": [
+            "Yes"
+          ]
+        },
+        {
+          "field": "vomiting",
+          "values": [
+            "Yes"
+          ]
+        },
+        {
+          "field": "no_gas",
+          "values": [
+            "Yes"
+          ]
+        }
+      ],
+      "reason": "Abdominal swelling with vomiting and inability to pass stool/gas needs immediate assessment.",
+      "source": "DRAFT local adaptation",
+      "status": "DRAFT",
+      "urgency": "immediate",
+      "provenance": "assumed"
+    },
+    {
+      "id": "fluid_intolerance",
+      "all": [
+        {
+          "field": "fluids",
+          "values": [
+            "Yes"
+          ]
+        }
+      ],
+      "reason": "Inability to keep fluids down needs immediate assessment.",
+      "source": "DRAFT local adaptation",
+      "status": "DRAFT",
+      "urgency": "immediate",
+      "provenance": "assumed"
+    },
+    {
+      "id": "biliary_fever",
+      "all": [
+        {
+          "field": "jaundice",
+          "values": [
+            "Yes"
+          ]
+        },
+        {
+          "field": "fever",
+          "values": [
+            "Yes"
+          ]
+        },
+        {
+          "field": "pain_site",
+          "values": [
+            "Right upper"
+          ]
+        }
+      ],
+      "reason": "Yellow eyes, fever/chills and upper-right pain need immediate assessment.",
+      "source": "DRAFT local adaptation",
+      "status": "DRAFT",
+      "urgency": "immediate",
+      "provenance": "assumed"
+    },
+    {
+      "id": "saliva",
+      "all": [
+        {
+          "field": "swallowing",
+          "values": [
+            "Cannot swallow saliva"
+          ]
+        }
+      ],
+      "reason": "Inability to swallow saliva needs immediate assistance.",
+      "source": "DRAFT local adaptation",
+      "status": "DRAFT",
+      "urgency": "immediate",
+      "provenance": "assumed"
+    },
+    {
+      "id": "melaena",
+      "all": [
+        {
+          "field": "black_stool",
+          "values": [
+            "Yes"
+          ]
+        }
+      ],
+      "reason": "Black tar-like stools need prompt medical assessment.",
+      "source": "NHS rectal bleeding",
+      "status": "DRAFT",
+      "urgency": "prompt",
+      "provenance": "assumed"
+    },
+    {
+      "id": "black_colour",
+      "all": [
+        {
+          "field": "stool_colour",
+          "values": [
+            "Black and sticky"
+          ]
+        }
+      ],
+      "reason": "Reported black sticky stool needs prompt medical assessment.",
+      "source": "NHS rectal bleeding",
+      "status": "DRAFT",
+      "urgency": "prompt",
+      "provenance": "assumed"
+    },
+    {
+      "id": "dysphagia",
+      "all": [
+        {
+          "field": "swallowing",
+          "values": [
+            "Solids",
+            "Liquids",
+            "Both"
+          ]
+        }
+      ],
+      "reason": "Difficulty swallowing needs prompt specialist assessment.",
+      "source": "NICE NG12 1.2.1 (local adaptation)",
+      "status": "DRAFT",
+      "urgency": "prompt",
+      "provenance": "assumed"
+    },
+    {
+      "id": "jaundice",
+      "all": [
+        {
+          "field": "jaundice",
+          "values": [
+            "Yes"
+          ]
+        }
+      ],
+      "reason": "Yellow eyes need prompt medical assessment.",
+      "source": "NICE NG12 (local adaptation)",
+      "status": "DRAFT",
+      "urgency": "prompt",
+      "provenance": "assumed"
+    },
+    {
+      "id": "loss",
+      "all": [
+        {
+          "field": "weight_loss",
+          "values": [
+            "Yes"
+          ]
+        }
+      ],
+      "reason": "Unintentional weight loss needs prompt clinical assessment.",
+      "source": "NICE NG12 (local adaptation)",
+      "status": "DRAFT",
+      "urgency": "prompt",
+      "provenance": "assumed"
+    },
+    {
+      "id": "bleeding",
+      "all": [
+        {
+          "field": "rectal_blood",
+          "values": [
+            "Yes"
+          ]
+        }
+      ],
+      "reason": "Rectal bleeding needs prompt clinical assessment.",
+      "source": "NICE NG12 (local adaptation)",
+      "status": "DRAFT",
+      "urgency": "prompt",
+      "provenance": "assumed"
+    },
+    {
+      "id": "persistent",
+      "all": [
+        {
+          "field": "duration",
+          "values": [
+            "More than 6 weeks"
+          ]
+        }
+      ],
+      "reason": "Persistent symptoms need prompt clinical review.",
+      "source": "DRAFT local adaptation",
+      "status": "DRAFT",
+      "urgency": "prompt",
+      "provenance": "assumed"
+    }
+  ],
+  "advice": {
+    "prompt": "Seek prompt assessment by a doctor or hospital. Do not wait for this app's AI or online review if symptoms worsen.",
+    "review": "Arrange a clinician review. These answers cannot exclude serious disease. Seek immediate assistance if symptoms become severe or new warning signs appear.",
+    "immediate": "Seek immediate medical assistance or visit a hospital now. Tell clinic staff immediately if you are at the clinic. Do not wait for the AI assessment or online review."
+  },
+  "author": "AI-assisted draft for clinical lead review",
+  "status": "DRAFT",
+  "version": "demo-draft-2026-09-21",
+  "approver": null,
+  "questions": [
+    {
+      "id": "vomit_blood",
+      "kind": "choice",
+      "label": "Vomiting blood or material like coffee grounds now or recently?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "safety",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "black_stool",
+      "kind": "choice",
+      "label": "Black, sticky, tar-like stools now or recently?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "safety",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "faint",
+      "kind": "choice",
+      "label": "Fainting, new confusion or feeling about to collapse?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "safety",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "severe_pain",
+      "kind": "choice",
+      "label": "Sudden severe abdominal pain, or pain that is becoming unbearable?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "safety",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "rigid",
+      "kind": "choice",
+      "label": "Does the abdomen feel unusually hard and very painful to touch?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "safety",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "distended",
+      "kind": "choice",
+      "label": "Is the abdomen unusually swollen?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "safety",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "no_gas",
+      "kind": "choice",
+      "label": "Unable to pass both stool and gas?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "safety",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "vomiting",
+      "kind": "choice",
+      "label": "Vomiting repeatedly?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "safety",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "fluids",
+      "kind": "choice",
+      "label": "Unable to keep fluids down?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "safety",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "jaundice",
+      "kind": "choice",
+      "label": "Yellowing of the whites of the eyes?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "safety",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "fever",
+      "kind": "choice",
+      "label": "Fever with chills or shivering?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "safety",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_site",
+      "kind": "choice",
+      "label": "Where is the abdominal discomfort?",
+      "options": [
+        "No pain",
+        "Right upper",
+        "Upper middle",
+        "Left upper",
+        "Right side",
+        "Around the navel",
+        "Left side",
+        "Right lower",
+        "Lower middle",
+        "Left lower",
+        "All over",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "safety",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "swallowing",
+      "kind": "choice",
+      "label": "Any difficulty swallowing?",
+      "options": [
+        "No",
+        "Solids",
+        "Liquids",
+        "Both",
+        "Cannot swallow saliva",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "safety",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "concern",
+      "kind": "text",
+      "label": "What brought the patient to the clinic today?",
+      "options": [],
+      "section": "symptoms",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "duration",
+      "kind": "choice",
+      "label": "When did the symptoms first start?",
+      "options": [
+        "Today",
+        "Several days",
+        "1–2 weeks",
+        "3–6 weeks",
+        "More than 6 weeks",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "symptoms",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "pattern",
+      "kind": "choice",
+      "label": "How are the symptoms changing?",
+      "options": [
+        "Improving",
+        "Unchanged",
+        "Worsening",
+        "Come and go",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "symptoms",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_score",
+      "kind": "choice",
+      "label": "How severe is the pain, from 0 to 10?",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "Not sure"
+      ],
+      "section": "symptoms",
+      "showWhen": {
+        "id": "pain_site",
+        "not": "No pain"
+      },
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_character",
+      "kind": "choice",
+      "label": "What does the discomfort feel like?",
+      "options": [
+        "Dull ache",
+        "Burning",
+        "Comes in waves",
+        "Sharp",
+        "Not sure"
+      ],
+      "section": "symptoms",
+      "showWhen": {
+        "id": "pain_site",
+        "not": "No pain"
+      },
+      "provenance": "assumed"
+    },
+    {
+      "id": "pain_radiates",
+      "kind": "choice",
+      "label": "Does it travel anywhere?",
+      "options": [
+        "Back",
+        "Right shoulder",
+        "Groin",
+        "Nowhere",
+        "Elsewhere",
+        "Not sure"
+      ],
+      "section": "symptoms",
+      "showWhen": {
+        "id": "pain_site",
+        "not": "No pain"
+      },
+      "provenance": "assumed"
+    },
+    {
+      "id": "food_effect",
+      "kind": "choice",
+      "label": "What happens after eating?",
+      "options": [
+        "Better",
+        "Worse",
+        "No change",
+        "Not sure"
+      ],
+      "section": "symptoms",
+      "showWhen": {
+        "id": "pain_site",
+        "not": "No pain"
+      },
+      "provenance": "assumed"
+    },
+    {
+      "id": "vomit_details",
+      "kind": "text",
+      "label": "Describe vomiting: when it started, times per day, appearance and relation to meals.",
+      "options": [],
+      "section": "symptoms",
+      "showWhen": {
+        "id": "vomiting",
+        "is": "Yes"
+      },
+      "provenance": "assumed"
+    },
+    {
+      "id": "fever_details",
+      "kind": "text",
+      "label": "If measured, give the temperature, unit, date and duration. Otherwise say it was felt, not measured.",
+      "options": [],
+      "section": "symptoms",
+      "showWhen": {
+        "id": "fever",
+        "is": "Yes"
+      },
+      "provenance": "assumed"
+    },
+    {
+      "id": "reflux",
+      "kind": "choice",
+      "label": "Burning in the chest/upper abdomen or sour fluid coming into the mouth?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "symptoms",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "early_full",
+      "kind": "choice",
+      "label": "Feeling full after eating only a small amount?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "symptoms",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "appetite",
+      "kind": "choice",
+      "label": "Loss of appetite?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "symptoms",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "weight_loss",
+      "kind": "choice",
+      "label": "Weight loss without trying?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "symptoms",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "weight_details",
+      "kind": "text",
+      "label": "How much weight was lost, over how long, and was it measured or estimated?",
+      "options": [],
+      "section": "symptoms",
+      "showWhen": {
+        "id": "weight_loss",
+        "is": "Yes"
+      },
+      "provenance": "assumed"
+    },
+    {
+      "id": "jaundice_details",
+      "kind": "text",
+      "label": "When did yellowing start? Is it persistent, getting worse or intermittent? Is the urine dark?",
+      "options": [],
+      "section": "symptoms",
+      "showWhen": {
+        "id": "jaundice",
+        "is": "Yes"
+      },
+      "provenance": "assumed"
+    },
+    {
+      "id": "itching",
+      "kind": "choice",
+      "label": "Itching of the body?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "symptoms",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "itch_details",
+      "kind": "text",
+      "label": "Where is the itching, and does it disturb sleep or activities?",
+      "options": [],
+      "section": "symptoms",
+      "showWhen": {
+        "id": "itching",
+        "is": "Yes"
+      },
+      "provenance": "assumed"
+    },
+    {
+      "id": "bowel_change",
+      "kind": "choice",
+      "label": "Bowel habits changed from usual?",
+      "options": [
+        "No",
+        "Constipation",
+        "Diarrhoea",
+        "Alternating",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "symptoms",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "bowel_details",
+      "kind": "text",
+      "label": "How often now compared with usual? When did this change, and is it worsening?",
+      "options": [],
+      "section": "symptoms",
+      "showWhen": {
+        "id": "bowel_change",
+        "not": "No"
+      },
+      "provenance": "assumed"
+    },
+    {
+      "id": "stool_colour",
+      "kind": "choice",
+      "label": "What colour is the stool?",
+      "options": [
+        "Brown",
+        "Black and sticky",
+        "Pale or clay coloured",
+        "Yellow",
+        "Red or blood mixed in",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "symptoms",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "mucus",
+      "kind": "choice",
+      "label": "Mucus or a jelly-like coating in the stool?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "symptoms",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "rectal_blood",
+      "kind": "choice",
+      "label": "Fresh red blood with or after passing stool?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "symptoms",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "bleeding_details",
+      "kind": "text",
+      "label": "Describe the blood, amount, frequency and whether mixed with stool or on its surface.",
+      "options": [],
+      "section": "symptoms",
+      "showWhen": {
+        "id": "rectal_blood",
+        "is": "Yes"
+      },
+      "provenance": "assumed"
+    },
+    {
+      "id": "fatigue",
+      "kind": "choice",
+      "label": "Unusual tiredness or breathlessness with usual activity?",
+      "options": [
+        "Yes",
+        "No",
+        "Not sure",
+        "Prefer not to answer"
+      ],
+      "section": "symptoms",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "medicines",
+      "kind": "text",
+      "label": "Current/recent medicines, painkillers, blood thinners, acidity tablets and herbal/home remedies; include duration.",
+      "options": [],
+      "section": "history",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "allergies",
+      "kind": "text",
+      "label": "Medicine or food allergies and reactions (write 'none known' only if confirmed).",
+      "options": [],
+      "section": "history",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "conditions",
+      "kind": "text",
+      "label": "Known illnesses and when diagnosed, including diabetes, liver disease, ulcers or gallstones.",
+      "options": [],
+      "section": "history",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "surgery",
+      "kind": "text",
+      "label": "Previous operations, hospital admissions or endoscopy, with approximate dates.",
+      "options": [],
+      "section": "history",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "family",
+      "kind": "text",
+      "label": "Family history of cancer or bowel polyps: relative, organ and age if known.",
+      "options": [],
+      "section": "history",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "tobacco",
+      "kind": "text",
+      "label": "Tobacco, betel/areca or alcohol use: type, amount and duration; none only if confirmed.",
+      "options": [],
+      "section": "history",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "tb_history",
+      "kind": "text",
+      "label": "Past tuberculosis, close contact, prolonged fever or night sweats? Give details or say not known.",
+      "options": [],
+      "section": "history",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "first_symptom_date",
+      "kind": "text",
+      "label": "Approximate date symptoms first started.",
+      "options": [],
+      "section": "history",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "first_contact",
+      "kind": "choice",
+      "label": "Who was first consulted?",
+      "options": [
+        "Nobody yet",
+        "Pharmacist",
+        "General physician",
+        "GI specialist",
+        "Other practitioner",
+        "Not sure"
+      ],
+      "section": "history",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "previous_treatment",
+      "kind": "text",
+      "label": "When was the first consultation? What was the problem treated as, what was tried, and did it help?",
+      "options": [],
+      "section": "history",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "visits",
+      "kind": "text",
+      "label": "How many consultations before this visit, and who referred the patient?",
+      "options": [],
+      "section": "history",
+      "showWhen": null,
+      "provenance": "assumed"
+    },
+    {
+      "id": "previous_tests",
+      "kind": "text",
+      "label": "Previous tests and dates, even if reports are not available.",
+      "options": [],
+      "section": "history",
+      "showWhen": null,
+      "provenance": "assumed"
+    }
+  ],
+  "urgencies": [
+    "review",
+    "prompt",
+    "immediate"
+  ],
+  "provenance": "assumed",
+  "specialties": [
+    "Gastroenterology",
+    "GI / HPB surgery",
+    "Surgical oncology",
+    "General medicine",
+    "Emergency department"
+  ],
+  "noticeVersion": "synthetic-demo-notice-v1"
+}

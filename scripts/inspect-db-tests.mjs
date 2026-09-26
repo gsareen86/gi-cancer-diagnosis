@@ -1,0 +1,4 @@
+import {existsSync,readFileSync} from 'node:fs';import {connectCloud} from './cloud.mjs';
+for(const f of ['.env','.env.operator','.env.test'])if(existsSync(f))process.loadEnvFile(f);
+const name=process.argv[2];if(!/^\d+_[a-z_]+\.sql$/.test(name))throw new Error('Invalid test');
+const {client}=await connectCloud('test');try{await client.query('begin');await client.query('set local search_path=public,extensions,pg_catalog');const result=await client.query(readFileSync(`supabase/tests/database/${name}`,'utf8'));for(const r of(Array.isArray(result)?result:[result]))for(const row of r.rows)for(const v of Object.values(row))if(typeof v==='string'&&/^(not ok|#)/.test(v))console.log(v);}catch(e){console.log(JSON.stringify({code:e.code,message:e.message,position:e.position}));process.exitCode=1;}finally{await client.query('rollback');await client.end();}

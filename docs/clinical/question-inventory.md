@@ -109,12 +109,23 @@ For each rule the clinical lead supplies:
 - minimum urgency and patient advice wording
 - staff handover text
 - **provenance** (assumed / guideline-derived with source / locally-validated)
+- exact source title/version/recommendation and original population; rationale for any local
+  threshold adaptation (approval is not clinical validation)
 - reviewer and date
 
 Every rule is tested with positive, explicit-negative, unknown, contradictory, partial and
 reordered-answer scenarios, plus AI unavailable and AI proposing lower urgency. Passing tests
 show the software behaves as written; they do not show the rule is clinically right.
 
+For the 25-case check use only facts available at first contact, include non-cancer controls
+and unknown answers, and record expected urgency and misses. Later diagnostic knowledge must
+not leak into the intake being evaluated. Keep patient-reported, coordinator-entered,
+report-extracted and clinician-verified fact provenance separate from rule provenance.
+Abdominal TB and other hypotheses use available evidence or explicitly unknown information;
+do not fabricate 'evidence against' or require a diagnosis in every patient output.
+
 ## Sign-off record
+
+Software draft implementation: [contextual questionnaire coverage and behavior](questionnaire-revision.md), version `intake-draft-2026-09-22.2`. This mapping does not approve the wording, options, clinical thresholds or navigation rules below.
 
 Clinical author: pending · Approved content version: none · Approved rules: none · Approval date: none
